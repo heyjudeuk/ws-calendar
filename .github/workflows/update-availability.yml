@@ -15,27 +15,26 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-            - name: Download JSON from SharePoint (resolve sharing link)
+      - name: Download JSON from SharePoint (resolve sharing link)
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p data
 
-          SHARE="https://merdekaltdcouk.sharepoint.com/:u:/g/IQBRBvUmC2PZRKy8P-9D86tEAdCEp2D7kMJZEZ7CXY-0x9s?e=gG5bgE"
+          SHARE='https://merdekaltdcouk.sharepoint.com/:u:/g/IQBRBvUmC2PZRKy8P-9D86tEAdCEp2D7kMJZEZ7CXY-0x9s?e=gG5bgE'
 
-          # Fetch the sharing page HTML
-          HTML="$(curl -L -sS -A "Mozilla/5.0" "$SHARE")"
-
-          # Extract the first https URL that looks like a download link (dl=1)
+          HTML="$(curl -L -sS -A 'Mozilla/5.0' "$SHARE")"
           DL="$(echo "$HTML" | tr '"' '\n' | grep -E '^https://.*(download|dl)=1' | head -n 1)"
 
           echo "Resolved download URL:"
           echo "$DL"
 
-          # Download the JSON
-          curl -L --fail -A "Mozilla/5.0" "$DL" -o data/availability.json
-
+          curl -L --fail -A 'Mozilla/5.0' "$DL" -o data/availability.json
 
       - name: Commit if changed
+        shell: bash
         run: |
+          set -euo pipefail
           if git diff --quiet -- data/availability.json; then
             echo "No changes"
             exit 0
