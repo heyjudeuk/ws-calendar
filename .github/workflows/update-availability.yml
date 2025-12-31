@@ -3,7 +3,7 @@ name: Sync SharePoint JSON to repo
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *" # every 30 minutes
+    - cron: "*/30 * * * *"
 
 permissions:
   id-token: write
@@ -39,26 +39,23 @@ jobs:
           TOKEN="$(az account get-access-token --resource-type ms-graph --query accessToken -o tsv)"
 
           echo "Resolving site ID..."
-          SITE_JSON="$(curl -sS -H "Authorization: Bearer $TOKEN" \
-            "https://graph.microsoft.com/v1.0/sites/${SP_HOST}:${SP_SITE_PATH}?\$select=id")"
+          curl -sS -H "Authorization: Bearer $TOKEN" \
+            "https://graph.microsoft.com/v1.0/sites/${SP_HOST}:${SP_SITE_PATH}?\$select=id" \
+            > /tmp/site.json
 
-          SITE_ID="$(echo "$SITE_JSON" | python -c "import sys,json; print(json.load(sys.stdin)['id'])")"
+          SITE_ID="$(python -c "import json; print(json.load(open('/tmp/site.json'))['id'])")"
           echo "Site ID: $SITE_ID"
 
           echo "Fetching drives (document libraries)..."
-          DRIVES_JSON="$(curl -sS -H "Authorization: Bearer $TOKEN" \
-            "https://graph.microsoft.com/v1.0/sites/$SITE_ID/drives?\$select=id,name")"
+          curl -sS -H "Authorization: Bearer $TOKEN" \
+            "https://graph.microsoft.com/v1.0/sites/$SITE_ID/drives?\$select=id,name" \
+            > /tmp/drives.json
 
           echo "Available drives:"
-          echo "$DRIVES_JSON" | python -c "import sys,json; data=json.load(sys.stdin); [print(f\"- {d.get('name')} | {d.get('id')}\") for d in data.get('value',[])]"
+          python -c "import json; d=json.load(open('/tmp/drives.json')); [print('- ' + x.get('name','') + ' | ' + x.get('id','')) for x in d.get('value',[])]"
 
           echo "Selecting drive by name: $SP_DRIVE_NAME"
-          DRIVE_ID="$(echo "$DRIVES_JSON" | python -c "import os,sys,json; want=os.environ['SP_DRIVE_NAME'].strip().lower(); data=json.load(sys.stdin); 
-for d in data.get('value',[]): 
-  name=(d.get('name') or '').strip().lower()
-  if name==want: 
-    print(d['id']); sys.exit(0)
-raise SystemExit('Drive not found. Set SP_DRIVE_NAME to one of the names listed above.')")"
+          DRIVE_ID="$(python -c "import json,os,sys; want=os.environ['SP_DRIVE_NAME'].strip().lower(); d=json.load(open('/tmp/drives.json')); ids=[x['id'] for x in d.get('value',[]) if (x.get('name') or '').strip().lower()==want]; print(ids[0] if ids else sys.exit('Drive not found: ' + os.environ['SP_DRIVE_NAME']))")"
           echo "Drive ID: $DRIVE_ID"
 
           echo "URL-encoding file path..."
