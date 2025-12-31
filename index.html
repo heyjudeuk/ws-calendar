@@ -16,8 +16,8 @@
       --radius:14px;
 
       /* Colour-blind safe palette (blue / amber) */
-      --good:#2b6cb0;                 /* available */
-      --bad:#d97706;                  /* unavailable */
+      --good:#2b6cb0;
+      --bad:#d97706;
       --good2: rgba(43,108,176,.22);
       --bad2: rgba(217,119,6,.28);
     }
@@ -26,201 +26,139 @@
 
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       background: radial-gradient(1200px 800px at 20% 0%, #132033 0%, var(--bg) 60%);
       color: var(--text);
-      line-height:1.4;
     }
 
     header{
-      padding: 22px 16px 10px;
-      max-width: 1200px;
-      margin: 0 auto;
+      padding:22px 16px 10px;
+      max-width:1200px;
+      margin:auto;
     }
 
-    h1{
-      margin:0 0 10px;
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: .2px;
-    }
+    h1{ margin:0 0 10px; font-size:22px; }
 
-    .sub{
-      color: var(--muted);
-      font-size: 14px;
-      margin: 0 0 14px;
-    }
+    .sub{ color:var(--muted); font-size:14px; margin-bottom:14px; }
 
     .toolbar{
       display:flex;
       flex-wrap:wrap;
       gap:12px;
       align-items:center;
-      background: rgba(18,25,37,.65);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px;
-      box-shadow: var(--shadow);
+      background:rgba(18,25,37,.65);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:12px;
+      box-shadow:var(--shadow);
     }
 
-    label{
-      font-size: 13px;
-      color: var(--muted);
-    }
+    label{ font-size:13px; color:var(--muted); }
 
     select{
-      background: #0e1522;
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 14px;
-      outline: none;
-      min-width: 220px;
+      background:#0e1522;
+      border:1px solid var(--border);
+      color:var(--text);
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:14px;
+      min-width:220px;
     }
 
     .legend{
       display:flex;
       gap:10px;
       align-items:center;
-      flex-wrap:wrap;
       margin-left:auto;
+      flex-wrap:wrap;
     }
 
     .pill{
       display:flex;
-      align-items:center;
       gap:8px;
+      align-items:center;
       border:1px solid var(--border);
       background:#0e1522;
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 12px;
-      color: var(--muted);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      color:var(--muted);
     }
 
-    .dot{
-      width:10px;height:10px;border-radius:50%;
-    }
-    .dot.good{ background: var(--good); }
-    .dot.bad{ background: var(--bad); }
+    .dot{ width:10px; height:10px; border-radius:50%; }
+    .dot.good{ background:var(--good); }
+    .dot.bad{ background:var(--bad); }
 
     main{
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 10px 16px 28px;
+      max-width:1200px;
+      margin:auto;
+      padding:10px 16px 28px;
     }
 
     .grid{
       display:grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 14px;
-      margin-top: 14px;
+      grid-template-columns:repeat(3,1fr);
+      gap:14px;
+      margin-top:14px;
     }
 
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-    }
-
-    @media (max-width: 640px){
-      .grid{ grid-template-columns: 1fr; }
-      select{ min-width: 100%; }
-      .legend{ width:100%; margin-left:0; }
-    }
+    @media (max-width:980px){ .grid{ grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:640px){ .grid{ grid-template-columns:1fr; } }
 
     .card{
-      background: rgba(18,25,37,.75);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      background:rgba(18,25,37,.75);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
       overflow:hidden;
     }
 
     .monthHeader{
-      padding: 10px 12px;
+      padding:10px 12px;
       border-bottom:1px solid var(--border);
       display:flex;
-      align-items:center;
       justify-content:space-between;
-      gap:10px;
+      font-size:14px;
     }
 
-    .monthHeader .name{
-      font-weight: 700;
-      letter-spacing:.2px;
-    }
+    .cal{ padding:10px; }
 
-    .monthHeader .meta{
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .cal{
-      padding: 10px 10px 12px;
+    .dow, .days{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:6px;
+      text-align:center;
     }
 
     .dow{
-      display:grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap:6px;
+      color:var(--muted);
+      font-size:11px;
       margin-bottom:8px;
-      color: var(--muted);
-      font-size: 11px;
-      text-align:center;
-      user-select:none;
-    }
-
-    .days{
-      display:grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap:6px;
     }
 
     .day{
       position:relative;
-      border: 1px solid transparent;
-      border-radius: 10px;
-      min-height: 42px;
-      padding: 6px 6px 6px;
-      text-align:center;
-      font-size: 13px;
-      background: rgba(255,255,255,.03);
-      color: var(--text);
-      user-select:none;
+      min-height:42px;
+      border-radius:10px;
       display:flex;
       flex-direction:column;
       justify-content:center;
+      align-items:center;
       gap:2px;
+      font-size:13px;
     }
 
-    .day strong{
-      font-weight:700;
-      font-size: 13px;
-      line-height: 1.1;
-    }
-
-    .day .mark{
-      font-size: 12px;
-      opacity: .9;
-      line-height: 1;
-    }
-
-    .day.empty{
-      background: transparent;
-      border-color: transparent;
-    }
+    .day strong{ font-weight:700; }
 
     .day.good{
-      background: var(--good2);
-      border-color: rgba(43,108,176,.40);
+      background:var(--good2);
+      border:1px solid rgba(43,108,176,.4);
     }
 
     .day.bad{
-      background: var(--bad2);
-      border-color: rgba(217,119,6,.45);
-
-      /* extra non-colour cue: subtle texture */
-      background-image: repeating-linear-gradient(
+      background:var(--bad2);
+      border:1px solid rgba(217,119,6,.45);
+      background-image:repeating-linear-gradient(
         45deg,
         rgba(0,0,0,.14),
         rgba(0,0,0,.14) 7px,
@@ -229,426 +167,227 @@
       );
     }
 
-    .day:hover{
-      border-color: rgba(255,255,255,.22);
-      cursor: default;
-    }
+    .day.empty{ background:transparent; }
+
+    .mark{ font-size:12px; }
 
     .tooltip{
       position:absolute;
-      left: 50%;
-      bottom: 110%;
-      transform: translateX(-50%);
+      bottom:110%;
+      left:50%;
+      transform:translateX(-50%);
       background:#07101c;
       border:1px solid var(--border);
-      color: var(--text);
-      padding: 8px 10px;
-      border-radius: 10px;
-      white-space: nowrap;
-      font-size: 12px;
-      box-shadow: var(--shadow);
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:12px;
+      box-shadow:var(--shadow);
       display:none;
-      z-index: 10;
-      max-width: 280px;
-      overflow:hidden;
-      text-overflow: ellipsis;
+      white-space:nowrap;
+      text-align:left;
+      z-index:10;
     }
 
-    .day:hover .tooltip{ display:block; }
+    .day.bad:hover .tooltip{ display:block; }
 
-    .section{
-      margin-top: 18px;
-    }
-
-    .section h2{
-      font-size: 16px;
-      margin: 18px 0 10px;
+    .tooltip div{
+      display:flex;
+      gap:6px;
+      align-items:center;
     }
 
     .raw{
-      background: rgba(18,25,37,.75);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      margin-top:18px;
+      background:rgba(18,25,37,.75);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
       overflow:hidden;
     }
 
     table{
       width:100%;
-      border-collapse: collapse;
-      font-size: 14px;
+      border-collapse:collapse;
+      font-size:14px;
     }
 
-    thead th{
-      text-align:left;
-      padding: 10px 12px;
-      color: var(--muted);
-      font-size: 12px;
-      background: rgba(14,21,34,.7);
-      border-bottom:1px solid var(--border);
-    }
-
-    tbody td{
-      padding: 10px 12px;
+    th, td{
+      padding:10px 12px;
       border-bottom:1px solid rgba(36,50,70,.6);
-      vertical-align: top;
+      text-align:left;
     }
 
-    tbody tr:last-child td{ border-bottom:none; }
+    th{ font-size:12px; color:var(--muted); }
 
     .chip{
       display:inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
+      margin:2px 6px 2px 0;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
       background:#0e1522;
-      color: var(--muted);
-      font-size: 12px;
-      margin-right:6px;
-      margin-bottom:6px;
-    }
-
-    .status{
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 8px;
-    }
-
-    .error{
-      color:#ffdfbf;
-      background: rgba(217,119,6,.15);
-      border:1px solid rgba(217,119,6,.35);
-      padding: 10px 12px;
-      border-radius: 12px;
-      margin-top: 12px;
+      font-size:12px;
+      color:var(--muted);
     }
   </style>
 </head>
 
 <body>
-  <header>
-    <h1 id="title">Weird Science Band Availability</h1>
-    <p class="sub" id="subtitle">Loading…</p>
+<header>
+  <h1 id="title">Weird Science Band Availability</h1>
+  <p class="sub" id="subtitle">Loading…</p>
 
-    <div class="toolbar">
-      <div>
-        <label for="mode">Show availability for</label><br/>
-        <select id="mode"></select>
-      </div>
-
-      <div class="legend">
-        <div class="pill" title="Available = ✔">
-          <span class="dot good"></span>
-          <span>Available ✔</span>
-        </div>
-        <div class="pill" title="Unavailable = ✖">
-          <span class="dot bad"></span>
-          <span>Unavailable ✖</span>
-        </div>
-        <div class="pill" id="rulePill" title="Rule"></div>
-      </div>
+  <div class="toolbar">
+    <div>
+      <label>Show availability for</label><br/>
+      <select id="mode"></select>
     </div>
 
-    <div id="msg" class="status"></div>
-  </header>
-
-  <main>
-    <div id="calGrid" class="grid" aria-live="polite"></div>
-
-    <div class="section">
-      <h2>Raw unavailability</h2>
-      <div class="raw">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:160px;">Member</th>
-              <th>Unavailable dates</th>
-            </tr>
-          </thead>
-          <tbody id="rawBody"></tbody>
-        </table>
-      </div>
+    <div class="legend">
+      <div class="pill"><span class="dot good"></span> Available ✔</div>
+      <div class="pill"><span class="dot bad"></span> Unavailable ✖</div>
+      <div class="pill" id="rulePill"></div>
     </div>
+  </div>
+</header>
 
-    <div id="error" class="error" style="display:none;"></div>
-  </main>
+<main>
+  <div id="calGrid" class="grid"></div>
+
+  <div class="raw">
+    <table>
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Unavailable dates</th>
+        </tr>
+      </thead>
+      <tbody id="rawBody"></tbody>
+    </table>
+  </div>
+</main>
 
 <script>
 (() => {
-  // Use a RELATIVE path so it works cleanly on subdomains and project pages
   const DATA_URL = 'data/availability.json';
+  const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+  const elGrid = document.getElementById('calGrid');
+  const elMode = document.getElementById('mode');
+  const elRule = document.getElementById('rulePill');
+  const elRaw = document.getElementById('rawBody');
   const elTitle = document.getElementById('title');
   const elSubtitle = document.getElementById('subtitle');
-  const elMode = document.getElementById('mode');
-  const elGrid = document.getElementById('calGrid');
-  const elRaw = document.getElementById('rawBody');
-  const elMsg = document.getElementById('msg');
-  const elError = document.getElementById('error');
-  const elRulePill = document.getElementById('rulePill');
 
-  // Monday-first labels (UK)
-  const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const MONTH_NAMES = [
-    'January','February','March','April','May','June',
-    'July','August','September','October','November','December'
-  ];
+  const pad = n => String(n).padStart(2,'0');
+  const iso = (y,m,d) => `${y}-${pad(m)}-${pad(d)}`;
 
-  const pad2 = (n) => String(n).padStart(2,'0');
-  const isoDate = (y,m,d) => `${y}-${pad2(m)}-${pad2(d)}`;
+  let state = { members:[], byDate:new Map(), year:2026, mode:'__ALL__' };
 
-  const parseData = async () => {
-    const res = await fetch(DATA_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`Failed to fetch ${DATA_URL}: HTTP ${res.status}`);
-    return res.json();
-  };
+  fetch(DATA_URL,{cache:'no-store'})
+    .then(r=>r.json())
+    .then(data=>{
+      state.members = data.members;
+      elSubtitle.textContent = `Last updated: ${data.generatedUtc}`;
+      buildMaps();
+      buildMode();
+      renderRaw();
+      render();
+    });
 
-  const normaliseMembers = (data) => {
-    const members = (data.members || []).map(m => ({
-      name: String(m.name || '').trim(),
-      unavailable: Array.isArray(m.unavailable) ? m.unavailable.map(String) : []
-    })).filter(m => m.name);
-
-    // Map: date -> [names...]
-    const byDate = new Map();
-    for (const m of members) {
-      for (const d of m.unavailable) {
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) continue;
-        if (!byDate.has(d)) byDate.set(d, []);
-        byDate.get(d).push(m.name);
-      }
-    }
-
-    // stable ordering for tooltips
-    for (const [d,names] of byDate.entries()) {
-      names.sort((a,b) => a.localeCompare(b, 'en-GB', { sensitivity: 'base' }));
-      byDate.set(d, names);
-    }
-
-    return { members, byDate };
-  };
-
-  const inferYear = (members) => {
+  function buildMaps(){
     const years = new Set();
-    for (const m of members) {
-      for (const d of m.unavailable) {
-        const y = Number(d.slice(0,4));
-        if (Number.isFinite(y)) years.add(y);
+    state.byDate.clear();
+
+    for(const m of state.members){
+      for(const d of m.unavailable){
+        years.add(+d.slice(0,4));
+        if(!state.byDate.has(d)) state.byDate.set(d,[]);
+        state.byDate.get(d).push(m.name);
       }
     }
-    if (years.size === 1) return [...years][0];
-    if (years.size > 1) return Math.min(...years); // earliest if mixed
-    return new Date().getFullYear() + 1;
-  };
+    state.year = years.size === 1 ? [...years][0] : Math.min(...years);
+    elTitle.textContent = `Weird Science Band Availability for ${state.year}`;
+  }
 
-  const buildModeOptions = (members) => {
-    elMode.innerHTML = '';
-    const optAll = document.createElement('option');
-    optAll.value = '__ALL__';
-    optAll.textContent = 'Whole band';
-    elMode.appendChild(optAll);
+  function buildMode(){
+    elMode.innerHTML = '<option value="__ALL__">Whole band</option>';
+    state.members
+      .map(m=>m.name)
+      .sort()
+      .forEach(n=>{
+        const o=document.createElement('option');
+        o.value=o.textContent=n;
+        elMode.appendChild(o);
+      });
 
-    const sorted = [...members].sort((a,b) => a.name.localeCompare(b.name, 'en-GB', { sensitivity: 'base' }));
-    for (const m of sorted) {
-      const opt = document.createElement('option');
-      opt.value = m.name;
-      opt.textContent = m.name;
-      elMode.appendChild(opt);
-    }
-  };
+    elMode.onchange=()=>{ state.mode=elMode.value; render(); };
+  }
 
-  const availabilityForDate = (dateISO, mode, byDate) => {
-    const names = byDate.get(dateISO) || [];
-    if (mode === '__ALL__') {
-      return { isBad: names.length > 0, names };
-    }
-    const isBad = names.includes(mode);
-    return { isBad, names: isBad ? [mode] : [] };
-  };
+  function render(){
+    elGrid.innerHTML='';
+    elRule.textContent = state.mode==='__ALL__'
+      ? '✔ only if nobody is unavailable'
+      : `✔ / ✖ for ${state.mode}`;
 
-  const renderCalendars = (year, mode, byDate) => {
-    elGrid.innerHTML = '';
+    for(let m=1;m<=12;m++){
+      const card=document.createElement('div');
+      card.className='card';
+      card.innerHTML=`<div class="monthHeader">${MONTHS[m-1]} ${state.year}</div>`;
+      const cal=document.createElement('div');
+      cal.className='cal';
 
-    const ruleText = (mode === '__ALL__')
-      ? 'Rule: ✔ only if nobody is unavailable'
-      : `Rule: ✔ / ✖ reflects ${mode} only`;
-    elRulePill.textContent = ruleText;
+      const dow=document.createElement('div');
+      dow.className='dow';
+      DOW.forEach(d=>dow.innerHTML+=`<div>${d}</div>`);
 
-    for (let month = 1; month <= 12; month++) {
-      const card = document.createElement('div');
-      card.className = 'card';
+      const days=document.createElement('div');
+      days.className='days';
 
-      const header = document.createElement('div');
-      header.className = 'monthHeader';
+      const first=new Date(state.year,m-1,1);
+      const offset=(first.getDay()+6)%7;
+      for(let i=0;i<offset;i++) days.innerHTML+='<div class="day empty"></div>';
 
-      const name = document.createElement('div');
-      name.className = 'name';
-      name.textContent = `${MONTH_NAMES[month-1]} ${year}`;
+      const count=new Date(state.year,m,0).getDate();
+      for(let d=1;d<=count;d++){
+        const date=iso(state.year,m,d);
+        const names=state.byDate.get(date)||[];
+        const bad=state.mode==='__ALL__' ? names.length>0 : names.includes(state.mode);
 
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      meta.textContent = (mode === '__ALL__') ? 'Whole band' : mode;
+        const cell=document.createElement('div');
+        cell.className=`day ${bad?'bad':'good'}`;
+        cell.innerHTML=`<strong>${d}</strong><div class="mark">${bad?'✖':'✔'}</div>`;
 
-      header.appendChild(name);
-      header.appendChild(meta);
-
-      const cal = document.createElement('div');
-      cal.className = 'cal';
-
-      const dow = document.createElement('div');
-      dow.className = 'dow';
-      for (const d of DOW) {
-        const s = document.createElement('div');
-        s.textContent = d;
-        dow.appendChild(s);
-      }
-
-      const days = document.createElement('div');
-      days.className = 'days';
-
-      // First day of month
-      const first = new Date(year, month-1, 1);
-      // JS getDay(): Sun=0..Sat=6. Convert to Monday-first index (Mon=0..Sun=6).
-      const firstIndex = (first.getDay() + 6) % 7;
-
-      // Days in month
-      const last = new Date(year, month, 0);
-      const daysInMonth = last.getDate();
-
-      // Leading blanks
-      for (let i=0; i<firstIndex; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'day empty';
-        days.appendChild(cell);
-      }
-
-      // Actual days
-      for (let day=1; day<=daysInMonth; day++) {
-        const cell = document.createElement('div');
-        cell.className = 'day';
-
-        const dISO = isoDate(year, month, day);
-        const { isBad, names } = availabilityForDate(dISO, mode, byDate);
-
-        cell.classList.add(isBad ? 'bad' : 'good');
-
-        // icon + number (non-colour cue)
-        const num = document.createElement('strong');
-        num.textContent = String(day);
-
-        const mark = document.createElement('div');
-        mark.className = 'mark';
-        mark.textContent = isBad ? '✖' : '✔';
-
-        const tt = document.createElement('div');
-        tt.className = 'tooltip';
-
-        if (mode === '__ALL__') {
-          tt.textContent = isBad
-            ? `${dISO}: Unavailable: ${names.join(', ')}`
-            : `${dISO}: Available (everyone)`;
-        } else {
-          tt.textContent = isBad
-            ? `${dISO}: Unavailable (${mode})`
-            : `${dISO}: Available (${mode})`;
+        if(bad){
+          const tt=document.createElement('div');
+          tt.className='tooltip';
+          names.forEach(n=>{
+            const row=document.createElement('div');
+            row.textContent=`✖ ${n}`;
+            tt.appendChild(row);
+          });
+          cell.appendChild(tt);
         }
-
-        cell.appendChild(num);
-        cell.appendChild(mark);
-        cell.appendChild(tt);
-
         days.appendChild(cell);
       }
 
       cal.appendChild(dow);
       cal.appendChild(days);
-
-      card.appendChild(header);
       card.appendChild(cal);
       elGrid.appendChild(card);
     }
-  };
+  }
 
-  const renderRawTable = (members) => {
-    elRaw.innerHTML = '';
-    const sorted = [...members].sort((a,b) => a.name.localeCompare(b.name, 'en-GB', { sensitivity: 'base' }));
-
-    for (const m of sorted) {
-      const tr = document.createElement('tr');
-
-      const tdName = document.createElement('td');
-      tdName.textContent = m.name;
-
-      const tdDates = document.createElement('td');
-      const dates = [...m.unavailable].filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
-
-      if (!dates.length) {
-        tdDates.textContent = '—';
-      } else {
-        for (const d of dates) {
-          const chip = document.createElement('span');
-          chip.className = 'chip';
-          chip.textContent = d;
-          tdDates.appendChild(chip);
-        }
-      }
-
-      tr.appendChild(tdName);
-      tr.appendChild(tdDates);
+  function renderRaw(){
+    elRaw.innerHTML='';
+    state.members.forEach(m=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${m.name}</td><td>${
+        m.unavailable.map(d=>`<span class="chip">${d}</span>`).join('')
+      }</td>`;
       elRaw.appendChild(tr);
-    }
-  };
-
-  const setError = (msg) => {
-    elError.style.display = 'block';
-    elError.textContent = msg;
-  };
-
-  const clearError = () => {
-    elError.style.display = 'none';
-    elError.textContent = '';
-  };
-
-  let state = {
-    members: [],
-    byDate: new Map(),
-    year: 2026,
-    mode: '__ALL__'
-  };
-
-  const refresh = () => {
-    renderCalendars(state.year, state.mode, state.byDate);
-    elMsg.textContent = (state.mode === '__ALL__')
-      ? 'Whole band mode: a date is available only if nobody is unavailable.'
-      : `Per member mode: availability reflects ${state.mode} only.`;
-  };
-
-  elMode.addEventListener('change', () => {
-    state.mode = elMode.value;
-    refresh();
-  });
-
-  (async () => {
-    try {
-      clearError();
-      const data = await parseData();
-      const { members, byDate } = normaliseMembers(data);
-
-      state.members = members;
-      state.byDate = byDate;
-      state.year = inferYear(members);
-
-      elTitle.textContent = `Weird Science Band Availability for ${state.year}`;
-      elSubtitle.textContent = `Last updated: ${data.generatedUtc || 'unknown'}`;
-
-      buildModeOptions(members);
-      renderRawTable(members);
-      refresh();
-    } catch (e) {
-      setError(String(e && e.message ? e.message : e));
-      elSubtitle.textContent = 'Could not load availability data.';
-    }
-  })();
+    });
+  }
 })();
 </script>
 </body>
