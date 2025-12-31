@@ -41,6 +41,16 @@ jobs:
           SITE_JSON="$(curl -sS -H "Authorization: Bearer $TOKEN" \
             "https://graph.microsoft.com/v1.0/sites/${SP_HOST}:${SP_SITE_PATH}?\$select=id")"
 
+          echo "Listing drives (document libraries) on the site..."
+          curl -sS -H "Authorization: Bearer $TOKEN" \
+            "https://graph.microsoft.com/v1.0/sites/$SITE_ID/drives?\$select=id,name,webUrl" \
+            | python - <<'PY'
+            import sys, json
+            data = json.load(sys.stdin)
+            for d in data.get("value", []):
+              print(f"- {d.get('name')} | {d.get('id')}")
+            PY
+
           SITE_ID="$(echo "$SITE_JSON" | python -c "import sys,json; print(json.load(sys.stdin)['id'])")"
           echo "Site ID: $SITE_ID"
 
