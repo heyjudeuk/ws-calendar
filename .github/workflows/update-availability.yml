@@ -3,7 +3,7 @@ name: Sync SharePoint JSON to repo
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "0 * * * *"   # hourly
 
 permissions:
   id-token: write
@@ -35,42 +35,25 @@ jobs:
         run: |
           set -euo pipefail
 
-          echo "Getting Graph access token..."
           TOKEN="$(az account get-access-token --resource-type ms-graph --query accessToken -o tsv)"
 
-          echo "Resolving site ID..."
-          curl -sS -H "Authorization: Bearer $TOKEN" \
+          SITE_ID="$(curl -fsSL -H "Authorization: Bearer $TOKEN" \
             "https://graph.microsoft.com/v1.0/sites/${SP_HOST}:${SP_SITE_PATH}?\$select=id" \
-            > /tmp/site.json
+            | python -c "import sys,json; print(json.load(sys.stdin)['id'])")"
 
-          SITE_ID="$(python -c "import json; print(json.load(open('/tmp/site.json'))['id'])")"
-          echo "Site ID: $SITE_ID"
-
-          echo "Fetching drives (document libraries)..."
-          curl -sS -H "Authorization: Bearer $TOKEN" \
+          DRIVE_ID="$(curl -fsSL -H "Authorization: Bearer $TOKEN" \
             "https://graph.microsoft.com/v1.0/sites/$SITE_ID/drives?\$select=id,name" \
-            > /tmp/drives.json
+            | python -c "import sys,json,os; want=os.environ['SP_DRIVE_NAME'].strip().lower(); d=json.load(sys.stdin); hits=[x['id'] for x in d.get('value',[]) if (x.get('name') or '').strip().lower()==want]; \
+                         (print(hits[0]) if hits else (_ for _ in ()).throw(SystemExit('Drive not found: ' + os.environ['SP_DRIVE_NAME'])))")"
 
-          echo "Available drives:"
-          python -c "import json; d=json.load(open('/tmp/drives.json')); [print('- ' + x.get('name','') + ' | ' + x.get('id','')) for x in d.get('value',[])]"
-
-          echo "Selecting drive by name: $SP_DRIVE_NAME"
-          DRIVE_ID="$(python -c "import json,os,sys; want=os.environ['SP_DRIVE_NAME'].strip().lower(); d=json.load(open('/tmp/drives.json')); ids=[x['id'] for x in d.get('value',[]) if (x.get('name') or '').strip().lower()==want]; print(ids[0] if ids else sys.exit('Drive not found: ' + os.environ['SP_DRIVE_NAME']))")"
-          echo "Drive ID: $DRIVE_ID"
-
-          echo "URL-encoding file path..."
           ENCODED_PATH="$(python -c "import os,urllib.parse; print(urllib.parse.quote(os.environ['SP_FILE_PATH'], safe='/'))")"
-          echo "Encoded path: $ENCODED_PATH"
 
-          echo "Downloading file..."
           mkdir -p "$(dirname "$TARGET_JSON_PATH")"
 
-          curl -sS -L \
-            -H "Authorization: Bearer $TOKEN" \
+          curl -fsSL -H "Authorization: Bearer $TOKEN" \
             "https://graph.microsoft.com/v1.0/drives/$DRIVE_ID/root:/$ENCODED_PATH:/content" \
             -o "$TARGET_JSON_PATH"
 
-          echo "Validating JSON..."
           python -c "import json; json.load(open('$TARGET_JSON_PATH','r',encoding='utf-8'))"
 
       - name: Commit and push if changed
@@ -80,14 +63,15 @@ jobs:
         run: |
           set -euo pipefail
 
-          if git diff --quiet; then
-            echo "No changes."
-            exit 0
-          fi
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add "$TARGET_JSON_PATH"
+
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+
           git commit -m "Sync availability JSON from SharePoint"
           git push
