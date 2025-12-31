@@ -28,10 +28,10 @@ jobs:
         shell: bash
         env:
           SP_HOST: ${{ vars.SP_HOST }}
-          SP_SITE_PATH: ${{ vars.SP_SITE_PATH }}
-          SP_DRIVE_NAME: ${{ vars.SP_DRIVE_NAME }}
-          SP_FILE_PATH: ${{ vars.SP_FILE_PATH }}
-          TARGET_JSON_PATH: ${{ vars.TARGET_JSON_PATH }}
+          SP_SITE_PATH: ${{ vars.SP_SITE_PATH }}          # use "/" for root site
+          SP_DRIVE_NAME: ${{ vars.SP_DRIVE_NAME }}        # e.g. "Documents"
+          SP_FILE_PATH: ${{ vars.SP_FILE_PATH }}          # e.g. "BandAvailability/availability.json"
+          TARGET_JSON_PATH: ${{ vars.TARGET_JSON_PATH }}  # e.g. "data/availability.json"
         run: |
           set -euo pipefail
 
@@ -45,20 +45,52 @@ jobs:
           SITE_ID="$(echo "$SITE_JSON" | python -c "import sys,json; print(json.load(sys.stdin)['id'])")"
           echo "Site ID: $SITE_ID"
 
-          echo "Listing drives on the site..."
+          echo "Fetching drives (document libraries)..."
           DRIVES_JSON="$(curl -sS -H "Authorization: Bearer $TOKEN" \
             "https://graph.microsoft.com/v1.0/sites/$SITE_ID/drives?\$select=id,name")"
 
-          echo "$DRIVES_JSON" | python - <<'PY'
-import sys, json
-data = json.load(sys.stdin)
-for d in data.get("value", []):
-    print(f"- {d.get('name')} | {d.get('id')}")
-PY
+          echo "Available drives:"
+          echo "$DRIVES_JSON" | python -c "import sys,json; data=json.load(sys.stdin); [print(f\"- {d.get('name')} | {d.get('id')}\") for d in data.get('value',[])]"
 
           echo "Selecting drive by name: $SP_DRIVE_NAME"
-          DRIVE_ID="$(echo "$DRIVES_JSON" | python - <<'PY'
-import os, sys, json
-want = os.environ["SP_DRIVE_NAME"].strip().lower()
-data = json.load(sys.stdin)
-for d in data.get("value", []):
+          DRIVE_ID="$(echo "$DRIVES_JSON" | python -c "import os,sys,json; want=os.environ['SP_DRIVE_NAME'].strip().lower(); data=json.load(sys.stdin); 
+for d in data.get('value',[]): 
+  name=(d.get('name') or '').strip().lower()
+  if name==want: 
+    print(d['id']); sys.exit(0)
+raise SystemExit('Drive not found. Set SP_DRIVE_NAME to one of the names listed above.')")"
+          echo "Drive ID: $DRIVE_ID"
+
+          echo "URL-encoding file path..."
+          ENCODED_PATH="$(python -c "import os,urllib.parse; print(urllib.parse.quote(os.environ['SP_FILE_PATH'], safe='/'))")"
+          echo "Encoded path: $ENCODED_PATH"
+
+          echo "Downloading file..."
+          mkdir -p "$(dirname "$TARGET_JSON_PATH")"
+
+          curl -sS -L \
+            -H "Authorization: Bearer $TOKEN" \
+            "https://graph.microsoft.com/v1.0/drives/$DRIVE_ID/root:/$ENCODED_PATH:/content" \
+            -o "$TARGET_JSON_PATH"
+
+          echo "Validating JSON..."
+          python -c "import json; json.load(open('$TARGET_JSON_PATH','r',encoding='utf-8'))"
+
+      - name: Commit and push if changed
+        shell: bash
+        env:
+          TARGET_JSON_PATH: ${{ vars.TARGET_JSON_PATH }}
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add "$TARGET_JSON_PATH"
+          git commit -m "Sync availability JSON from SharePoint"
+          git push
