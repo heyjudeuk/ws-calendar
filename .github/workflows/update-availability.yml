@@ -18,7 +18,9 @@ jobs:
       - name: Download JSON from SharePoint
         run: |
           mkdir -p data
-          curl -L --fail \
+          curl -L --fail --retry 3 --retry-delay 2 \
+            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+            -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
             "https://merdekaltdcouk.sharepoint.com/:u:/g/IQBRBvUmC2PZRKy8P-9D86tEAdCEp2D7kMJZEZ7CXY-0x9s?e=gG5bgE&download=1" \
             -o data/availability.json
 
