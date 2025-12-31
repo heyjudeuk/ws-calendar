@@ -1,46 +1,75 @@
-name: Update availability.json
+name: Sync SharePoint JSON to repo
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "7,37 * * * *"
+    - cron: "*/30 * * * *"  # every 30 minutes
 
 permissions:
+  id-token: write
   contents: write
 
 jobs:
-  update:
+  sync:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download JSON from SharePoint (resolve sharing link)
+      - name: Login to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Download JSON from SharePoint (Microsoft Graph)
         shell: bash
+        env:
+          SP_HOST: ${{ vars.SP_HOST }}
+          SP_SITE_PATH: ${{ vars.SP_SITE_PATH }}
+          SP_FILE_PATH: ${{ vars.SP_FILE_PATH }}
+          TARGET_JSON_PATH: ${{ vars.TARGET_JSON_PATH }}
         run: |
           set -euo pipefail
-          mkdir -p data
 
-          SHARE='https://merdekaltdcouk.sharepoint.com/:u:/g/IQBRBvUmC2PZRKy8P-9D86tEAdCEp2D7kMJZEZ7CXY-0x9s?e=gG5bgE'
+          echo "Getting Graph access token..."
+          TOKEN="$(az account get-access-token --resource-type ms-graph --query accessToken -o tsv)"
 
-          HTML="$(curl -L -sS -A 'Mozilla/5.0' "$SHARE")"
-          DL="$(echo "$HTML" | tr '"' '\n' | grep -E '^https://.*(download|dl)=1' | head -n 1)"
+          echo "Resolving site ID..."
+          SITE_JSON="$(curl -sS -H "Authorization: Bearer $TOKEN" \
+            "https://graph.microsoft.com/v1.0/sites/${SP_HOST}:${SP_SITE_PATH}?$select=id")"
 
-          echo "Resolved download URL:"
-          echo "$DL"
+          SITE_ID="$(echo "$SITE_JSON" | python -c "import sys,json; print(json.load(sys.stdin)['id'])")"
+          echo "Site ID: $SITE_ID"
 
-          curl -L --fail -A 'Mozilla/5.0' "$DL" -o data/availability.json
+          echo "Downloading file..."
+          mkdir -p "$(dirname "$TARGET_JSON_PATH")"
 
-      - name: Commit if changed
+          curl -sS -L \
+            -H "Authorization: Bearer $TOKEN" \
+            "https://graph.microsoft.com/v1.0/sites/$SITE_ID/drive/root:/$SP_FILE_PATH:/content" \
+            -o "$TARGET_JSON_PATH"
+
+          echo "Validating JSON..."
+          python -c "import json; json.load(open('$TARGET_JSON_PATH','r',encoding='utf-8'))"
+
+      - name: Commit and push if changed
         shell: bash
+        env:
+          TARGET_JSON_PATH: ${{ vars.TARGET_JSON_PATH }}
         run: |
           set -euo pipefail
-          if git diff --quiet -- data/availability.json; then
-            echo "No changes"
+
+          if git diff --quiet; then
+            echo "No changes."
             exit 0
           fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/availability.json
-          git commit -m "Update availability.json"
+
+          git add "$TARGET_JSON_PATH"
+          git commit -m "Sync availability JSON from SharePoint"
           git push
