@@ -15,14 +15,24 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Download JSON from SharePoint
+            - name: Download JSON from SharePoint (resolve sharing link)
         run: |
           mkdir -p data
-          curl -L --fail --retry 3 --retry-delay 2 \
-            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
-            -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
-            "https://merdekaltdcouk.sharepoint.com/Shared%20Documents/BandAvailability/availability.json" \
-            -o data/availability.json
+
+          SHARE="https://merdekaltdcouk.sharepoint.com/:u:/g/IQBRBvUmC2PZRKy8P-9D86tEAdCEp2D7kMJZEZ7CXY-0x9s?e=gG5bgE"
+
+          # Fetch the sharing page HTML
+          HTML="$(curl -L -sS -A "Mozilla/5.0" "$SHARE")"
+
+          # Extract the first https URL that looks like a download link (dl=1)
+          DL="$(echo "$HTML" | tr '"' '\n' | grep -E '^https://.*(download|dl)=1' | head -n 1)"
+
+          echo "Resolved download URL:"
+          echo "$DL"
+
+          # Download the JSON
+          curl -L --fail -A "Mozilla/5.0" "$DL" -o data/availability.json
+
 
       - name: Commit if changed
         run: |
