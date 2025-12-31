@@ -59,3 +59,42 @@ This project is designed to work well for red/green colour blindness:
 
 ## Repo structure
 
+/
+├── index.html
+├── README.md
+├── CNAME
+└── data/
+└── availability.json
+
+
+---
+
+## Data format
+
+Availability is defined in a single JSON file:
+
+`/data/availability.json`
+
+Example:
+
+```json
+{
+  "generatedUtc": "2025-12-31T17:49:26Z",
+  "members": [
+    {
+      "name": "jude",
+      "unavailable": [
+        "2026-03-01",
+        "2026-03-02"
+      ]
+    },
+    {
+      "name": "shaun",
+      "unavailable": [
+        "2026-03-17"
+      ]
+    }
+  ]
+}
+
+
