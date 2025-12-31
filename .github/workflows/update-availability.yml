@@ -1,1 +1,35 @@
 name: Update availability.json
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7,37 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Download JSON from SharePoint
+        run: |
+          mkdir -p data
+          curl -L --fail \
+            "https://merdekaltdcouk.sharepoint.com/:u:/g/IQBRBvUmC2PZRKy8P-9D86tEAdCEp2D7kMJZEZ7CXY-0x9s?e=gG5bgE&download=1" \
+            -o data/availability.json
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- data/availability.json; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/availability.json
+          git commit -m "Update availability.json"
+          git push
