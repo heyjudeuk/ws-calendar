@@ -1,32 +1,51 @@
 # Weird Science – Band Availability
 
-A simple, static, zero-backend availability calendar for the band **Weird Science**, hosted on GitHub Pages.
+A simple, static availability dashboard for the band **Weird Science**, showing who is available on which dates at a glance.
 
-This site displays band availability at a glance using monthly calendars, with the underlying unavailability data stored as a single JSON file in the repo.
-
-Designed to be:
-- fast
-- free to host
-- easy to maintain
-- accessible (colour-blind safe)
+The entire system is deliberately minimal:
+- no backend
+- no database
+- no authentication
+- no build step
 
 Live site:  
 👉 https://ws.echo3.co
 
 ---
 
+## Architecture (intentionally simple)
+
+Power Automate
+↓
+Google Sheet
+↓ (Published as CSV)
+Static HTML (GitHub Pages)
+
+
+That’s it.
+
+- **Power Automate** writes availability into a Google Sheet
+- The sheet is **published to the web as a CSV**
+- A single **static HTML file** fetches and renders the data
+
+No servers, no secrets, no fragile integrations.
+
+---
+
 ## How it works
 
-- The site is a single static `index.html`
-- Availability data lives in `/data/availability.json`
-- JavaScript fetches the JSON and renders:
+- `index.html` fetches a public CSV published from Google Sheets
+- Only three columns are used:
+  - `member`
+  - `startdate`
+  - `enddate`
+- Date ranges are expanded client-side into individual unavailable days
+- The UI renders:
   - 12 monthly calendars
   - a filter (whole band or per member)
-  - a raw unavailability list for audit / reference
+  - a raw unavailability list for audit/reference
 
-There is **no backend**, **no database**, and **no build step**.
-
-GitHub Pages serves everything directly.
+Everything runs in the browser.
 
 ---
 
@@ -37,23 +56,43 @@ GitHub Pages serves everything directly.
 - ✔ Available: **nobody** is unavailable
 - ✖ Unavailable: **one or more** members are unavailable
 
-Hovering an unavailable date shows **only the names of unavailable members**.
+Hovering an unavailable date shows a list of unavailable members.
 
 ### Per member mode
 
 - ✔ / ✖ reflects **that member only**
-- Tooltips still show who is unavailable on that date
+- Tooltips still show the full list of unavailable members for that date
 
 ---
 
 ## Accessibility
 
-This project is designed to work well for red/green colour blindness:
+Designed to work well for red/green colour blindness:
 
-- Uses **blue (available)** and **amber (unavailable)**
-- Uses **icons (✔ / ✖)** as non-colour cues
-- Uses **striped texture** on unavailable dates
-- Available dates have **no tooltip**, reducing visual noise
+- Blue = available
+- Amber = unavailable
+- ✔ / ✖ icons used as non-colour cues
+- Unavailable dates use a striped texture
+- Tooltips only appear on unavailable dates
+
+---
+
+## Google Sheet requirements
+
+The published sheet must include a header row.
+
+Only these columns are used:
+
+| Column      | Required | Notes |
+|------------|----------|-------|
+| `member`   | Yes      | Band member name |
+| `startdate`| Yes      | Start of unavailability |
+| `enddate`  | Yes      | End of unavailability (same as startdate for single-day absences) |
+
+### Date formats supported
+
+- `YYYY-MM-DD` (recommended)
+- `DD/MM/YYYY`
 
 ---
 
@@ -62,39 +101,42 @@ This project is designed to work well for red/green colour blindness:
 /
 ├── index.html
 ├── README.md
-├── CNAME
-└── data/
-└── availability.json
+└── CNAME
 
+
+There is **no data stored in the repo**.
 
 ---
 
-## Data format
+## Updating availability
 
-Availability is defined in a single JSON file:
+1. Power Automate updates the Google Sheet
+2. The published CSV updates automatically
+3. The site reflects changes immediately on refresh
 
-`/data/availability.json`
+No redeploy, no commits, no workflow runs required.
 
-Example:
+---
 
-```json
-{
-  "generatedUtc": "2025-12-31T17:49:26Z",
-  "members": [
-    {
-      "name": "jude",
-      "unavailable": [
-        "2026-03-01",
-        "2026-03-02"
-      ]
-    },
-    {
-      "name": "shaun",
-      "unavailable": [
-        "2026-03-17"
-      ]
-    }
-  ]
-}
+## Why this approach?
 
+This design intentionally avoids:
+- APIs with auth
+- server-side code
+- client-side secrets
+- complex tooling
 
+The result is:
+- extremely reliable
+- very easy to reason about
+- free to host
+- future-proof
+
+If Google Sheets can serve a CSV, this site will keep working.
+
+---
+
+## Licence
+
+Private project for band use.  
+All rights reserved.
