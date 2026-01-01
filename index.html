@@ -461,6 +461,7 @@
       state.year = years.size === 1 ? [...years][0] : (years.size ? Math.min(...years) : 2026);
 
       elTitle.textContent = `Weird Science Band Availability for ${state.year}`;
+      elSubtitle.textContent = 'Data loaded!';
 
       buildMode();
       renderRaw();
