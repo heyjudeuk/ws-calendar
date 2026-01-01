@@ -284,6 +284,15 @@
   const pad = n => String(n).padStart(2,'0');
   const iso = (y,m,d) => `${y}-${pad(m)}-${pad(d)}`;
 
+  // Capitalise Member Names for display only (internal keys remain lowercase)
+  const displayName = (name) =>
+    String(name || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+
   // Parse CSV robustly (handles quoted fields + commas)
   function parseCSV(text) {
     const rows = [];
@@ -390,7 +399,7 @@
   }
 
   let state = {
-    members: [],          // { name, unavailable: [YYYY-MM-DD...] }
+    members: [],          // { name, unavailable: [YYYY-MM-DD...], ranges: [{start,end}...] }
     byDate: new Map(),    // date -> [names...]
     year: 2026,
     mode: '__ALL__'
@@ -417,8 +426,8 @@
       const startCol  = idxStart  >= 0 ? idxStart  : 1;
       const endCol    = idxEnd    >= 0 ? idxEnd    : 2;
 
-      const memberMap = new Map();      // name -> Set(dates)
-      const memberRanges = new Map();   // name -> Array<{start:string,end:string}>
+      const memberMap = new Map();      // name -> Set(expanded dates)
+      const memberRanges = new Map();   // name -> Array<{start,end}> (source rows)
       const byDate = new Map();
       const years = new Set();
 
@@ -434,47 +443,43 @@
         const dates = expandDates(startISO, endISO);
         if (!dates.length) continue;
 
-        const name = nameRaw.toLowerCase(); // keep your existing lowercase style
-        
+        const name = nameRaw.toLowerCase(); // internal key
         if (!memberMap.has(name)) memberMap.set(name, new Set());
         if (!memberRanges.has(name)) memberRanges.set(name, []);
-        
+
         // store the original row range (source data)
         memberRanges.get(name).push({ start: startISO, end: endISO });
-        
+
         for (const d of dates) {
           memberMap.get(name).add(d);
           years.add(+d.slice(0,4));
-        
+
           if (!byDate.has(d)) byDate.set(d, []);
           byDate.get(d).push(name);
         }
-
       }
 
-      // Build members array
-    const uniqRanges = (ranges) => {
-    const seen = new Set();
-    const out = [];
-    for (const r of ranges) {
-      const key = `${r.start}|${r.end}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(r);
-    }
-    // sort by start date then end date
-    out.sort((a,b) => (a.start.localeCompare(b.start) || a.end.localeCompare(b.end)));
-    return out;
-  };
-  
-  const members = [...memberMap.entries()]
-    .map(([name, set]) => ({
-      name,
-      unavailable: [...set].sort(),
-      ranges: uniqRanges(memberRanges.get(name) || [])
-    }))
-    .sort((a,b) => a.name.localeCompare(b.name));
+      const uniqRanges = (ranges) => {
+        const seen = new Set();
+        const out = [];
+        for (const r of ranges) {
+          const key = `${r.start}|${r.end}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push(r);
+        }
+        out.sort((a,b) => (a.start.localeCompare(b.start) || a.end.localeCompare(b.end)));
+        return out;
+      };
 
+      // Build members array
+      const members = [...memberMap.entries()]
+        .map(([name, set]) => ({
+          name,
+          unavailable: [...set].sort(),
+          ranges: uniqRanges(memberRanges.get(name) || [])
+        }))
+        .sort((a,b) => a.name.localeCompare(b.name));
 
       // Sort tooltip names on each date
       for (const [d, names] of byDate.entries()) {
@@ -502,12 +507,14 @@
 
   function buildMode() {
     elMode.innerHTML = '<option value="__ALL__">Whole band</option>';
+
     state.members
       .map(m => m.name)
       .sort()
       .forEach(n => {
         const o = document.createElement('option');
-        o.value = o.textContent = n;
+        o.value = n;                    // internal key (lowercase)
+        o.textContent = displayName(n);  // display label (capitalised)
         elMode.appendChild(o);
       });
 
@@ -516,9 +523,10 @@
 
   function render() {
     elGrid.innerHTML = '';
+
     elRule.textContent = state.mode === '__ALL__'
       ? '✔ only if nobody is unavailable'
-      : `✔ / ✖ for ${state.mode}`;
+      : `✔ / ✖ for ${displayName(state.mode)}`;
 
     for (let m = 1; m <= 12; m++) {
       const card = document.createElement('div');
@@ -557,7 +565,7 @@
 
           (state.byDate.get(date) || []).forEach(n => {
             const row = document.createElement('div');
-            row.textContent = `✖ ${n}`;
+            row.textContent = `✖ ${displayName(n)}`;
             tt.appendChild(row);
           });
 
@@ -575,21 +583,22 @@
   }
 
   function renderRaw() {
-  elRaw.innerHTML = '';
-  state.members.forEach(m => {
-    const tr = document.createElement('tr');
+    elRaw.innerHTML = '';
+    state.members.forEach(m => {
+      const tr = document.createElement('tr');
 
-    const chips = (m.ranges || []).map(r => {
-      const label = (r.start === r.end) ? r.start : `${r.start} to ${r.end}`;
-      return `<span class="chip">${label}</span>`;
-    }).join('');
+      // Show source ranges (as entered in the sheet), not expanded per-day list
+      const chips = (m.ranges || []).map(r => {
+        const label = (r.start === r.end) ? r.start : `${r.start} to ${r.end}`;
+        return `<span class="chip">${label}</span>`;
+      }).join('');
 
-    tr.innerHTML = `<td>${m.name}</td><td>${chips}</td>`;
-    elRaw.appendChild(tr);
-  });
-}
-
+      tr.innerHTML = `<td>${displayName(m.name)}</td><td>${chips}</td>`;
+      elRaw.appendChild(tr);
+    });
+  }
 })();
+
 </script>
 </body>
 </html>
