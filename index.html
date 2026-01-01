@@ -417,7 +417,8 @@
       const startCol  = idxStart  >= 0 ? idxStart  : 1;
       const endCol    = idxEnd    >= 0 ? idxEnd    : 2;
 
-      const memberMap = new Map(); // name -> Set(dates)
+      const memberMap = new Map();      // name -> Set(dates)
+      const memberRanges = new Map();   // name -> Array<{start:string,end:string}>
       const byDate = new Map();
       const years = new Set();
 
@@ -434,21 +435,46 @@
         if (!dates.length) continue;
 
         const name = nameRaw.toLowerCase(); // keep your existing lowercase style
+        
         if (!memberMap.has(name)) memberMap.set(name, new Set());
-
+        if (!memberRanges.has(name)) memberRanges.set(name, []);
+        
+        // store the original row range (source data)
+        memberRanges.get(name).push({ start: startISO, end: endISO });
+        
         for (const d of dates) {
           memberMap.get(name).add(d);
           years.add(+d.slice(0,4));
-
+        
           if (!byDate.has(d)) byDate.set(d, []);
           byDate.get(d).push(name);
         }
+
       }
 
       // Build members array
-      const members = [...memberMap.entries()]
-        .map(([name, set]) => ({ name, unavailable: [...set].sort() }))
-        .sort((a,b) => a.name.localeCompare(b.name));
+    const uniqRanges = (ranges) => {
+    const seen = new Set();
+    const out = [];
+    for (const r of ranges) {
+      const key = `${r.start}|${r.end}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(r);
+    }
+    // sort by start date then end date
+    out.sort((a,b) => (a.start.localeCompare(b.start) || a.end.localeCompare(b.end)));
+    return out;
+  };
+  
+  const members = [...memberMap.entries()]
+    .map(([name, set]) => ({
+      name,
+      unavailable: [...set].sort(),
+      ranges: uniqRanges(memberRanges.get(name) || [])
+    }))
+    .sort((a,b) => a.name.localeCompare(b.name));
+
 
       // Sort tooltip names on each date
       for (const [d, names] of byDate.entries()) {
@@ -549,15 +575,20 @@
   }
 
   function renderRaw() {
-    elRaw.innerHTML = '';
-    state.members.forEach(m => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${m.name}</td><td>${
-        m.unavailable.map(d => `<span class="chip">${d}</span>`).join('')
-      }</td>`;
-      elRaw.appendChild(tr);
-    });
-  }
+  elRaw.innerHTML = '';
+  state.members.forEach(m => {
+    const tr = document.createElement('tr');
+
+    const chips = (m.ranges || []).map(r => {
+      const label = (r.start === r.end) ? r.start : `${r.start} to ${r.end}`;
+      return `<span class="chip">${label}</span>`;
+    }).join('');
+
+    tr.innerHTML = `<td>${m.name}</td><td>${chips}</td>`;
+    elRaw.appendChild(tr);
+  });
+}
+
 })();
 </script>
 </body>
