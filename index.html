@@ -268,7 +268,9 @@
 
 <script>
 (() => {
-  const DATA_URL = 'data/availability.json';
+  // Google Sheets "Publish to web" CSV
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqqmwi0YjOcvp6PoyFfhEd-YbYt6MxR11lxWhK4g6Hzh3dwWqMcch0xCTDQ8dkZ7qIhxvWjgwKqKpq/pub?gid=0&single=true&output=csv";
+
   const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -282,92 +284,260 @@
   const pad = n => String(n).padStart(2,'0');
   const iso = (y,m,d) => `${y}-${pad(m)}-${pad(d)}`;
 
-  let state = { members:[], byDate:new Map(), year:2026, mode:'__ALL__' };
+  // Parse CSV robustly (handles quoted fields + commas)
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cur = '';
+    let inQuotes = false;
 
-  fetch(DATA_URL,{cache:'no-store'})
-    .then(r=>r.json())
-    .then(data=>{
-      state.members = data.members;
-      elSubtitle.textContent = `Last updated: ${data.generatedUtc}`;
-      buildMaps();
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i+1];
+
+      if (inQuotes) {
+        if (ch === '"' && next === '"') {
+          cur += '"';
+          i++;
+        } else if (ch === '"') {
+          inQuotes = false;
+        } else {
+          cur += ch;
+        }
+      } else {
+        if (ch === '"') {
+          inQuotes = true;
+        } else if (ch === ',') {
+          row.push(cur);
+          cur = '';
+        } else if (ch === '\n') {
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = '';
+        } else if (ch === '\r') {
+          // ignore CR
+        } else {
+          cur += ch;
+        }
+      }
+    }
+    // last field
+    if (cur.length || row.length) {
+      row.push(cur);
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  function normaliseHeader(h) {
+    return String(h || '').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  }
+
+  // Accepts:
+  // - YYYY-MM-DD
+  // - YYYY/MM/DD
+  // - DD/MM/YYYY
+  // Returns ISO YYYY-MM-DD or null
+  function toISODate(s) {
+    const v = String(s || '').trim();
+    if (!v) return null;
+
+    // YYYY-MM-DD or YYYY/MM/DD
+    let m = v.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
+    if (m) {
+      const y = +m[1], mo = +m[2], d = +m[3];
+      if (isValidYMD(y,mo,d)) return iso(y,mo,d);
+      return null;
+    }
+
+    // DD/MM/YYYY
+    m = v.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+    if (m) {
+      const d = +m[1], mo = +m[2], y = +m[3];
+      if (isValidYMD(y,mo,d)) return iso(y,mo,d);
+      return null;
+    }
+
+    return null;
+  }
+
+  function isValidYMD(y,m,d) {
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return false;
+    if (y < 1900 || y > 2100) return false;
+    if (m < 1 || m > 12) return false;
+    if (d < 1 || d > 31) return false;
+    const dt = new Date(y, m-1, d);
+    return dt.getFullYear() === y && dt.getMonth() === (m-1) && dt.getDate() === d;
+  }
+
+  // Inclusive range expansion
+  function expandDates(startISO, endISO) {
+    const out = [];
+    const [sy, sm, sd] = startISO.split('-').map(Number);
+    const [ey, em, ed] = endISO.split('-').map(Number);
+    let cur = new Date(sy, sm-1, sd);
+    const end = new Date(ey, em-1, ed);
+
+    // guard against inverted ranges
+    if (cur > end) return out;
+
+    while (cur <= end) {
+      out.push(iso(cur.getFullYear(), cur.getMonth()+1, cur.getDate()));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return out;
+  }
+
+  let state = {
+    members: [],          // { name, unavailable: [YYYY-MM-DD...] }
+    byDate: new Map(),    // date -> [names...]
+    year: 2026,
+    mode: '__ALL__'
+  };
+
+  fetch(CSV_URL, { cache: 'no-store' })
+    .then(r => {
+      if (!r.ok) throw new Error(`Failed to fetch CSV: HTTP ${r.status}`);
+      return r.text();
+    })
+    .then(text => {
+      const rows = parseCSV(text).filter(r => r.some(c => String(c||'').trim() !== ''));
+      if (!rows.length) throw new Error('CSV is empty.');
+
+      const header = rows[0] || [];
+      const h = header.map(normaliseHeader);
+
+      // Find column indices by header name; fallback to first three columns.
+      const idxMember = h.findIndex(x => ['member','name','person','bandmember'].includes(x));
+      const idxStart  = h.findIndex(x => ['startdate','start','from','datestart'].includes(x));
+      const idxEnd    = h.findIndex(x => ['enddate','end','to','dateend'].includes(x));
+
+      const memberCol = idxMember >= 0 ? idxMember : 0;
+      const startCol  = idxStart  >= 0 ? idxStart  : 1;
+      const endCol    = idxEnd    >= 0 ? idxEnd    : 2;
+
+      const memberMap = new Map(); // name -> Set(dates)
+      const byDate = new Map();
+      const years = new Set();
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const nameRaw = (row[memberCol] ?? '').toString().trim();
+        if (!nameRaw) continue;
+
+        const startISO = toISODate(row[startCol]);
+        const endISO = toISODate(row[endCol]) || startISO;
+        if (!startISO || !endISO) continue;
+
+        const dates = expandDates(startISO, endISO);
+        if (!dates.length) continue;
+
+        const name = nameRaw.toLowerCase(); // keep your existing lowercase style
+        if (!memberMap.has(name)) memberMap.set(name, new Set());
+
+        for (const d of dates) {
+          memberMap.get(name).add(d);
+          years.add(+d.slice(0,4));
+
+          if (!byDate.has(d)) byDate.set(d, []);
+          byDate.get(d).push(name);
+        }
+      }
+
+      // Build members array
+      const members = [...memberMap.entries()]
+        .map(([name, set]) => ({ name, unavailable: [...set].sort() }))
+        .sort((a,b) => a.name.localeCompare(b.name));
+
+      // Sort tooltip names on each date
+      for (const [d, names] of byDate.entries()) {
+        names.sort((a,b) => a.localeCompare(b));
+        byDate.set(d, names);
+      }
+
+      state.members = members;
+      state.byDate = byDate;
+      state.year = years.size === 1 ? [...years][0] : (years.size ? Math.min(...years) : 2026);
+
+      elTitle.textContent = `Weird Science Band Availability for ${state.year}`;
+      elSubtitle.textContent = 'Data source: Google Sheets (CSV)';
+
       buildMode();
       renderRaw();
       render();
+    })
+    .catch(err => {
+      elSubtitle.textContent = 'Failed to load data.';
+      elTitle.textContent = 'Weird Science Band Availability';
+      console.error(err);
+      elRaw.innerHTML = `<tr><td colspan="2">Error: ${String(err && err.message ? err.message : err)}</td></tr>`;
     });
 
-  function buildMaps(){
-    const years = new Set();
-    state.byDate.clear();
-
-    for(const m of state.members){
-      for(const d of m.unavailable){
-        years.add(+d.slice(0,4));
-        if(!state.byDate.has(d)) state.byDate.set(d,[]);
-        state.byDate.get(d).push(m.name);
-      }
-    }
-    state.year = years.size === 1 ? [...years][0] : Math.min(...years);
-    elTitle.textContent = `Weird Science Band Availability for ${state.year}`;
-  }
-
-  function buildMode(){
+  function buildMode() {
     elMode.innerHTML = '<option value="__ALL__">Whole band</option>';
     state.members
-      .map(m=>m.name)
+      .map(m => m.name)
       .sort()
-      .forEach(n=>{
-        const o=document.createElement('option');
-        o.value=o.textContent=n;
+      .forEach(n => {
+        const o = document.createElement('option');
+        o.value = o.textContent = n;
         elMode.appendChild(o);
       });
 
-    elMode.onchange=()=>{ state.mode=elMode.value; render(); };
+    elMode.onchange = () => { state.mode = elMode.value; render(); };
   }
 
-  function render(){
-    elGrid.innerHTML='';
-    elRule.textContent = state.mode==='__ALL__'
+  function render() {
+    elGrid.innerHTML = '';
+    elRule.textContent = state.mode === '__ALL__'
       ? '✔ only if nobody is unavailable'
       : `✔ / ✖ for ${state.mode}`;
 
-    for(let m=1;m<=12;m++){
-      const card=document.createElement('div');
-      card.className='card';
-      card.innerHTML=`<div class="monthHeader">${MONTHS[m-1]} ${state.year}</div>`;
-      const cal=document.createElement('div');
-      cal.className='cal';
+    for (let m = 1; m <= 12; m++) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `<div class="monthHeader">${MONTHS[m-1]} ${state.year}</div>`;
 
-      const dow=document.createElement('div');
-      dow.className='dow';
-      DOW.forEach(d=>dow.innerHTML+=`<div>${d}</div>`);
+      const cal = document.createElement('div');
+      cal.className = 'cal';
 
-      const days=document.createElement('div');
-      days.className='days';
+      const dow = document.createElement('div');
+      dow.className = 'dow';
+      DOW.forEach(d => dow.innerHTML += `<div>${d}</div>`);
 
-      const first=new Date(state.year,m-1,1);
-      const offset=(first.getDay()+6)%7;
-      for(let i=0;i<offset;i++) days.innerHTML+='<div class="day empty"></div>';
+      const days = document.createElement('div');
+      days.className = 'days';
 
-      const count=new Date(state.year,m,0).getDate();
-      for(let d=1;d<=count;d++){
-        const date=iso(state.year,m,d);
-        const names=state.byDate.get(date)||[];
-        const bad=state.mode==='__ALL__' ? names.length>0 : names.includes(state.mode);
+      const first = new Date(state.year, m-1, 1);
+      const offset = (first.getDay() + 6) % 7;
+      for (let i = 0; i < offset; i++) days.innerHTML += '<div class="day empty"></div>';
 
-        const cell=document.createElement('div');
-        cell.className=`day ${bad?'bad':'good'}`;
-        cell.innerHTML=`<strong>${d}</strong><div class="mark">${bad?'✖':'✔'}</div>`;
+      const count = new Date(state.year, m, 0).getDate();
+      for (let d = 1; d <= count; d++) {
+        const date = iso(state.year, m, d);
+        const names = state.byDate.get(date) || [];
+        const bad = state.mode === '__ALL__' ? names.length > 0 : names.includes(state.mode);
 
-        if(bad){
-          const tt=document.createElement('div');
-          tt.className='tooltip';
-          names.forEach(n=>{
-            const row=document.createElement('div');
-            row.textContent=`✖ ${n}`;
+        const cell = document.createElement('div');
+        cell.className = `day ${bad ? 'bad' : 'good'}`;
+        cell.innerHTML = `<strong>${d}</strong><div class="mark">${bad ? '✖' : '✔'}</div>`;
+
+        // Tooltip only for unavailable squares:
+        // show the (whole-band) list of unavailable members for that date.
+        if (bad) {
+          const tt = document.createElement('div');
+          tt.className = 'tooltip';
+
+          (state.byDate.get(date) || []).forEach(n => {
+            const row = document.createElement('div');
+            row.textContent = `✖ ${n}`;
             tt.appendChild(row);
           });
+
           cell.appendChild(tt);
         }
+
         days.appendChild(cell);
       }
 
@@ -378,12 +548,12 @@
     }
   }
 
-  function renderRaw(){
-    elRaw.innerHTML='';
-    state.members.forEach(m=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${m.name}</td><td>${
-        m.unavailable.map(d=>`<span class="chip">${d}</span>`).join('')
+  function renderRaw() {
+    elRaw.innerHTML = '';
+    state.members.forEach(m => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${m.name}</td><td>${
+        m.unavailable.map(d => `<span class="chip">${d}</span>`).join('')
       }</td>`;
       elRaw.appendChild(tr);
     });
