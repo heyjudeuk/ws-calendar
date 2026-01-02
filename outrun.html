@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Weird Science Band Availability</title>
+
+  <style>
+    :root{
+      --bg:#070012;
+      --card: rgba(10, 6, 30, .72);
+      --muted:#b9b0ff;
+      --text:#f7f2ff;
+      --border: rgba(255, 46, 210, .28);
+      --shadow: 0 18px 50px rgba(0,0,0,.55);
+      --radius:16px;
+
+      /* Synthwave neon palette */
+      --good:#00e5ff;     /* cyan */
+      --bad:#ff2ed2;      /* hot pink */
+      --good2: rgba(0,229,255,.18);
+      --bad2: rgba(255,46,210,.18);
+
+      --neonC: 0 0 14px rgba(0,229,255,.55);
+      --neonP: 0 0 14px rgba(255,46,210,.55);
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 600px at 50% 0%, rgba(255,46,210,.25), transparent 60%),
+        radial-gradient(900px 600px at 20% 10%, rgba(0,229,255,.18), transparent 55%),
+        linear-gradient(#120022, #05000d 55%, #020006);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Outrun grid floor overlay */
+    body::before{
+      content:"";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .22;
+      background:
+        linear-gradient(to top, rgba(255,46,210,.35), transparent 60%),
+        repeating-linear-gradient(to right, rgba(0,229,255,.25) 0 1px, transparent 1px 60px),
+        repeating-linear-gradient(to top, rgba(0,229,255,.25) 0 1px, transparent 1px 60px);
+      transform: perspective(700px) rotateX(55deg) translateY(35%);
+      transform-origin: bottom;
+      mix-blend-mode: screen;
+      z-index: 0;
+    }
+
+    /* Subtle scanlines */
+    body::after{
+      content:"";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .10;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,.12) 0px,
+        rgba(255,255,255,.12) 1px,
+        transparent 2px,
+        transparent 5px
+      );
+      mix-blend-mode: overlay;
+      z-index: 0;
+    }
+
+    header{
+      padding:22px 16px 10px;
+      max-width:1200px;
+      margin:auto;
+      position:relative; z-index:1;
+    }
+
+    h1{ 
+      margin:0 0 10px; 
+      font-size:24px; 
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      text-shadow:
+        0 0 12px rgba(255,46,210,.55),
+        0 0 18px rgba(0,229,255,.35);
+    }
+
+    .sub{ color:var(--muted); font-size:14px; margin-bottom:14px; }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:center;
+      background:rgba(18,25,37,.65);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:12px;
+      box-shadow:var(--shadow);
+    }
+
+    label{ font-size:13px; color:var(--muted); }
+
+    select{
+      background:#0e1522;
+      border:1px solid var(--border);
+      color:var(--text);
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:14px;
+      min-width:220px;
+    }
+
+    .legend{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-left:auto;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      border:1px solid var(--border);
+      background:#0e1522;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .dot{ width:10px; height:10px; border-radius:50%; }
+    .dot.good{ background:var(--good); }
+    .dot.bad{ background:var(--bad); }
+
+    main{
+      max-width:1200px;
+      margin:auto;
+      padding:10px 16px 28px;
+      position:relative; z-index:1;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:14px;
+      margin-top:14px;
+    }
+
+    @media (max-width:980px){ .grid{ grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:640px){ .grid{ grid-template-columns:1fr; } }
+
+    .card{
+      background:rgba(18,25,37,.75);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .monthHeader{
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      font-size:14px;
+    }
+
+    .cal{ padding:10px; }
+
+    .dow, .days{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:6px;
+      text-align:center;
+    }
+
+    .dow{
+      color:var(--muted);
+      font-size:11px;
+      margin-bottom:8px;
+    }
+
+    .day{
+      position:relative;
+      min-height:42px;
+      border-radius:10px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      gap:2px;
+      font-size:13px;
+    }
+
+    .day strong{ font-weight:700; }
+
+    .day.good{
+      background:var(--good2);
+      border:1px solid rgba(43,108,176,.4);
+    }
+
+    .day.bad{
+      background:var(--bad2);
+      border:1px solid rgba(217,119,6,.45);
+      background-image:repeating-linear-gradient(
+        45deg,
+        rgba(0,0,0,.14),
+        rgba(0,0,0,.14) 7px,
+        transparent 7px,
+        transparent 14px
+      );
+    }
+
+    .day.empty{ background:transparent; }
+
+    .mark{ font-size:12px; }
+
+    .tooltip{
+      position:absolute;
+      bottom:110%;
+      left:50%;
+      transform:translateX(-50%);
+      background:#07101c;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:12px;
+      box-shadow:var(--shadow);
+      display:none;
+      white-space:nowrap;
+      text-align:left;
+      z-index:10;
+    }
+
+    .day.bad:hover .tooltip{ display:block; }
+
+    .tooltip div{
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+
+    .raw{
+      margin-top:18px;
+      background:rgba(18,25,37,.75);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      overflow:hidden;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+
+    th, td{
+      padding:10px 12px;
+      border-bottom:1px solid rgba(36,50,70,.6);
+      text-align:left;
+    }
+
+    th{ font-size:12px; color:var(--muted); }
+
+    .chip{
+      display:inline-block;
+      margin:2px 6px 2px 0;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#0e1522;
+      font-size:12px;
+      color:var(--muted);
+    }
+  
+    /* Neon accents */
+    .card, .toolbar{
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow), 0 0 0 1px rgba(255,46,210,.10);
+    }
+
+    .dot.good{ box-shadow: var(--neonC); }
+    .dot.bad{ box-shadow: var(--neonP); }
+
+    .day.good{
+      box-shadow: inset 0 0 0 1px rgba(0,229,255,.25);
+    }
+
+    .day.bad{
+      box-shadow: inset 0 0 0 1px rgba(255,46,210,.25);
+    }
+
+    .tooltip{
+      box-shadow: var(--shadow), 0 0 18px rgba(0,229,255,.15);
+    }
+
+  </style>
+</head>
+
+<body>
+<header>
+  <h1 id="title">Weird Science Band Availability</h1>
+  <p class="sub" id="subtitle">Loading…</p>
+
+  <div class="toolbar">
+    <div>
+      <label>Show availability for</label><br/>
+      <select id="mode"></select>
+    </div>
+
+    <div class="legend">
+      <div class="pill"><span class="dot good"></span> Available ✔</div>
+      <div class="pill"><span class="dot bad"></span> Unavailable ✖</div>
+      <div class="pill" id="rulePill"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="calGrid" class="grid"></div>
+
+  <div class="raw">
+    <table>
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Unavailable dates</th>
+        </tr>
+      </thead>
+      <tbody id="rawBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+(() => {
+  // Google Sheets "Publish to web" CSV
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqqmwi0YjOcvp6PoyFfhEd-YbYt6MxR11lxWhK4g6Hzh3dwWqMcch0xCTDQ8dkZ7qIhxvWjgwKqKpq/pub?gid=0&single=true&output=csv";
+
+  const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  const elGrid = document.getElementById('calGrid');
+  const elMode = document.getElementById('mode');
+  const elRule = document.getElementById('rulePill');
+  const elRaw = document.getElementById('rawBody');
+  const elTitle = document.getElementById('title');
+  const elSubtitle = document.getElementById('subtitle');
+
+  const pad = n => String(n).padStart(2,'0');
+  const iso = (y,m,d) => `${y}-${pad(m)}-${pad(d)}`;
+
+  // Capitalise Member Names for display only (internal keys remain lowercase)
+  const displayName = (name) =>
+    String(name || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+
+  // Parse CSV robustly (handles quoted fields + commas)
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cur = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i+1];
+
+      if (inQuotes) {
+        if (ch === '"' && next === '"') {
+          cur += '"';
+          i++;
+        } else if (ch === '"') {
+          inQuotes = false;
+        } else {
+          cur += ch;
+        }
+      } else {
+        if (ch === '"') {
+          inQuotes = true;
+        } else if (ch === ',') {
+          row.push(cur);
+          cur = '';
+        } else if (ch === '\n') {
+          row.push(cur);
+          rows.push(row);
+          row = [];
+          cur = '';
+        } else if (ch === '\r') {
+          // ignore CR
+        } else {
+          cur += ch;
+        }
+      }
+    }
+    // last field
+    if (cur.length || row.length) {
+      row.push(cur);
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  function normaliseHeader(h) {
+    return String(h || '').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  }
+
+  // Accepts:
+  // - YYYY-MM-DD
+  // - YYYY/MM/DD
+  // - DD/MM/YYYY
+  // Returns ISO YYYY-MM-DD or null
+  function toISODate(s) {
+    const v = String(s || '').trim();
+    if (!v) return null;
+
+    // YYYY-MM-DD or YYYY/MM/DD
+    let m = v.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
+    if (m) {
+      const y = +m[1], mo = +m[2], d = +m[3];
+      if (isValidYMD(y,mo,d)) return iso(y,mo,d);
+      return null;
+    }
+
+    // DD/MM/YYYY
+    m = v.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+    if (m) {
+      const d = +m[1], mo = +m[2], y = +m[3];
+      if (isValidYMD(y,mo,d)) return iso(y,mo,d);
+      return null;
+    }
+
+    return null;
+  }
+
+  function isValidYMD(y,m,d) {
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return false;
+    if (y < 1900 || y > 2100) return false;
+    if (m < 1 || m > 12) return false;
+    if (d < 1 || d > 31) return false;
+    const dt = new Date(y, m-1, d);
+    return dt.getFullYear() === y && dt.getMonth() === (m-1) && dt.getDate() === d;
+  }
+
+  // Inclusive range expansion
+  function expandDates(startISO, endISO) {
+    const out = [];
+    const [sy, sm, sd] = startISO.split('-').map(Number);
+    const [ey, em, ed] = endISO.split('-').map(Number);
+    let cur = new Date(sy, sm-1, sd);
+    const end = new Date(ey, em-1, ed);
+
+    // guard against inverted ranges
+    if (cur > end) return out;
+
+    while (cur <= end) {
+      out.push(iso(cur.getFullYear(), cur.getMonth()+1, cur.getDate()));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return out;
+  }
+
+  let state = {
+    members: [],          // { name, unavailable: [YYYY-MM-DD...], ranges: [{start,end}...] }
+    byDate: new Map(),    // date -> [names...]
+    year: 2026,
+    mode: '__ALL__'
+  };
+
+  fetch(CSV_URL, { cache: 'no-store' })
+    .then(r => {
+      if (!r.ok) throw new Error(`Failed to fetch CSV: HTTP ${r.status}`);
+      return r.text();
+    })
+    .then(text => {
+      const rows = parseCSV(text).filter(r => r.some(c => String(c||'').trim() !== ''));
+      if (!rows.length) throw new Error('CSV is empty.');
+
+      const header = rows[0] || [];
+      const h = header.map(normaliseHeader);
+
+      // Find column indices by header name; fallback to first three columns.
+      const idxMember = h.findIndex(x => ['member','name','person','bandmember'].includes(x));
+      const idxStart  = h.findIndex(x => ['startdate','start','from','datestart'].includes(x));
+      const idxEnd    = h.findIndex(x => ['enddate','end','to','dateend'].includes(x));
+
+      const memberCol = idxMember >= 0 ? idxMember : 0;
+      const startCol  = idxStart  >= 0 ? idxStart  : 1;
+      const endCol    = idxEnd    >= 0 ? idxEnd    : 2;
+
+      const memberMap = new Map();      // name -> Set(expanded dates)
+      const memberRanges = new Map();   // name -> Array<{start,end}> (source rows)
+      const byDate = new Map();
+      const years = new Set();
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const nameRaw = (row[memberCol] ?? '').toString().trim();
+        if (!nameRaw) continue;
+
+        const startISO = toISODate(row[startCol]);
+        const endISO = toISODate(row[endCol]) || startISO;
+        if (!startISO || !endISO) continue;
+
+        const dates = expandDates(startISO, endISO);
+        if (!dates.length) continue;
+
+        const name = nameRaw.toLowerCase(); // internal key
+        if (!memberMap.has(name)) memberMap.set(name, new Set());
+        if (!memberRanges.has(name)) memberRanges.set(name, []);
+
+        // store the original row range (source data)
+        memberRanges.get(name).push({ start: startISO, end: endISO });
+
+        for (const d of dates) {
+          memberMap.get(name).add(d);
+          years.add(+d.slice(0,4));
+
+          if (!byDate.has(d)) byDate.set(d, []);
+          byDate.get(d).push(name);
+        }
+      }
+
+      const uniqRanges = (ranges) => {
+        const seen = new Set();
+        const out = [];
+        for (const r of ranges) {
+          const key = `${r.start}|${r.end}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push(r);
+        }
+        out.sort((a,b) => (a.start.localeCompare(b.start) || a.end.localeCompare(b.end)));
+        return out;
+      };
+
+      // Build members array
+      const members = [...memberMap.entries()]
+        .map(([name, set]) => ({
+          name,
+          unavailable: [...set].sort(),
+          ranges: uniqRanges(memberRanges.get(name) || [])
+        }))
+        .sort((a,b) => a.name.localeCompare(b.name));
+
+      // Sort tooltip names on each date
+      for (const [d, names] of byDate.entries()) {
+        names.sort((a,b) => a.localeCompare(b));
+        byDate.set(d, names);
+      }
+
+      state.members = members;
+      state.byDate = byDate;
+      state.year = years.size === 1 ? [...years][0] : (years.size ? Math.min(...years) : 2026);
+
+      elTitle.textContent = `Weird Science Band Availability for ${state.year}`;
+      elSubtitle.textContent = 'Data loaded!';
+
+      buildMode();
+      renderRaw();
+      render();
+    })
+    .catch(err => {
+      elSubtitle.textContent = 'Failed to load data.';
+      elTitle.textContent = 'Weird Science Band Availability';
+      console.error(err);
+      elRaw.innerHTML = `<tr><td colspan="2">Error: ${String(err && err.message ? err.message : err)}</td></tr>`;
+    });
+
+  function buildMode() {
+    elMode.innerHTML = '<option value="__ALL__">Whole band</option>';
+
+    state.members
+      .map(m => m.name)
+      .sort()
+      .forEach(n => {
+        const o = document.createElement('option');
+        o.value = n;                    // internal key (lowercase)
+        o.textContent = displayName(n);  // display label (capitalised)
+        elMode.appendChild(o);
+      });
+
+    elMode.onchange = () => { state.mode = elMode.value; render(); };
+  }
+
+  function render() {
+    elGrid.innerHTML = '';
+
+    elRule.textContent = state.mode === '__ALL__'
+      ? '✔ only if nobody is unavailable'
+      : `✔ / ✖ for ${displayName(state.mode)}`;
+
+    for (let m = 1; m <= 12; m++) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `<div class="monthHeader">${MONTHS[m-1]} ${state.year}</div>`;
+
+      const cal = document.createElement('div');
+      cal.className = 'cal';
+
+      const dow = document.createElement('div');
+      dow.className = 'dow';
+      DOW.forEach(d => dow.innerHTML += `<div>${d}</div>`);
+
+      const days = document.createElement('div');
+      days.className = 'days';
+
+      const first = new Date(state.year, m-1, 1);
+      const offset = (first.getDay() + 6) % 7;
+      for (let i = 0; i < offset; i++) days.innerHTML += '<div class="day empty"></div>';
+
+      const count = new Date(state.year, m, 0).getDate();
+      for (let d = 1; d <= count; d++) {
+        const date = iso(state.year, m, d);
+        const names = state.byDate.get(date) || [];
+        const bad = state.mode === '__ALL__' ? names.length > 0 : names.includes(state.mode);
+
+        const cell = document.createElement('div');
+        cell.className = `day ${bad ? 'bad' : 'good'}`;
+        cell.innerHTML = `<strong>${d}</strong><div class="mark">${bad ? '✖' : '✔'}</div>`;
+
+        // Tooltip only for unavailable squares:
+        // show the (whole-band) list of unavailable members for that date.
+        if (bad) {
+          const tt = document.createElement('div');
+          tt.className = 'tooltip';
+
+          (state.byDate.get(date) || []).forEach(n => {
+            const row = document.createElement('div');
+            row.textContent = `✖ ${displayName(n)}`;
+            tt.appendChild(row);
+          });
+
+          cell.appendChild(tt);
+        }
+
+        days.appendChild(cell);
+      }
+
+      cal.appendChild(dow);
+      cal.appendChild(days);
+      card.appendChild(cal);
+      elGrid.appendChild(card);
+    }
+  }
+
+  function renderRaw() {
+    elRaw.innerHTML = '';
+    state.members.forEach(m => {
+      const tr = document.createElement('tr');
+
+      // Show source ranges (as entered in the sheet), not expanded per-day list
+      const chips = (m.ranges || []).map(r => {
+        const label = (r.start === r.end) ? r.start : `${r.start} to ${r.end}`;
+        return `<span class="chip">${label}</span>`;
+      }).join('');
+
+      tr.innerHTML = `<td>${displayName(m.name)}</td><td>${chips}</td>`;
+      elRaw.appendChild(tr);
+    });
+  }
+})();
+
+</script>
+</body>
+</html>
