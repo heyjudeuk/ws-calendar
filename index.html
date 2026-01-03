@@ -187,7 +187,15 @@
 
     .day.empty{ background:transparent; }
 
+    .day.past{
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.55);
+}
+
+    .day.past .mark{ display:none; } /* hides ✔ / ✖ */
     .mark{ font-size:12px; }
+    .day.past .tooltip{ display:none !important; }
 
     .tooltip{
       position:absolute;
@@ -214,39 +222,6 @@
       align-items:center;
     }
 
-    .raw{
-      margin-top:18px;
-      background:rgba(18,25,37,.75);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      overflow:hidden;
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:14px;
-    }
-
-    th, td{
-      padding:10px 12px;
-      border-bottom:1px solid rgba(36,50,70,.6);
-      text-align:left;
-    }
-
-    th{ font-size:12px; color:var(--muted); }
-
-    .chip{
-      display:inline-block;
-      margin:2px 6px 2px 0;
-      padding:2px 8px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:#0e1522;
-      font-size:12px;
-      color:var(--muted);
-    }
-  
     /* Arcade typography accents */
     label, .pill, th{
       font-family: "Press Start 2P", system-ui;
@@ -302,6 +277,8 @@
       filter: brightness(1.08);
     }
 
+    .day.past{ cursor: default; }
+
   </style>
 </head>
 
@@ -332,19 +309,6 @@
 <main>
   <div id="calGrid" class="grid"></div>
 
-  <div class="raw">
-    <table>
-      <thead>
-        <tr>
-          <th>Member</th>
-          <th>Unavailable dates</th>
-        </tr>
-      </thead>
-      <tbody id="rawBody"></tbody>
-    </table>
-  </div>
-</main>
-
 <script>
 (() => {
   // Google Sheets "Publish to web" CSV
@@ -356,13 +320,19 @@
   const elGrid = document.getElementById('calGrid');
   const elMode = document.getElementById('mode');
   const elYear = document.getElementById('yearSel');
-const elRule = document.getElementById('rulePill');
-  const elRaw = document.getElementById('rawBody');
+  const elRule = document.getElementById('rulePill');
   const elTitle = document.getElementById('title');
   const elSubtitle = document.getElementById('subtitle');
 
   const pad = n => String(n).padStart(2,'0');
   const iso = (y,m,d) => `${y}-${pad(m)}-${pad(d)}`;
+
+    const todayISO = () => {
+    const t = new Date();
+    t.setHours(0,0,0,0);
+    return iso(t.getFullYear(), t.getMonth()+1, t.getDate());
+  };
+
 
   // Capitalise Member Names for display only (internal keys remain lowercase)
   const displayName = (name) =>
@@ -579,7 +549,6 @@ const elRule = document.getElementById('rulePill');
 
       buildYear();
       buildMode();
-      renderRaw();
       render();
     })
     .catch(err => {
@@ -601,7 +570,6 @@ const elRule = document.getElementById('rulePill');
     elYear.onchange = () => {
       state.year = +elYear.value;
       updateTitle();
-      renderRaw();
       render();
     };
   }
@@ -657,14 +625,19 @@ const elRule = document.getElementById('rulePill');
         const date = iso(state.year, m, d);
         const names = state.byDate.get(date) || [];
         const bad = state.mode === '__ALL__' ? names.length > 0 : names.includes(state.mode);
+        const past = date < todayISO();
+
 
         const cell = document.createElement('div');
-        cell.className = `day ${bad ? 'bad' : 'good'}`;
-        cell.innerHTML = `<strong>${d}</strong><div class="mark">${bad ? '✖' : '✔'}</div>`;
+        cell.className = `day ${past ? 'past' : (bad ? 'bad' : 'good')}`;
+        cell.innerHTML = past
+          ? `<strong>${d}</strong>`
+          : `<strong>${d}</strong><div class="mark">${bad ? '✖' : '✔'}</div>`;
+
 
         // Tooltip only for unavailable squares:
         // show the (whole-band) list of unavailable members for that date.
-        if (bad) {
+        if (bad && !past) {
           const tt = document.createElement('div');
           tt.className = 'tooltip';
 
@@ -687,31 +660,6 @@ const elRule = document.getElementById('rulePill');
     }
   }
 
-  function renderRaw() {
-    elRaw.innerHTML = '';
-
-    const yearStart = `${state.year}-01-01`;
-    const yearEnd   = `${state.year}-12-31`;
-
-    state.members.forEach(m => {
-      const tr = document.createElement('tr');
-
-      // Show ONLY source ranges that overlap the selected year,
-      // and clip them to the year boundaries for display.
-      const chips = (m.ranges || [])
-        .filter(r => !(r.end < yearStart || r.start > yearEnd))
-        .map(r => {
-          const s = (r.start < yearStart) ? yearStart : r.start;
-          const e = (r.end   > yearEnd)   ? yearEnd   : r.end;
-          const label = (s === e) ? s : `${s} to ${e}`;
-          return `<span class="chip">${label}</span>`;
-        })
-        .join('');
-
-      tr.innerHTML = `<td>${displayName(m.name)}</td><td>${chips}</td>`;
-      elRaw.appendChild(tr);
-    });
-  }
 })();
 
 </script>
