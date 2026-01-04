@@ -609,22 +609,37 @@
       opacity: 0;
     }
 
-    .screen-flash {
-      animation: flash 120ms steps(1, end) 1;
+    /* ZX-style hit flash: harsh strobe + brief invert */
+    body.zx-flash {
+      animation: zxBorder 260ms steps(1, end) 1;
     }
 
-    @keyframes flash {
-      0% {
-        filter: brightness(1);
-      }
+    body.zx-flash #calGrid {
+      animation: zxInvert 260ms steps(1, end) 1;
+    }
 
-      50% {
-        filter: brightness(2.2);
-      }
+    @keyframes zxBorder {
+      0%   { background: #000; }
+      12%  { background: #fff; }
+      24%  { background: #000; }
+      36%  { background: #fff; }
+      48%  { background: #000; }
+      60%  { background: #ff2b2b; }
+      72%  { background: #000; }
+      84%  { background: #fff; }
+      100% { background: #000; }
+    }
 
-      100% {
-        filter: brightness(1);
-      }
+    @keyframes zxInvert {
+      0%   { filter: none; }
+      12%  { filter: invert(1) contrast(1.4); }
+      24%  { filter: none; }
+      36%  { filter: invert(1) contrast(1.4); }
+      48%  { filter: none; }
+      60%  { filter: invert(1) contrast(1.6) brightness(1.1); }
+      72%  { filter: none; }
+      84%  { filter: invert(1) contrast(1.4); }
+      100% { filter: none; }
     }
 
     .day.revealFace {
@@ -727,7 +742,7 @@
       </div>
 
       <div class="legend">
-        <div class="pill"><span class="dot good"></span> Available ✔</div>
+        <div class="pill" id="availPill"><span class="dot good"></span> Available ✔</div>
         <div class="pill"><span class="dot bad"></span> Unavailable ✖</div>
         <div class="pill" id="rulePill"></div>
       </div>
@@ -756,6 +771,8 @@
         const elHud = document.getElementById('hud');
         const elHudText = document.getElementById('hudText');
         const elBadge = document.getElementById('unlockBadge');
+        const elAvailPill = document.getElementById('availPill');
+
 
  // ---------- CHIP SFX (iPhone-safe, no samples) ----------
         const CHIP = (() => {
@@ -788,6 +805,283 @@
                 } catch { }
               }, 0);
             }
+          }
+
+          // Game over: slow falling minor motif (the opposite of a fanfare)
+          function gameOver(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.16;
+            const step = opts.step ?? 0.14;
+
+            // Downward, slightly ominous: A4 -> G4 -> E4 -> C4 (minor-ish fall)
+            const notes = opts.notes ?? [440.0, 392.0, 329.63, 261.63];
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            const osc = c.createOscillator();
+            osc.type = 'triangle'; // softer = sadder
+            osc.connect(out);
+
+            // Tiny wobble for “defeat”
+            const wob = c.createOscillator();
+            wob.type = 'sine';
+            wob.frequency.setValueAtTime(5.5, t0);
+
+            const wobAmt = c.createGain();
+            wobAmt.gain.setValueAtTime(6, t0); // Hz depth
+            wob.connect(wobAmt).connect(osc.frequency);
+
+            // Per-note envelope (longer decay = “opposite of fanfare”)
+            for (let i = 0; i < notes.length; i++) {
+              const ti = t0 + i * step;
+
+              osc.frequency.setValueAtTime(notes[i], ti);
+
+              out.gain.setValueAtTime(0.0001, ti);
+              out.gain.exponentialRampToValueAtTime(vol, ti + 0.012);
+              out.gain.exponentialRampToValueAtTime(0.0001, ti + step + 0.10);
+            }
+
+            // Little low “thud” tail
+            const bass = c.createOscillator();
+            bass.type = 'square';
+            bass.frequency.setValueAtTime(78, t0 + step * notes.length - 0.02); // ~E2
+
+            const bGain = c.createGain();
+            bGain.gain.setValueAtTime(0.0001, t0 + step * notes.length - 0.02);
+            bGain.gain.exponentialRampToValueAtTime(vol * 0.35, t0 + step * notes.length + 0.01);
+            bGain.gain.exponentialRampToValueAtTime(0.0001, t0 + step * notes.length + 0.22);
+
+            bass.connect(bGain).connect(c.destination);
+
+            const total = notes.length * step + 0.35;
+
+            osc.start(t0);
+            wob.start(t0);
+            bass.start(t0 + step * notes.length - 0.02);
+
+            osc.stop(t0 + total);
+            wob.stop(t0 + total);
+            bass.stop(t0 + step * notes.length + 0.25);
+          }
+
+          // Level cleared fanfare (chip jingle)
+          function levelClear(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.14;
+            const step = opts.step ?? 0.085;
+
+            // A bright, happy little cadence: C5 E5 G5 C6  B5 G5 E5
+            const notes = opts.notes ?? [523.25, 659.25, 783.99, 1046.50, 987.77, 783.99, 659.25];
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            // Main voice (chip)
+            const osc = c.createOscillator();
+            osc.type = 'square';
+            osc.connect(out);
+
+            // Optional soft support voice (adds “fanfare” without samples)
+            const osc2 = c.createOscillator();
+            osc2.type = 'triangle';
+
+            const out2 = c.createGain();
+            out2.gain.setValueAtTime(0.0001, t0);
+            out2.connect(c.destination);
+
+            osc2.connect(out2);
+
+            for (let i = 0; i < notes.length; i++) {
+              const ti = t0 + i * step;
+
+              osc.frequency.setValueAtTime(notes[i], ti);
+              osc2.frequency.setValueAtTime(notes[i] / 2, ti); // octave below
+
+              // plucky envelope per note
+              out.gain.setValueAtTime(0.0001, ti);
+              out.gain.exponentialRampToValueAtTime(vol, ti + 0.006);
+              out.gain.exponentialRampToValueAtTime(0.0001, ti + step);
+
+              out2.gain.setValueAtTime(0.0001, ti);
+              out2.gain.exponentialRampToValueAtTime(vol * 0.35, ti + 0.006);
+              out2.gain.exponentialRampToValueAtTime(0.0001, ti + step);
+            }
+
+            const total = notes.length * step + 0.05;
+            osc.start(t0);
+            osc2.start(t0);
+
+            osc.stop(t0 + total);
+            osc2.stop(t0 + total);
+          }
+
+
+          // Gentle ringing chime when a FRUIT is revealed
+          function revealFruit(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.14;
+            const dur = opts.dur ?? 0.65;
+
+            // Master gain
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            // Bell-like oscillator
+            const osc = c.createOscillator();
+            osc.type = 'sine'; // softer, more bell-like than square
+
+            // Musical interval: perfect fifth (very pleasing)
+            const base = opts.base ?? 988.0; // G5
+            const fifth = base * 1.5;        // D6
+
+            osc.frequency.setValueAtTime(base, t0);
+            osc.frequency.setValueAtTime(fifth, t0 + 0.03);
+
+            // Long, gentle decay (the "ring")
+            out.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+            out.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+            // Very subtle vibrato for shimmer
+            const vib = c.createOscillator();
+            vib.type = 'sine';
+            vib.frequency.setValueAtTime(6, t0);
+
+            const vibAmt = c.createGain();
+            vibAmt.gain.setValueAtTime(4, t0);
+
+            vib.connect(vibAmt).connect(osc.frequency);
+
+            osc.connect(out);
+
+            osc.start(t0);
+            vib.start(t0);
+
+            osc.stop(t0 + dur);
+            vib.stop(t0 + dur);
+          }
+
+          // Chime when a BOMB is revealed (warning ping, slightly nasty)
+          function revealBomb(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.11;
+            const step = opts.step ?? 0.060;
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            const osc = c.createOscillator();
+            osc.type = 'square';
+            osc.connect(out);
+
+            // Two-note “uh-oh” (tritone-ish tension)
+            const n1 = opts.n1 ?? 740.0;   // ~F#5
+            const n2 = opts.n2 ?? 523.25;  // C5
+
+            osc.frequency.setValueAtTime(n1, t0);
+            out.gain.exponentialRampToValueAtTime(vol, t0 + 0.003);
+            out.gain.exponentialRampToValueAtTime(0.0001, t0 + step);
+
+            osc.frequency.setValueAtTime(n2, t0 + step);
+            out.gain.setValueAtTime(0.0001, t0 + step);
+            out.gain.exponentialRampToValueAtTime(vol * 1.05, t0 + step + 0.003);
+            out.gain.exponentialRampToValueAtTime(0.0001, t0 + step * 2);
+
+            osc.start(t0);
+            osc.stop(t0 + step * 2 + 0.03);
+          }
+
+
+         function bomb(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.28;
+            const dur = opts.dur ?? 0.6; // LONGER = ZX feel
+
+            // =========================
+            // NOISE EXPLOSION (core)
+            // =========================
+            const len = Math.floor(c.sampleRate * dur);
+            const buf = c.createBuffer(1, len, c.sampleRate);
+            const data = buf.getChannelData(0);
+
+            // Rough ZX-style noise: no smoothing, heavy decay
+            for (let i = 0; i < len; i++) {
+              const k = 1 - i / len;           // decay 1 → 0
+              const grit = Math.random() * 2 - 1;
+              data[i] = grit * k * 0.95;
+            }
+
+            const noise = c.createBufferSource();
+            noise.buffer = buf;
+
+            const nGain = c.createGain();
+            nGain.gain.setValueAtTime(vol, t0);
+            nGain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+            // Aggressive low-pass sweep (this is VERY ZX)
+            const lp = c.createBiquadFilter();
+            lp.type = 'lowpass';
+            lp.frequency.setValueAtTime(4200, t0);
+            lp.frequency.exponentialRampToValueAtTime(140, t0 + dur);
+
+            noise.connect(lp).connect(nGain).connect(c.destination);
+
+            // =========================
+            // LOW RUMBLE (optional but very ZX)
+            // =========================
+            const osc = c.createOscillator();
+            osc.type = 'square';
+
+            const oGain = c.createGain();
+            oGain.gain.setValueAtTime(vol * 0.35, t0);
+            oGain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+            // Very low pitch slide = speaker abuse
+            osc.frequency.setValueAtTime(95, t0);
+            osc.frequency.exponentialRampToValueAtTime(28, t0 + dur);
+
+            // Slow wobble (feels like unstable hardware)
+            const wob = c.createOscillator();
+            wob.type = 'sine';
+            wob.frequency.setValueAtTime(8, t0);
+
+            const wobAmt = c.createGain();
+            wobAmt.gain.setValueAtTime(14, t0);
+            wob.connect(wobAmt).connect(osc.frequency);
+
+            osc.connect(oGain).connect(c.destination);
+
+            // =========================
+            // START / STOP
+            // =========================
+            noise.start(t0);
+            noise.stop(t0 + dur);
+
+            wob.start(t0);
+            wob.stop(t0 + dur);
+
+            osc.start(t0);
+            osc.stop(t0 + dur);
           }
 
           function coin(opts = {}) {
@@ -861,7 +1155,423 @@
             osc.stop(t0 + step * 2 + 0.08);
           }
 
-          return { unlock, coin, fruit };
+                    // ---------- CHIP MUSIC (looping, scheduled) ----------
+          const MUSIC = (() => {
+
+            const LEAD_LEVEL = 0.15; // 1.0 = current loudness
+
+            let prevLead = null;
+            let prevBass = null;
+            let prevArp = null;
+
+            let playing = false;
+            let timerId = null;
+
+            let noiseBuf = null;
+
+            function bars(...barArrays) {
+              // each bar array must be length 16 (16th notes)
+              const out = [];
+              for (const b of barArrays) out.push(...b);
+              return out;
+            }
+
+            function getNoiseBuffer() {
+              const c = getCtx();
+              if (noiseBuf) return noiseBuf;
+
+              // 1 second of noise we can slice from
+              const len = c.sampleRate * 1;
+              const buf = c.createBuffer(1, len, c.sampleRate);
+              const data = buf.getChannelData(0);
+              for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+
+              noiseBuf = buf;
+              return noiseBuf;
+            }
+
+            // separate music bus so you can control volume/ducking
+            let musicGain = null;
+            let drumGain = null;
+
+            // running voices (keep oscillators alive; change freq + envelope)
+            let leadOsc = null, leadGain = null;
+            let bassOsc = null, bassGain = null;
+            let arpOsc = null, arpGain = null;
+            let patternArp = [];
+
+            // scheduler
+            let step = 0;
+            let nextNoteTime = 0;
+
+            // tuneables
+            let tempo = 132;          // BPM
+            let stepsPerBeat = 4;     // 16th notes (4 per beat)
+            let patternLead = [];
+            let patternBass = [];
+
+            function ensureDrumBus() {
+              const c = getCtx();
+              ensureBus();
+              if (!drumGain) {
+                drumGain = c.createGain();
+                drumGain.gain.value = 1.3; // drum volume
+                drumGain.connect(musicGain);
+              }
+            }
+
+            function drumKick(t) {
+              const c = getCtx();
+              ensureDrumBus();
+
+              const o = c.createOscillator();
+              o.type = 'sine';
+
+              const g = c.createGain();
+              g.gain.setValueAtTime(0.0001, t);
+              g.gain.exponentialRampToValueAtTime(0.12, t + 0.005);
+              g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+
+              // pitch drop gives the “thump”
+              o.frequency.setValueAtTime(140, t);
+              o.frequency.exponentialRampToValueAtTime(55, t + 0.10);
+
+              o.connect(g).connect(drumGain);
+              o.start(t);
+              o.stop(t + 0.13);
+            }
+
+            function drumHat(t) {
+              const c = getCtx();
+              ensureDrumBus(); // makes sure drumGain exists and is connected
+
+              // Use cached noise buffer (no per-hit allocation)
+              const src = c.createBufferSource();
+              src.buffer = getNoiseBuffer();
+
+              // Random slice so it doesn't sound identical each hit
+              const offset = 0.25;
+              const dur = 0.03;                   // hat length (seconds)
+
+              const hp = c.createBiquadFilter();
+              hp.type = 'highpass';
+              hp.frequency.setValueAtTime(6000, t);
+
+              const g = c.createGain();
+              g.gain.setValueAtTime(0.0001, t);
+              g.gain.exponentialRampToValueAtTime(0.09, t + 0.004);      // attack was 0.002
+              g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.006); // tiny tail
+
+              const lp = c.createBiquadFilter();
+              lp.type = 'lowpass';
+              lp.frequency.setValueAtTime(12000, t);
+
+              src.connect(hp).connect(lp).connect(g).connect(drumGain);
+
+              // Start with offset+duration (slice from the cached buffer)
+              src.start(t, offset, dur);
+              src.stop(t + dur + 0.02);
+            }
+
+            function drumSnare(t) {
+              const c = getCtx();
+              ensureDrumBus();
+
+              const src = c.createBufferSource();
+              src.buffer = getNoiseBuffer();
+
+              const offset = Math.random() * 0.7;
+              const dur = 0.08; // snare length
+
+              const bp = c.createBiquadFilter();
+              bp.type = 'bandpass';
+              bp.frequency.setValueAtTime(1800, t);
+              bp.Q.setValueAtTime(0.8, t);
+
+              const g = c.createGain();
+              g.gain.setValueAtTime(0.0001, t);
+              g.gain.exponentialRampToValueAtTime(0.16, t + 0.004);     // louder snare
+              g.gain.exponentialRampToValueAtTime(0.0001, t + dur);     // decay
+
+              src.connect(bp).connect(g).connect(drumGain);
+
+              src.start(t, offset, dur);
+              src.stop(t + dur + 0.02);
+            }
+
+
+
+            function ensureBus() {
+              const c = getCtx();
+              if (!musicGain) {
+                musicGain = c.createGain();
+                musicGain.gain.value = 0.0001;
+
+                const comp = c.createDynamicsCompressor();
+                comp.threshold.value = -18;
+                comp.knee.value = 10;
+                comp.ratio.value = 12;
+                comp.attack.value = 0.003;
+                comp.release.value = 0.12;
+
+                musicGain.connect(comp);
+                comp.connect(c.destination);
+              }
+            }
+
+            function midiToHz(m) {
+              return 440 * Math.pow(2, (m - 69) / 12);
+            }
+
+            function ensureVoices() {
+              const c = getCtx();
+              ensureBus();
+              ensureDrumBus();
+
+              if (!leadOsc) {
+                leadOsc = c.createOscillator();
+                leadOsc.type = 'square';
+                leadGain = c.createGain();
+                leadGain.gain.value = 0.0001;
+                leadOsc.connect(leadGain).connect(musicGain);
+                leadOsc.start();
+              }
+
+              if (!bassOsc) {
+                bassOsc = c.createOscillator();
+                bassOsc.type = 'triangle';
+                bassGain = c.createGain();
+                bassGain.gain.value = 0.0001;
+                bassOsc.connect(bassGain).connect(musicGain);
+                bassOsc.start();
+              }
+
+              if (!arpOsc) {
+                arpOsc = c.createOscillator();
+                arpOsc.type = 'square';           // sparkly
+                arpGain = c.createGain();
+                arpGain.gain.value = 0.0001;
+                arpOsc.connect(arpGain).connect(musicGain);
+                arpOsc.start();
+              }
+
+            }
+
+            function setMusicVolume(v) {
+              ensureBus();
+              const c = getCtx();
+              musicGain.gain.cancelScheduledValues(c.currentTime);
+              musicGain.gain.setTargetAtTime(Math.max(0.0001, v), c.currentTime, 0.03);
+            }
+
+            // Main theme song instruments
+
+            function scheduleStep(t) {
+              const c = getCtx();
+              const spb = 60 / tempo;                       // seconds per beat
+              const stepDur = spb / stepsPerBeat;           // seconds per 16th
+              const len = Math.max(patternLead.length, patternBass.length, patternArp.length);
+              const idx = step % len;
+
+              // LEAD (use MIDI notes; null = rest)
+              const leadNote = patternLead[idx];
+
+              if (leadNote == null) {
+                if (prevLead != null) {
+                  // release when note ends
+                  leadGain.gain.setTargetAtTime(0.0001, t, 0.02);
+                }
+                prevLead = null;
+              } else {
+                const hz = (typeof leadNote === 'number' && leadNote < 200) ? midiToHz(leadNote) : leadNote;
+
+                // if new note: retrigger attack
+                if (prevLead !== leadNote) {
+                  leadOsc.frequency.setValueAtTime(hz, t);
+                  leadGain.gain.setValueAtTime(0.0001, t);
+                  leadGain.gain.exponentialRampToValueAtTime(0.07 * LEAD_LEVEL, t + 0.01);
+                } else {
+                  // same note: sustain, no retrigger
+                  leadOsc.frequency.setValueAtTime(hz, t);
+                  leadGain.gain.setTargetAtTime(0.055 * LEAD_LEVEL, t, 0.02);
+                }
+
+                prevLead = leadNote;
+              }
+
+              // BASS
+             const bassNote = patternBass[idx];
+
+              if (bassNote == null) {
+                if (prevBass != null) bassGain.gain.setTargetAtTime(0.0001, t, 0.03);
+                prevBass = null;
+              } else {
+                const hz = (typeof bassNote === 'number' && bassNote < 200) ? midiToHz(bassNote) : bassNote;
+
+                if (prevBass !== bassNote) {
+                  bassOsc.frequency.setValueAtTime(hz, t);
+                  bassGain.gain.setValueAtTime(0.0001, t);
+                  bassGain.gain.exponentialRampToValueAtTime(0.04, t + 0.015);
+                } else {
+                  bassOsc.frequency.setValueAtTime(hz, t);
+                  bassGain.gain.setTargetAtTime(0.032, t, 0.03);
+                }
+
+                prevBass = bassNote;
+              }
+
+              // ARP (chord sparkle)
+             const arpNote = patternArp[idx];
+
+              if (arpNote == null) {
+                if (prevArp != null) arpGain.gain.setTargetAtTime(0.0001, t, 0.01);
+                prevArp = null;
+              } else {
+                const hz = (typeof arpNote === 'number' && arpNote < 200) ? midiToHz(arpNote) : arpNote;
+
+                // always plucky, but quieter
+                arpOsc.frequency.setValueAtTime(hz, t);
+                arpGain.gain.setValueAtTime(0.0001, t);
+                arpGain.gain.exponentialRampToValueAtTime(0.022, t + 0.004);
+                arpGain.gain.exponentialRampToValueAtTime(0.0001, t + stepDur * 0.55);
+
+                prevArp = arpNote;
+              }
+
+              // Theme song pattern
+
+              // DRUMS on a 16-step grid
+              const drumStep = idx % 16; // 0–15 every bar, even in a 32-step loop
+           
+              // DRUMS on a 16-step grid, repeating every bar
+              if (drumStep === 0 || drumStep === 8) drumKick(t);          // 1 and 3
+              if (drumStep === 4 || drumStep === 12) drumSnare(t);        // 2 and 4
+              if (drumStep % 2 === 0) drumHat(t - 0.002);
+
+              // Little turnaround fill at the very end of bar 2
+              if (idx === 30) drumSnare(t);
+              if (idx === 31) { drumSnare(t); drumHat(t - 0.002); }
+
+              step++;
+              nextNoteTime += stepDur;
+            }
+
+            function scheduler() {
+              const c = getCtx();
+              const lookahead = 0.10; // schedule 100ms ahead
+              while (nextNoteTime < c.currentTime + lookahead) {
+                scheduleStep(nextNoteTime);
+              }
+            }
+
+            function start(opts = {}) {
+              unlock();
+              const c = getCtx();
+              ensureVoices();
+
+              // 16-bar A section at 16th-note resolution (16 steps per bar).
+              // Key centre: C. Progression backbone: Cmaj7, Am7, Dm7, G7 (I–vi–ii–V).
+              // Lead is hooky and syncopated; bass walks; arp implies extended harmony.
+
+              // LEAD: hooky, fewer notes, longer holds (repeat notes to sustain)
+              const L1 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 81, 81, 79, 79];
+              const L2 = [76, 76, null, null, 76, 76, 79, 79, 81, 81, null, null, 79, 79, null, null];
+
+              const L3 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 86, 86, 84, 84];
+              const L4 = [83, 83, null, null, 81, 81, 79, 79, 77, 77, null, null, 76, 76, null, null];
+
+              // Repeat phrase (8 bars total)
+              patternLead = opts.lead ?? bars(L1, L2, L3, L4, L1, L2, L3, L4);
+
+              // Bass: roots plus approach notes, gives that “driving” feel.
+              const B_C = [36, null, 36, 40, 43, null, 45, null, 47, null, 45, null, 43, null, 40, null];
+              const B_A = [33, null, 33, 36, 40, null, 41, null, 43, null, 41, null, 40, null, 38, null];
+              const B_D = [38, null, 38, 41, 45, null, 47, null, 48, null, 47, null, 45, null, 41, null];
+              const B_G = [31, null, 31, 35, 38, null, 40, null, 41, null, 40, null, 38, null, 35, null];
+
+              // 4 bars per chord cycle, repeated with slight bass motion already baked in.
+              patternBass = opts.bass ?? bars(
+                B_C, B_A, B_D, B_G,
+                B_C, B_A, B_D, B_G,
+                B_C, B_A, B_D, B_G,
+                B_C, B_A, B_D, B_G
+              );
+
+              // Arp: 16ths that imply maj7, m7, m7, dom7.
+              // Kept bright, consistent, “cruising city-pop”.
+              const A_C = [72, 76, 79, 83, 76, 79, 83, 86, 72, 76, 79, 83, 76, 79, 83, 86];
+              const A_A = [69, 72, 76, 79, 72, 76, 79, 83, 69, 72, 76, 79, 72, 76, 79, 83];
+              const A_D = [74, 77, 81, 84, 77, 81, 84, 86, 74, 77, 81, 84, 77, 81, 84, 86];
+              const A_G = [67, 71, 74, 77, 71, 74, 77, 81, 67, 71, 74, 77, 71, 74, 77, 81];
+
+              patternArp = opts.arp ?? bars(
+                A_C, A_A, A_D, A_G,
+                A_C, A_A, A_D, A_G,
+                A_C, A_A, A_D, A_G,
+                A_C, A_A, A_D, A_G
+              );
+
+              step = 0;
+              nextNoteTime = c.currentTime + 0.02;
+              playing = true;
+
+              setMusicVolume(opts.volume ?? 0.20);
+
+              if (timerId) clearInterval(timerId);
+              timerId = setInterval(scheduler, 25);
+            }
+
+            function stop(opts = {}) {
+              if (!playing) return;
+              playing = false;
+              if (timerId) clearInterval(timerId);
+              timerId = null;
+
+              if (musicGain) {
+                const c = getCtx();
+                const fade = opts.fade ?? 0.10;
+                musicGain.gain.setTargetAtTime(0.0001, c.currentTime, fade);
+              }
+            }
+
+            // Win tune: scheduled one-shot using the existing AudioContext
+            function win(opts = {}) {
+              unlock();
+              const c = getCtx();
+              ensureBus();
+
+              const t0 = c.currentTime + 0.02;
+              const vol = opts.volume ?? 0.22;
+              const stepDur = opts.step ?? 0.12;
+
+              // Simple uplifting line (MIDI): C5 E5 G5 C6 B5 G5 E5 C5
+              const notes = opts.notes ?? [72, 76, 79, 84, 83, 79, 76, 72];
+
+              const o = c.createOscillator();
+              o.type = 'square';
+              const g = c.createGain();
+              g.gain.setValueAtTime(0.0001, t0);
+              o.connect(g).connect(musicGain);
+
+              for (let i = 0; i < notes.length; i++) {
+                const ti = t0 + i * stepDur;
+                o.frequency.setValueAtTime(midiToHz(notes[i]), ti);
+
+                g.gain.setValueAtTime(0.0001, ti);
+                g.gain.exponentialRampToValueAtTime(vol, ti + 0.01);
+                g.gain.exponentialRampToValueAtTime(0.0001, ti + stepDur * 0.95);
+              }
+
+              o.start(t0);
+              o.stop(t0 + notes.length * stepDur + 0.05);
+            }
+
+            return { start, stop, win, setMusicVolume };
+          })();
+
+
+          return { unlock, coin, fruit, bomb, revealFruit, revealBomb, levelClear, gameOver, music: MUSIC };
+
 
         })();
 
@@ -1085,8 +1795,9 @@
         }
 
         function triggerGameOver() {
+          CHIP.music.stop({ fade: 0.06 });
           stopLevel();
-
+          CHIP.gameOver();
           const ov = document.createElement('div');
           ov.className = 'gameOverOverlay';
           ov.innerHTML = `
@@ -1264,6 +1975,8 @@
           stopLevel(); // clean start
           bombStreak = 0;
           levelRunning = true;
+          setManualMusic(false);
+          // CHIP.music.start({ tempo: 132, volume: 0.50 });
           startMonthTimer();
           revealMs = getRevealMsForMonth(currentLevel);
           scheduleNextPeek(150);
@@ -1312,12 +2025,14 @@
           if (isBomb) {
             bombStreak++;
             cell.dataset.peekType = 'bomb';
+            CHIP.revealFruit();
             setFace(cell, '💣');
           } else {
             bombStreak = 0;
             cell.dataset.peekType = 'fruit';
             const f = FRUITS[(Math.random() * FRUITS.length) | 0];
             cell.dataset.peekPts = String(f.pts);
+            CHIP.revealFruit();
             setFace(cell, f.emoji);
           }
 
@@ -1361,10 +2076,10 @@
           clearFace(cell);
 
           if (t === 'bomb') {
+            CHIP.bomb();
             lives = Math.max(0, lives - 1);
-
-            document.body.classList.add('screen-flash');
-            setTimeout(() => document.body.classList.remove('screen-flash'), 120);
+            document.body.classList.add('zx-flash');
+            setTimeout(() => document.body.classList.remove('zx-flash'), 260);
 
             updateHud();
 
@@ -1393,6 +2108,7 @@
 
           // If that was the last remaining tile in the month, clear the level
           if (getCandidatesForMonth(currentLevel).length === 0) {
+            CHIP.music.stop({ fade: 0.10 });
             stopLevel();
             setTimeout(() => advanceLevel(), 250);
             return;
@@ -1873,8 +2589,8 @@
           }
 
 
-          document.body.classList.add('screen-flash');
-          setTimeout(() => document.body.classList.remove('screen-flash'), 120);
+          document.body.classList.add('zx-flash');
+          setTimeout(() => document.body.classList.remove('zx-flash'), 260);
 
           // Reset this month (bring back hidden tiles)
           // Easiest reliable reset is: re-render without clearing the month,
@@ -1936,6 +2652,7 @@
 
 
         function showLevelClearOverlay({ clearedMonth, bonusPts, msLeft, onDone }) {
+          CHIP.levelClear();
           const ov = document.createElement('div');
           ov.className = 'levelClearOverlay';
 
@@ -1960,6 +2677,9 @@
 
 
         function winGame({ bonusPts = 0, msLeft = 0 } = {}) {
+
+          CHIP.music.stop({ fade: 0.10 });
+          CHIP.music.win(); // little “ALL CLEAR” tune
 
           setUnlocked();
           setHighScoreIfBetter(score);
@@ -2158,6 +2878,29 @@
 
           requestAnimationFrame(tick);
         }
+
+        let manualMusicOn = false;
+
+        function setManualMusic(on) {
+          manualMusicOn = on;
+
+          if (on) {
+            CHIP.unlock();
+            CHIP.music.start({ tempo: 132, volume: 0.50 }); // tweak to taste
+            elAvailPill.style.outline = '2px solid rgba(255,255,255,0.35)';
+            elAvailPill.title = 'Double-click to stop music';
+          } else {
+            CHIP.music.stop({ fade: 0.08 });
+            elAvailPill.style.outline = '';
+            elAvailPill.title = 'Double-click to play music';
+          }
+        }
+
+        elAvailPill.addEventListener('dblclick', (e) => {
+          e.preventDefault();
+          setManualMusic(!manualMusicOn);
+        });
+
 
         updateBadge();
 
