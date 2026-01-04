@@ -1163,11 +1163,24 @@
             let prevLead = null;
             let prevBass = null;
             let prevArp = null;
+            let bassFilt = null;    
+            
+            let padOsc1 = null, padOsc2 = null, padOsc3 = null;
+            let padGain = null;
+            let padFilt = null;
+
+            let prevPadRoot = null;
 
             let playing = false;
             let timerId = null;
 
             let noiseBuf = null;
+
+            let leadCar = null;      // carrier
+            let leadMod = null;      // modulator
+            let leadModGain = null;  // modulation index control
+            let leadGain = null;     // output amp envelope (reuse your existing name if you like)
+
 
             function bars(...barArrays) {
               // each bar array must be length 16 (16th notes)
@@ -1195,7 +1208,6 @@
             let drumGain = null;
 
             // running voices (keep oscillators alive; change freq + envelope)
-            let leadOsc = null, leadGain = null;
             let bassOsc = null, bassGain = null;
             let arpOsc = null, arpGain = null;
             let patternArp = [];
@@ -1209,6 +1221,8 @@
             let stepsPerBeat = 4;     // 16th notes (4 per beat)
             let patternLead = [];
             let patternBass = [];
+            let patternPad = [];
+
 
             function ensureDrumBus() {
               const c = getCtx();
@@ -1259,7 +1273,7 @@
 
               const g = c.createGain();
               g.gain.setValueAtTime(0.0001, t);
-              g.gain.exponentialRampToValueAtTime(0.09, t + 0.004);      // attack was 0.002
+              g.gain.exponentialRampToValueAtTime(0.045, t + 0.004);      // attack was 0.002 // change first value for vol
               g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.006); // tiny tail
 
               const lp = c.createBiquadFilter();
@@ -1300,7 +1314,6 @@
             }
 
 
-
             function ensureBus() {
               const c = getCtx();
               if (!musicGain) {
@@ -1328,21 +1341,82 @@
               ensureBus();
               ensureDrumBus();
 
-              if (!leadOsc) {
-                leadOsc = c.createOscillator();
-                leadOsc.type = 'square';
+              if (!padOsc1) {
+                padOsc1 = c.createOscillator();
+                padOsc1.type = 'sawtooth';
+
+                padOsc2 = c.createOscillator();
+                padOsc2.type = 'sawtooth';
+
+                padOsc3 = c.createOscillator();
+                padOsc3.type = 'sawtooth';
+
+                padFilt = c.createBiquadFilter();
+                padFilt.type = 'lowpass';
+                padFilt.frequency.value = 600;  // pad brightness; tweak 600..1400
+                padFilt.Q.value = 1.0;          // gentle
+
+                padGain = c.createGain();
+                padGain.gain.value = 0.0001;
+
+                padOsc1.detune.value = -2;
+                //padOsc2.detune.value = +2;
+                //padOsc3.detune.value = +4;
+
+                // Mix the oscillators into one filter -> gain -> bus
+                padOsc1.connect(padFilt);
+                padOsc2.connect(padFilt);
+                padOsc3.connect(padFilt);
+                padFilt.connect(padGain).connect(musicGain);
+
+                padOsc1.start();
+                padOsc2.start();
+                padOsc3.start();
+              }
+
+
+              if (!leadCar) {
+                // DX7-ish 2-op FM:
+                // modulator -> (gain) -> carrier frequency
+
+                leadCar = c.createOscillator();
+                leadCar.type = 'sine';          // carrier sine is classic FM
+
+                leadMod = c.createOscillator();
+                leadMod.type = 'sine';          // modulator sine
+
+                leadModGain = c.createGain();
+                leadModGain.gain.value = 0;     // modulation index (amount), set per note
+
+                // connect modulator to carrier frequency
+                leadMod.connect(leadModGain);
+                leadModGain.connect(leadCar.frequency);
+
+                // output amp
                 leadGain = c.createGain();
                 leadGain.gain.value = 0.0001;
-                leadOsc.connect(leadGain).connect(musicGain);
-                leadOsc.start();
+
+                // carrier -> amp -> music bus
+                leadCar.connect(leadGain).connect(musicGain);
+
+                leadMod.start();
+                leadCar.start();
               }
 
               if (!bassOsc) {
                 bassOsc = c.createOscillator();
-                bassOsc.type = 'triangle';
+                bassOsc.type = 'sawtooth';          // MOOG-ish base wave
+
+                bassFilt = c.createBiquadFilter();
+                bassFilt.type = 'lowpass';
+                bassFilt.frequency.value = 180;     // will be modulated by env
+                bassFilt.Q.value = 7;              // resonance; tweak 6..14
+
                 bassGain = c.createGain();
                 bassGain.gain.value = 0.0001;
-                bassOsc.connect(bassGain).connect(musicGain);
+
+                // osc -> filter -> gain -> music bus
+                bassOsc.connect(bassFilt).connect(bassGain).connect(musicGain);
                 bassOsc.start();
               }
 
@@ -1370,51 +1444,171 @@
               const c = getCtx();
               const spb = 60 / tempo;                       // seconds per beat
               const stepDur = spb / stepsPerBeat;           // seconds per 16th
-              const len = Math.max(patternLead.length, patternBass.length, patternArp.length);
+              // const len = Math.max(patternLead.length, patternBass.length, patternArp.length);
+              const len = 64;
               const idx = step % len;
 
-              // LEAD (use MIDI notes; null = rest)
+              // PAD: sustain one root per bar (16 steps = 1 bar)
+              const bar = Math.floor(idx / 16);
+              const barStep = idx % 16;
+              const chord = patternPad[idx] || null;
+
+              if (barStep === 0) {
+
+                // If no chord this step, fade pad out
+                if (!chord) {
+                  padGain.gain.setTargetAtTime(0.0001, t, 0.2);
+                  return;
+                }
+
+                // Use the first two notes of the chord for a wide pad
+                const hz1 = midiToHz(chord[0]); // root
+                const hz2 = midiToHz(chord[1]); // 3rd
+                const hz3 = midiToHz(chord[3]); // 7th
+
+                padOsc1.frequency.cancelScheduledValues(t);
+                padOsc2.frequency.cancelScheduledValues(t);
+                padOsc3.frequency.cancelScheduledValues(t);
+
+                padOsc1.frequency.setValueAtTime(hz1, t);
+                padOsc2.frequency.setValueAtTime(hz2, t);
+                padOsc3.frequency.setValueAtTime(hz3, t);
+
+                const padAttack = 0.35;
+                const padRelease = 0.45;
+                const padLevel = 0.020;
+
+                padGain.gain.cancelScheduledValues(t);
+                padGain.gain.setTargetAtTime(padLevel, t, padAttack);
+
+                const barDur = stepDur * 16;
+                padGain.gain.setTargetAtTime(0.0001, t + barDur - 0.05, padRelease);
+              }
+
+              if (leadGain) leadGain.gain.setTargetAtTime(0.0001, t, 0.01);
+
+              // LEAD (DX7-ish 2-op FM, long sustain, glide)
               const leadNote = patternLead[idx];
+
+              const leadGlide = 0.035;  // seconds; tweak 0.02..0.08
+              const leadAttack = 0.020;
+              const leadRelease = 0.120;
+
+              const sustainAmp = 0.030;  // overall loudness; tweak 0.015..0.05
+              const peakAmp = 0.040;  // slight swell into sustain
+
+              // FM character controls
+              const modRatio = 6.0;    // 1.0, 2.0, 3.0 etc. 2.0 is classic “bright”
+              const modAttackIx = 120;    // attack brightness (index)
+              const modSustainIx = 80;     // sustain brightness (index)
+              const modAttack = 0.030;
+              const modDecay = 0.120;
 
               if (leadNote == null) {
                 if (prevLead != null) {
-                  // release when note ends
-                  leadGain.gain.setTargetAtTime(0.0001, t, 0.02);
+                  // release
+                  leadGain.gain.cancelScheduledValues(t);
+                  leadGain.gain.setTargetAtTime(0.0001, t, leadRelease);
+
+                  leadModGain.gain.cancelScheduledValues(t);
+                  leadModGain.gain.setTargetAtTime(0, t, 0.10);
                 }
                 prevLead = null;
+
               } else {
                 const hz = (typeof leadNote === 'number' && leadNote < 200) ? midiToHz(leadNote) : leadNote;
 
-                // if new note: retrigger attack
+                // subtle vibrato (manual wobble)
+                leadCar.frequency.setTargetAtTime(hz * 1.002, t + 0.10, 0.06);
+                leadCar.frequency.setTargetAtTime(hz, t + 0.22, 0.06);
+
+                // glide carrier pitch
+                leadCar.frequency.cancelScheduledValues(t);
+                leadCar.frequency.setTargetAtTime(hz, t, leadGlide);
+
+                // modulator tracks pitch by ratio (keeps tone consistent across notes)
+                leadMod.frequency.cancelScheduledValues(t);
+                leadMod.frequency.setTargetAtTime(hz * modRatio, t, leadGlide);
+
                 if (prevLead !== leadNote) {
-                  leadOsc.frequency.setValueAtTime(hz, t);
-                  leadGain.gain.setValueAtTime(0.0001, t);
-                  leadGain.gain.exponentialRampToValueAtTime(0.07 * LEAD_LEVEL, t + 0.01);
+                  // AMP: long sustain
+                  leadGain.gain.cancelScheduledValues(t);
+                  leadGain.gain.setValueAtTime(Math.max(0.0001, leadGain.gain.value), t);
+                  leadGain.gain.setTargetAtTime(peakAmp, t, leadAttack);
+                  leadGain.gain.setTargetAtTime(sustainAmp, t + 0.08, 0.06);
+
+                  // FM INDEX: bright bite then mellow sustain
+                  leadModGain.gain.cancelScheduledValues(t);
+                  leadModGain.gain.setValueAtTime(0, t);
+                  leadModGain.gain.setTargetAtTime(modAttackIx, t, modAttack);
+                  leadModGain.gain.setTargetAtTime(modSustainIx, t + 0.05, modDecay);
                 } else {
-                  // same note: sustain, no retrigger
-                  leadOsc.frequency.setValueAtTime(hz, t);
-                  leadGain.gain.setTargetAtTime(0.055 * LEAD_LEVEL, t, 0.02);
+                  // same note, just hold
+                  leadGain.gain.cancelScheduledValues(t);
+                  leadGain.gain.setTargetAtTime(sustainAmp, t, 0.08);
                 }
 
                 prevLead = leadNote;
               }
 
-              // BASS
-             const bassNote = patternBass[idx];
+
+              // BASS (moog-ish, click-safe)
+              const bassNote = patternBass[idx];
+
+              const glide = 0.03;       // seconds; tweak 0.01..0.05
+              const ampAttack = 0.012;
+              const ampRelease = 0.045;
+
+              const baseCut = 120;       // Hz (closed)
+              const envCut = 650;       // Hz (open on attack) tweak 500..1400
+              const filtAttack = 0.010;
+              const filtRelease = 0.080;
 
               if (bassNote == null) {
-                if (prevBass != null) bassGain.gain.setTargetAtTime(0.0001, t, 0.03);
-                prevBass = null;
+                if (prevBass != null) {
+                  // Legato hold through rests (prevents staccato + reduces pops)
+                  bassGain.gain.cancelScheduledValues(t);
+                  bassGain.gain.setTargetAtTime(0.040, t, 0.03); // sustain level; tweak 0.03..0.05
+
+                  if (bassFilt) {
+                    bassFilt.frequency.cancelScheduledValues(t);
+                    bassFilt.frequency.setTargetAtTime(baseCut + 80, t, 0.05); // keep it warm
+                  }
+                }
+
+              // IMPORTANT: don't clear prevBass on a rest
+              // prevBass = null;
+
               } else {
                 const hz = (typeof bassNote === 'number' && bassNote < 200) ? midiToHz(bassNote) : bassNote;
 
+                // glide pitch change
+                  bassOsc.frequency.cancelScheduledValues(t);
+                  bassOsc.frequency.setValueAtTime(hz, t);
+
+
+                // if new note: retrigger amp + filter env
                 if (prevBass !== bassNote) {
-                  bassOsc.frequency.setValueAtTime(hz, t);
-                  bassGain.gain.setValueAtTime(0.0001, t);
-                  bassGain.gain.exponentialRampToValueAtTime(0.04, t + 0.015);
+                  // AMP env (click-safe)
+                  bassGain.gain.cancelScheduledValues(t);
+                  bassGain.gain.setValueAtTime(Math.max(0.0001, bassGain.gain.value), t);
+                  bassGain.gain.setTargetAtTime(0.060, t, ampAttack);     // bass loudness; tweak 0.04..0.08
+
+                  // FILTER env (the “moog” character)
+                  if (bassFilt) {
+                    bassFilt.frequency.cancelScheduledValues(t);
+                    bassFilt.frequency.setValueAtTime(baseCut, t);
+                    bassFilt.frequency.setTargetAtTime(envCut, t, filtAttack);
+                    bassFilt.frequency.setTargetAtTime(baseCut, t + 0.06, filtRelease); // closes after bite
+                  }
                 } else {
-                  bassOsc.frequency.setValueAtTime(hz, t);
-                  bassGain.gain.setTargetAtTime(0.032, t, 0.03);
+                  // same note: hold steady, no re-attack
+                  bassGain.gain.cancelScheduledValues(t);
+                  bassGain.gain.setTargetAtTime(0.050, t, 0.03);
+                  if (bassFilt) {
+                    bassFilt.frequency.cancelScheduledValues(t);
+                    bassFilt.frequency.setTargetAtTime(baseCut + 120, t, 0.04);
+                  }
                 }
 
                 prevBass = bassNote;
@@ -1444,13 +1638,14 @@
               const drumStep = idx % 16; // 0–15 every bar, even in a 32-step loop
            
               // DRUMS on a 16-step grid, repeating every bar
+        
               if (drumStep === 0 || drumStep === 8) drumKick(t);          // 1 and 3
               if (drumStep === 4 || drumStep === 12) drumSnare(t);        // 2 and 4
               if (drumStep % 2 === 0) drumHat(t - 0.002);
 
               // Little turnaround fill at the very end of bar 2
-              if (idx === 30) drumSnare(t);
-              if (idx === 31) { drumSnare(t); drumHat(t - 0.002); }
+             if (idx === 30) drumSnare(t);
+             if (idx === 31) { drumSnare(t); drumHat(t - 0.002); }
 
               step++;
               nextNoteTime += stepDur;
@@ -1469,19 +1664,20 @@
               const c = getCtx();
               ensureVoices();
 
-              // 16-bar A section at 16th-note resolution (16 steps per bar).
-              // Key centre: C. Progression backbone: Cmaj7, Am7, Dm7, G7 (I–vi–ii–V).
-              // Lead is hooky and syncopated; bass walks; arp implies extended harmony.
+              // Apply tempo if provided
+              if (typeof opts.tempo === 'number' && Number.isFinite(opts.tempo)) {
+                tempo = opts.tempo;
+              }
 
               // LEAD: hooky, fewer notes, longer holds (repeat notes to sustain)
-              const L1 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 81, 81, 79, 79];
-              const L2 = [76, 76, null, null, 76, 76, 79, 79, 81, 81, null, null, 79, 79, null, null];
+              // const L1 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 81, 81, 79, 79];
+             //  const L2 = [76, 76, null, null, 76, 76, 79, 79, 81, 81, null, null, 79, 79, null, null];
 
-              const L3 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 86, 86, 84, 84];
-              const L4 = [83, 83, null, null, 81, 81, 79, 79, 77, 77, null, null, 76, 76, null, null];
+             // const L3 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 86, 86, 84, 84];
+             // const L4 = [83, 83, null, null, 81, 81, 79, 79, 77, 77, null, null, 76, 76, null, null];
 
               // Repeat phrase (8 bars total)
-              patternLead = opts.lead ?? bars(L1, L2, L3, L4, L1, L2, L3, L4);
+             // patternLead = opts.lead ?? bars(L1, L2, L3, L4, L1, L2, L3, L4);
 
               // Bass: roots plus approach notes, gives that “driving” feel.
               const B_C = [36, null, 36, 40, 43, null, 45, null, 47, null, 45, null, 43, null, 40, null];
@@ -1509,6 +1705,46 @@
                 A_C, A_A, A_D, A_G,
                 A_C, A_A, A_D, A_G,
                 A_C, A_A, A_D, A_G
+              );
+
+
+              // PAD: one chord per bar (16 steps), sustained.
+              // Represent chords as arrays of MIDI notes: [root, 3rd, 5th, 7th].
+              // Use null for “no chord” (rest).
+
+              // PAD CHORDS
+
+             const P_Cmaj7 = [
+                [72, 76, 79, 83], null, null, null,
+                null, null, null, null,
+                null, null, null, null,
+                null, null, null, null
+              ]; // C5 E5 G5 B5
+
+              const P_Am7 = [
+                [69, 72, 76, 79], null, null, null,
+                null, null, null, null,
+                null, null, null, null,
+                null, null, null, null
+              ]; // A4 C5 E5 G5
+
+              const P_Dm7 = [
+                [74, 77, 81, 84], null, null, null,
+                null, null, null, null,
+                null, null, null, null,
+                null, null, null, null
+              ]; // D5 F5 A5 C6
+
+              const P_G7 = [
+                [67, 71, 74, 77], null, null, null,
+                null, null, null, null,
+                null, null, null, null,
+                null, null, null, null
+              ]; // G4 B4 D5 F5
+
+              patternPad = opts.pad ?? bars(
+                P_Cmaj7, P_Am7, P_Dm7, P_G7,
+                P_Cmaj7, P_Am7, P_Dm7, P_G7
               );
 
               step = 0;
@@ -1566,7 +1802,156 @@
               o.stop(t0 + notes.length * stepDur + 0.05);
             }
 
-            return { start, stop, win, setMusicVolume };
+            // Long win fanfare: one-shot (about 12–14 seconds)
+            function fanfare(opts = {}) {
+              unlock();
+              const c = getCtx();
+              ensureBus();
+
+              // ✅ IMPORTANT: winGame() calls MUSIC.stop() first which fades musicGain to ~silent.
+              // So we must bring the bus back up for the fanfare to be audible.
+              const fanfareVol = opts.volume ?? 0.30;
+              setMusicVolume(Math.max(0.12, fanfareVol)); // raise bus volume immediately
+
+              const t0 = c.currentTime + 0.03;
+              const vol = opts.volume ?? 0.24;
+
+              // Tempo for fanfare (independent of level music)
+              const bpm = opts.tempo ?? 156;
+              const beat = 60 / bpm;         // seconds per beat
+              const step = beat / 2;         // 8th notes (easier than 16ths)
+
+              // Helper: schedule a single note with a simple chip envelope
+              function playNote(oscType, midi, t, dur, level) {
+                if (midi == null) return;
+
+                const o = c.createOscillator();
+                o.type = oscType;
+
+                const g = c.createGain();
+                g.gain.setValueAtTime(0.0001, t);
+
+                o.frequency.setValueAtTime(midiToHz(midi), t);
+
+                // quick attack, then decay
+                g.gain.exponentialRampToValueAtTime(level, t + 0.01);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+                o.connect(g).connect(musicGain);
+
+                o.start(t);
+                o.stop(t + dur + 0.02);
+              }
+
+              // Helper: play a chord (stacked notes)
+              function playChord(midiNotes, t, dur, oscType, level) {
+                for (const m of midiNotes) playNote(oscType, m, t, dur, level);
+              }
+
+              // --- FANFARE CONTENT ---
+              // Chords (city-pop / arcade friendly): Cmaj7, Am7, Fmaj7, G7, then a lift
+              const Cmaj7 = [72, 76, 79, 83];   // C5 E5 G5 B5
+              const Am7 = [69, 72, 76, 79];   // A4 C5 E5 G5
+              const Fmaj7 = [65, 69, 72, 76];   // F4 A4 C5 E5
+              const G7 = [67, 71, 74, 77];   // G4 B4 D5 F5
+
+              // 8 bars of chords, 2 beats each (so 16 chord hits)
+              const chordHits = [
+                Cmaj7, Cmaj7,
+                Am7, Am7,
+                Fmaj7, Fmaj7,
+                G7, G7,
+
+                Cmaj7, Cmaj7,
+                Fmaj7, Fmaj7,
+                G7, G7,
+                Cmaj7, Cmaj7
+              ];
+
+              // Melody (8th-note steps). null = rest
+              // This is long enough to feel like a proper “victory theme”
+              const melody = [
+                84, 83, 79, 76,  // C6 B5 G5 E5
+                79, 83, 84, null,
+                86, 84, 83, 79,
+                76, 79, 83, null,
+
+                84, 83, 79, 76,
+                79, 83, 84, 86,
+                88, 86, 84, 83,
+                84, null, null, null,
+
+                83, 81, 79, 76,
+                79, 81, 83, null,
+                84, 83, 79, 76,
+                79, 83, 84, null,
+
+                86, 84, 83, 79,
+                76, 79, 83, 84,
+                86, 88, 91, 88,
+                86, 84, 83, 84
+              ];
+
+              // Bass hits (on the chord roots)
+              const bassRoots = [
+                36, 36,  // C2
+                33, 33,  // A1
+                29, 29,  // F1
+                31, 31,  // G1
+
+                36, 36,
+                29, 29,
+                31, 31,
+                36, 36
+              ];
+
+              // Schedule chords + bass every 2 beats
+              for (let i = 0; i < chordHits.length; i++) {
+                const t = t0 + i * (2 * beat);
+
+                // soft pad-ish chord (saw), short-ish so it feels “chip”
+                playChord(chordHits[i], t, 1.8 * beat, 'sawtooth', vol * 0.20);
+
+                // bass thump (triangle)
+                playNote('triangle', bassRoots[i], t, 0.9 * beat, vol * 0.30);
+
+                // simple drum accents using your existing drum functions
+                // (kick on each chord hit; snare every other)
+                ensureDrumBus();
+                drumKick(t);
+                if (i % 2 === 1) drumSnare(t);
+                drumHat(t + 0.5 * beat);
+                drumHat(t + 1.0 * beat);
+              }
+
+              // Schedule melody on 8th notes
+              for (let i = 0; i < melody.length; i++) {
+                const t = t0 + i * step;
+                const m = melody[i];
+
+                // Lead: square (classic)
+                playNote('square', m, t, step * 0.95, vol * 0.33);
+
+                // Little harmony shimmer on some notes (every 4th step)
+                if (m != null && i % 4 === 0) {
+                  playNote('triangle', m - 12, t, step * 0.95, vol * 0.16); // octave below
+                }
+              }
+
+              // Final “tag” chord + sparkle (big ending)
+              const tEnd = t0 + (chordHits.length * 2 * beat);
+              playChord([72, 76, 79, 84], tEnd, 2.6 * beat, 'sawtooth', vol * 0.28); // C major spread
+              playChord([84, 88, 91], tEnd + 0.3 * beat, 2.0 * beat, 'square', vol * 0.18);
+
+              // Tiny sparkle using your existing coin arpeggio as a flourish
+              setTimeout(() => {
+                // Uses CHIP.coin sound which is already defined outside MUSIC
+                // If you’d rather not call it from here, you can remove this bit.
+              }, 0);
+            }
+
+            return { start, stop, win, fanfare, setMusicVolume };
+
           })();
 
 
@@ -1903,12 +2288,12 @@
 
         // Fruit table (later we can tune values)
         const FRUITS = [
-          { emoji: '🍒', pts: 50 },
-          { emoji: '🍋', pts: 75 },
-          { emoji: '🍇', pts: 100 },
-          { emoji: '🍓', pts: 125 },
-          { emoji: '🍍', pts: 150 },
-          { emoji: '🍉', pts: 175 },
+          { emoji: '🍒', pts: 10 },
+          { emoji: '🍋', pts: 10 },
+          { emoji: '🍇', pts: 10 },
+          { emoji: '🍓', pts: 10 },
+          { emoji: '🍍', pts: 10 },
+          { emoji: '🍉', pts: 10 },
         ];
 
         function bombChanceForMonth(month) {
@@ -1917,6 +2302,18 @@
             0.15,
             Math.min(0.30, 0.15 + (month - 1) * 0.015)
           );
+        }
+
+        function tempoForMonth(month) {
+          // January tempo and how much it rises each month
+          const jan = 116;     // BPM in January
+          const step = 4;      // +4 BPM per month
+
+          // Calculate
+          const t = jan + (month - 1) * step;
+
+          // Clamp so it stays reasonable
+          return Math.max(100, Math.min(176, t));
         }
 
         // Ensure we can show an icon even on past tiles (which currently have no .mark)
@@ -1976,7 +2373,7 @@
           bombStreak = 0;
           levelRunning = true;
           setManualMusic(false);
-          // CHIP.music.start({ tempo: 132, volume: 0.50 });
+          CHIP.music.start({ tempo: tempoForMonth(currentLevel), volume: 0.30 });
           startMonthTimer();
           revealMs = getRevealMsForMonth(currentLevel);
           scheduleNextPeek(150);
@@ -2650,7 +3047,6 @@
           });
         }
 
-
         function showLevelClearOverlay({ clearedMonth, bonusPts, msLeft, onDone }) {
           CHIP.levelClear();
           const ov = document.createElement('div');
@@ -2659,12 +3055,12 @@
           const sec = Math.max(0, Math.ceil(msLeft / 1000));
 
           ov.innerHTML = `
-    <div class="box">
-      <div class="big">LEVEL CLEARED</div>
-      <div class="small">TIME BONUS +${bonusPts}  (${sec}s LEFT)</div>
-      <div class="hint">CLICK TO CONTINUE</div>
-    </div>
-  `;
+          <div class="box">
+            <div class="big">LEVEL CLEARED</div>
+            <div class="small">TIME BONUS +${bonusPts}  (${sec}s LEFT)</div>
+            <div class="hint">CLICK TO CONTINUE</div>
+          </div>
+        `;
 
           document.body.appendChild(ov);
 
@@ -2679,7 +3075,7 @@
         function winGame({ bonusPts = 0, msLeft = 0 } = {}) {
 
           CHIP.music.stop({ fade: 0.10 });
-          CHIP.music.win(); // little “ALL CLEAR” tune
+          CHIP.music.fanfare({ volume: 0.3, tempo: 156 });
 
           setUnlocked();
           setHighScoreIfBetter(score);
@@ -2886,7 +3282,7 @@
 
           if (on) {
             CHIP.unlock();
-            CHIP.music.start({ tempo: 132, volume: 0.50 }); // tweak to taste
+            CHIP.music.start({ tempo: 120, volume: 0.50 }); // tweak to taste
             elAvailPill.style.outline = '2px solid rgba(255,255,255,0.35)';
             elAvailPill.title = 'Double-click to stop music';
           } else {
