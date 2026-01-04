@@ -1948,6 +1948,11 @@
                 // Uses CHIP.coin sound which is already defined outside MUSIC
                 // If you’d rather not call it from here, you can remove this bit.
               }, 0);
+
+                // ✅ After the fanfare ends, fade the music bus back down (optional)
+              const approxLengthSec = (chordHits.length * 2 * beat) + (2.8 * beat);
+              musicGain.gain.setTargetAtTime(0.0001, t0 + approxLengthSec, 0.20);
+
             }
 
             return { start, stop, win, fanfare, setMusicVolume };
