@@ -757,6 +757,88 @@
         const elHudText = document.getElementById('hudText');
         const elBadge = document.getElementById('unlockBadge');
 
+        // ---------- CHIP SFX (no samples) ----------
+        const CHIP = (() => {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+          function resume() {
+            if (ctx.state === 'suspended') ctx.resume();
+          }
+
+          // Musical arcade coin: tiny arpeggio + vibrato (no samples)
+          function coin(opts = {}) {
+            resume();
+
+            const t0 = ctx.currentTime;
+            const vol = opts.volume ?? 0.12;
+
+            // Master gain
+            const out = ctx.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(ctx.destination);
+
+            // Main voice
+            const osc = ctx.createOscillator();
+            osc.type = 'square';
+
+            // Subtle vibrato (classic chip shimmer)
+            const vib = ctx.createOscillator();
+            vib.type = 'sine';
+            vib.frequency.setValueAtTime(opts.vibHz ?? 18, t0); // vibrato speed
+
+            const vibAmt = ctx.createGain();
+            vibAmt.gain.setValueAtTime(opts.vibCents ?? 18, t0); // vibrato depth in Hz-ish feel
+
+            // Convert "cents-ish" depth to Hz modulation by scaling relative to current pitch.
+            // Simple/cheap: just add a small Hz wobble.
+            vib.connect(vibAmt).connect(osc.frequency);
+
+            // Fast “coin click” transient (tiny noise burst)
+            const noise = ctx.createBufferSource();
+            const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.01), ctx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.6;
+            noise.buffer = buf;
+
+            const nGain = ctx.createGain();
+            nGain.gain.setValueAtTime(vol * 0.35, t0);
+            nGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.012);
+            noise.connect(nGain).connect(ctx.destination);
+
+            // Musical arpeggio (major triad up)
+            // Default: C6 -> E6 -> G6 (very “arcade credit”)
+            const notes = opts.notes ?? [1046.50, 1318.51, 1567.98]; // Hz
+            const step = opts.step ?? 0.045;                         // seconds per note
+            const total = step * notes.length + 0.06;
+
+            // Per-note “pluck” envelope by resetting gain quickly each step
+            out.gain.setValueAtTime(0.0001, t0);
+            for (let i = 0; i < notes.length; i++) {
+              const ti = t0 + i * step;
+              osc.frequency.setValueAtTime(notes[i], ti);
+
+              // mini attack/decay for each note (chip pluck)
+              out.gain.setValueAtTime(0.0001, ti);
+              out.gain.exponentialRampToValueAtTime(vol, ti + 0.004);
+              out.gain.exponentialRampToValueAtTime(0.0001, ti + step);
+            }
+
+            osc.connect(out);
+
+            // Start/stop
+            osc.start(t0);
+            vib.start(t0);
+            noise.start(t0);
+
+            osc.stop(t0 + total);
+            vib.stop(t0 + total);
+            noise.stop(t0 + 0.012);
+          }
+
+          return { resume, coin };
+        })();
+
+
         let coinInserted = false;
         let gameStarted = false;
         let currentLevel = 1;                 // 1=Jan ... 12=Dec
@@ -957,6 +1039,7 @@
           elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
           const coin = document.getElementById('insertCoin');
           coin.addEventListener('pointerdown', () => {
+            CHIP.coin({ notes: [523.25, 659.25, 783.99, 987.77], step: 0.07 }); // C5 E5 G5 B5
             coinInserted = true;
             document.body.classList.add('game-mode');
             coin.textContent = 'READY';
@@ -1545,6 +1628,7 @@
 
             const coin = document.getElementById('insertCoin');
             coin.addEventListener('pointerdown', () => {
+              CHIP.coin({ notes: [523.25, 659.25, 783.99, 987.77], step: 0.07 }); // C5 E5 G5 B5
               coinInserted = true;
 
               // Enter game mode (disable tooltips etc.)
@@ -1876,6 +1960,7 @@
             elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
             const coin = document.getElementById('insertCoin');
             coin.addEventListener('pointerdown', () => {
+              CHIP.coin({ notes: [523.25, 659.25, 783.99, 987.77], step: 0.07 }); // C5 E5 G5 B5
               coinInserted = true;
               updateHud();
               document.body.classList.add('game-mode');
