@@ -741,7 +741,7 @@
 
     <script>
       (() => {
-        // Google Sheets "Publish to web" CSV
+        // IIFE BLOCK
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqqmwi0YjOcvp6PoyFfhEd-YbYt6MxR11lxWhK4g6Hzh3dwWqMcch0xCTDQ8dkZ7qIhxvWjgwKqKpq/pub?gid=0&single=true&output=csv";
 
         const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -757,87 +757,116 @@
         const elHudText = document.getElementById('hudText');
         const elBadge = document.getElementById('unlockBadge');
 
-        // ---------- CHIP SFX (no samples) ----------
+ // ---------- CHIP SFX (iPhone-safe, no samples) ----------
         const CHIP = (() => {
-          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          let ctx = null;
+          let unlocked = false;
 
-          function resume() {
-            if (ctx.state === 'suspended') ctx.resume();
+          function getCtx() {
+            if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+            return ctx;
           }
 
-          // Musical arcade coin: tiny arpeggio + vibrato (no samples)
-          function coin(opts = {}) {
-            resume();
+          function unlock() {
+            const c = getCtx();
 
-            const t0 = ctx.currentTime;
+            // Ask iOS to resume
+            if (c.state === 'suspended') {
+              try { c.resume(); } catch { }
+            }
+
+            // Prime the pipeline once, but do it *next tick* so resume has time to take effect
+            if (!unlocked) {
+              unlocked = true;
+              setTimeout(() => {
+                try {
+                  const b = c.createBuffer(1, 1, c.sampleRate);
+                  const src = c.createBufferSource();
+                  src.buffer = b;
+                  src.connect(c.destination);
+                  src.start(0);
+                } catch { }
+              }, 0);
+            }
+          }
+
+          function coin(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
             const vol = opts.volume ?? 0.12;
 
-            // Master gain
-            const out = ctx.createGain();
+            const out = c.createGain();
             out.gain.setValueAtTime(0.0001, t0);
-            out.connect(ctx.destination);
+            out.connect(c.destination);
 
-            // Main voice
-            const osc = ctx.createOscillator();
+            const osc = c.createOscillator();
             osc.type = 'square';
 
-            // Subtle vibrato (classic chip shimmer)
-            const vib = ctx.createOscillator();
-            vib.type = 'sine';
-            vib.frequency.setValueAtTime(opts.vibHz ?? 18, t0); // vibrato speed
-
-            const vibAmt = ctx.createGain();
-            vibAmt.gain.setValueAtTime(opts.vibCents ?? 18, t0); // vibrato depth in Hz-ish feel
-
-            // Convert "cents-ish" depth to Hz modulation by scaling relative to current pitch.
-            // Simple/cheap: just add a small Hz wobble.
-            vib.connect(vibAmt).connect(osc.frequency);
-
-            // Fast “coin click” transient (tiny noise burst)
-            const noise = ctx.createBufferSource();
-            const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.01), ctx.sampleRate);
-            const data = buf.getChannelData(0);
-            for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.6;
-            noise.buffer = buf;
-
-            const nGain = ctx.createGain();
-            nGain.gain.setValueAtTime(vol * 0.35, t0);
-            nGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.012);
-            noise.connect(nGain).connect(ctx.destination);
-
-            // Musical arpeggio (major triad up)
-            // Default: C6 -> E6 -> G6 (very “arcade credit”)
-            const notes = opts.notes ?? [1046.50, 1318.51, 1567.98]; // Hz
-            const step = opts.step ?? 0.045;                         // seconds per note
+            // (your existing coin code, but using c instead of ctx)
+            const notes = opts.notes ?? [523.25, 659.25, 783.99, 987.77];
+            const step = opts.step ?? 0.07;
             const total = step * notes.length + 0.06;
 
-            // Per-note “pluck” envelope by resetting gain quickly each step
             out.gain.setValueAtTime(0.0001, t0);
             for (let i = 0; i < notes.length; i++) {
               const ti = t0 + i * step;
               osc.frequency.setValueAtTime(notes[i], ti);
-
-              // mini attack/decay for each note (chip pluck)
               out.gain.setValueAtTime(0.0001, ti);
               out.gain.exponentialRampToValueAtTime(vol, ti + 0.004);
               out.gain.exponentialRampToValueAtTime(0.0001, ti + step);
             }
 
             osc.connect(out);
-
-            // Start/stop
             osc.start(t0);
-            vib.start(t0);
-            noise.start(t0);
-
             osc.stop(t0 + total);
-            vib.stop(t0 + total);
-            noise.stop(t0 + 0.012);
           }
 
-          return { resume, coin };
+          function fruit(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+            const vol = opts.volume ?? 0.10;
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            const osc = c.createOscillator();
+            osc.type = 'square';
+            osc.connect(out);
+
+            const a = opts.a ?? 988.0;
+            const b = opts.b ?? 1318.5;
+            const cHz = opts.c ?? 1760.0;
+            const step = opts.step ?? 0.055;
+
+            osc.frequency.setValueAtTime(a, t0);
+            out.gain.exponentialRampToValueAtTime(vol, t0 + 0.004);
+            out.gain.exponentialRampToValueAtTime(0.0001, t0 + step);
+
+            osc.frequency.setValueAtTime(b, t0 + step);
+            out.gain.setValueAtTime(0.0001, t0 + step);
+            out.gain.exponentialRampToValueAtTime(vol, t0 + step + 0.004);
+            out.gain.exponentialRampToValueAtTime(0.0001, t0 + step * 2);
+
+            if (opts.sparkle !== false) {
+              osc.frequency.setValueAtTime(cHz, t0 + step * 2);
+              out.gain.setValueAtTime(0.0001, t0 + step * 2);
+              out.gain.exponentialRampToValueAtTime(vol * 0.75, t0 + step * 2 + 0.003);
+              out.gain.exponentialRampToValueAtTime(0.0001, t0 + step * 2 + 0.030);
+            }
+
+            osc.start(t0);
+            osc.stop(t0 + step * 2 + 0.08);
+          }
+
+          return { unlock, coin, fruit };
+
         })();
 
+        window.addEventListener('touchstart', () => CHIP.unlock(), { once: true, passive: true });
+        window.addEventListener('pointerdown', () => CHIP.unlock(), { once: true });
 
         let coinInserted = false;
         let gameStarted = false;
@@ -1350,6 +1379,7 @@
 
 
           // fruit
+          CHIP.fruit();
           const pts = Number(cell.dataset.peekPts || '50');
           score += pts;
           addTimerMs(FRUIT_HIT_BONUS_MS);
