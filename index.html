@@ -1,327 +1,463 @@
 <!doctype html>
 <html lang="en-GB">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Weird Science Band Availability</title>
 
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-<style>
-    :root{
-      --bg:#252525;
-      --card:#0c1220;
-      --muted:#9fb0c3;
-      --text:#e6eef7;
-      --border:#2b3a55;
-      --shadow: 0 10px 30px rgba(0,0,0,.45);
-      --radius:14px;
+  <style>
+    :root {
+      --bg: #252525;
+      --card: #0c1220;
+      --muted: #9fb0c3;
+      --text: #e6eef7;
+      --border: #2b3a55;
+      --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+      --radius: 14px;
 
-    /* Arcade palette */
-      --good:#3b82f6;              /* blue */
-      --good2: rgba(59,130,246,.18);
+      /* Arcade palette */
+      --good: #3b82f6;
+      /* blue */
+      --good2: rgba(59, 130, 246, .18);
 
-      --bad:#ef4444;
-      --bad2: rgba(239,68,68,.18);
+      --bad: #ef4444;
+      --bad2: rgba(239, 68, 68, .18);
     }
 
-    *{ box-sizing:border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
-    body{
-      margin:0;
+    body {
+      margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       background:
-        radial-gradient(900px 600px at 50% 0%, rgba(34,197,94,.10), transparent 60%),
-        radial-gradient(900px 600px at 15% 15%, rgba(239,68,68,.10), transparent 60%),
+        radial-gradient(900px 600px at 50% 0%, rgba(34, 197, 94, .10), transparent 60%),
+        radial-gradient(900px 600px at 15% 15%, rgba(239, 68, 68, .10), transparent 60%),
         linear-gradient(#0b0f14, #070a10 60%, #05070a);
       color: var(--text);
     }
 
-    header{
-      padding:22px 16px 10px;
-      max-width:1200px;
-      margin:auto;
+    header {
+      padding: 22px 16px 10px;
+      max-width: 1200px;
+      margin: auto;
     }
 
-    h1{ 
-      margin:0 0 12px; 
+    h1 {
+      margin: 0 0 12px;
       font-family: "Press Start 2P", system-ui;
-      font-size:16px;
-      line-height:1.4;
-      letter-spacing:.06em;
-      text-transform:uppercase;
+      font-size: 16px;
+      line-height: 1.4;
+      letter-spacing: .06em;
+      text-transform: uppercase;
       text-shadow:
-        0 0 10px rgba(34,197,94,.25),
-        0 0 14px rgba(239,68,68,.18);
+        0 0 10px rgba(34, 197, 94, .25),
+        0 0 14px rgba(239, 68, 68, .18);
     }
 
-    .sub{ color:var(--muted); font-size:14px; margin-bottom:14px; }
-
-    .toolbar{
-      display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-      align-items:center;
-      background:rgba(18,25,37,.65);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:12px;
-      box-shadow:var(--shadow);
+    .sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 14px;
     }
 
-    label{ font-size:13px; color:var(--muted); }
-
-    select{
-      background:#0e1522;
-      border:1px solid var(--border);
-      color:var(--text);
-      border-radius:10px;
-      padding:8px 10px;
-      font-size:14px;
-      min-width:220px;
-    }
-
-    .legend{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      margin-left:auto;
-      flex-wrap:wrap;
-    }
-
-    .pill{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      border:1px solid var(--border);
-      background:#0e1522;
-      border-radius:999px;
-      padding:6px 10px;
-      font-size:12px;
-      color:var(--muted);
-    }
-
-    .dot{ width:10px; height:10px; border-radius:50%; }
-    .dot.good{ background:var(--good); }
-    .dot.bad{ background:var(--bad); }
-
-    main{
-      max-width:1200px;
-      margin:auto;
-      padding:10px 16px 28px;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:14px;
-      margin-top:14px;
-    }
-
-    @media (max-width:980px){ .grid{ grid-template-columns:repeat(2,1fr); } }
-    @media (max-width:640px){ .grid{ grid-template-columns:1fr; } }
-
-    .card{
-      background:rgba(18,25,37,.75);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-
-    .monthHeader{
-      padding:10px 12px;
-      border-bottom:1px solid var(--border);
-      display:flex;
-      justify-content:space-between;
-      font-size:14px;
-    }
-
-    .cal{ padding:10px; }
-
-    .dow, .days{
-      display:grid;
-      grid-template-columns:repeat(7,1fr);
-      gap:6px;
-      text-align:center;
-    }
-
-    .dow{
-      color:var(--muted);
-      font-size:11px;
-      margin-bottom:8px;
-    }
-
-    .day{
-      position:relative;
-      min-height:42px;
-      border-radius:10px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:center;
-      gap:2px;
-      font-size:13px;
-    }
-
-    .day strong{ font-weight:700; }
-
-    .day.good{
-      background:var(--good2);
-      border:1px solid rgba(59,130,246,.45);
-    }
-
-    .day.bad{
-      background:var(--bad2);
-      border:1px solid rgba(217,119,6,.45);
-      background-image:repeating-linear-gradient(
-        45deg,
-        rgba(0,0,0,.14),
-        rgba(0,0,0,.14) 7px,
-        transparent 7px,
-        transparent 14px
-      );
-    }
-
-    .day.empty{ background:transparent; }
-
-    .day.past{
-      background: transparent;
-      border: 1px solid rgba(255,255,255,.12);
-      color: rgba(255,255,255,.55);
-}
-
-    .day.past .mark{ display:none; } /* hides ✔ / ✖ */
-    .mark{ font-size:12px; }
-    .day.past .tooltip{ display:none !important; }
-
-    .tooltip{
-      position:absolute;
-      bottom:110%;
-      left:50%;
-      transform:translateX(-50%);
-      background:#07101c;
-      border:1px solid var(--border);
-      border-radius:10px;
-      padding:8px 10px;
-      font-size:12px;
-      box-shadow:var(--shadow);
-      display:none;
-      white-space:nowrap;
-      text-align:left;
-      z-index:10;
-    }
-
-    .day.bad:hover .tooltip{ display:block; }
-
-    .tooltip div{
-      display:flex;
-      gap:6px;
-      align-items:center;
-    }
-
-    /* Arcade typography accents */
-    label, .pill, th{
-      font-family: "Press Start 2P", system-ui;
-      font-size:10px;
-      letter-spacing:.02em;
-      text-transform:uppercase;
-    }
-
-    select{
-      font-family: "Press Start 2P", system-ui;
-      font-size:10px;
-      padding:10px 10px;
-      border-radius:12px;
-    }
-
-    .monthHeader{
-      font-family: "Press Start 2P", system-ui;
-      font-size:10px;
-      letter-spacing:.04em;
-      text-transform:uppercase;
-    }
-
-    .day strong{
-      font-family: "Press Start 2P", system-ui;
-      font-size:11px;
-    }
-
-    .mark{
-      font-family: "Press Start 2P", system-ui;
-      font-size:10px;
-      letter-spacing:.02em;
-    }
-
-    .chip{
-      font-family: "Press Start 2P", system-ui;
-      font-size:9px;
-      padding:4px 8px;
-    }
-
-    /* Pixel-ish borders */
-    .card, .toolbar, select, .pill, .raw, .tooltip{
-      border-width:2px;
-      border-style:solid;
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      background: rgba(18, 25, 37, .65);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
       box-shadow: var(--shadow);
     }
 
-    .day{
-      border-radius:8px;
+    label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    select {
+      background: #0e1522;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 14px;
+      min-width: 220px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--border);
+      background: #0e1522;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot.good {
+      background: var(--good);
+    }
+
+    .dot.bad {
+      background: var(--bad);
+    }
+
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 10px 16px 28px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    @media (max-width:980px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width:640px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: rgba(18, 25, 37, .75);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .monthHeader {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+
+    .cal {
+      padding: 10px;
+    }
+
+    .dow,
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+
+    .dow {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+
+    .day {
+      position: relative;
+      min-height: 42px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+    }
+
+    .day strong {
+      font-weight: 700;
+    }
+
+    .day.good {
+      background: var(--good2);
+      border: 1px solid rgba(59, 130, 246, .45);
+    }
+
+    .day.bad {
+      background: var(--bad2);
+      border: 1px solid rgba(217, 119, 6, .45);
+      background-image: repeating-linear-gradient(45deg,
+          rgba(0, 0, 0, .14),
+          rgba(0, 0, 0, .14) 7px,
+          transparent 7px,
+          transparent 14px);
+    }
+
+    .day.empty {
+      background: transparent;
+    }
+
+    .day.past {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, .12);
+      color: rgba(255, 255, 255, .55);
+    }
+
+    .day.past .mark {
+      display: none;
+    }
+
+    /* hides ✔ / ✖ */
+    .mark {
+      font-size: 12px;
+    }
+
+    .day.past .tooltip {
+      display: none !important;
+    }
+
+    .tooltip {
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #07101c;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      box-shadow: var(--shadow);
+      display: none;
+      white-space: nowrap;
+      text-align: left;
+      z-index: 10;
+    }
+
+    .day.bad:hover .tooltip {
+      display: block;
+    }
+
+    .tooltip div {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    /* Arcade typography accents */
+    label,
+    .pill,
+    th {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    select {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+    }
+
+    .monthHeader {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .day strong {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 11px;
+    }
+
+    .mark {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .02em;
+    }
+
+    .chip {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 9px;
+      padding: 4px 8px;
+    }
+
+    /* Pixel-ish borders */
+    .card,
+    .toolbar,
+    select,
+    .pill,
+    .raw,
+    .tooltip {
+      border-width: 2px;
+      border-style: solid;
+      box-shadow: var(--shadow);
+    }
+
+    .day {
+      border-radius: 8px;
     }
 
     /* Buttony hover feel */
-    .day.bad:hover{
+    .day.bad:hover {
       filter: brightness(1.08);
     }
 
-    .day.past{ cursor: default; }
+    .day.past {
+      cursor: default;
+    }
 
     /* INSERT COIN prompt */
     .insert-coin {
       font-family: "Press Start 2P", system-ui;
-    font-size: 12px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    cursor: pointer;
-    display: inline-block;
-    animation: coinBlink 1.1s steps(1) infinite;
-    color: #22c55e;
-    text-shadow:
-      0 0 8px rgba(34,197,94,.6),
-      0 0 14px rgba(34,197,94,.35);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-block;
+      animation: coinBlink 1.1s steps(1) infinite;
+      color: #22c55e;
+      text-shadow:
+        0 0 8px rgba(34, 197, 94, .6),
+        0 0 14px rgba(34, 197, 94, .35);
     }
 
-   .unlockBadge{
-    display:inline-block;
-    margin: 0 0 10px;
-    padding: 10px 14px;
-    border: 2px solid #facc15; /* gold */
-    border-radius: 14px;
-    background: linear-gradient(
-      180deg,
-      rgba(250,204,21,.18),
-      rgba(250,204,21,.05)
-    );
-    font-family: "Press Start 2P", system-ui;
-    font-size: 10px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: #fde047;
-    text-shadow:
-      0 0 6px rgba(250,204,21,.8),
-      0 0 14px rgba(250,204,21,.45),
-      0 0 22px rgba(250,204,21,.25);
-    box-shadow:
-      0 0 12px rgba(250,204,21,.35),
-      inset 0 0 12px rgba(250,204,21,.12);
-  }
+    /* Level clear overlay */
+    .levelClearOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .86);
+      z-index: 10020;
+      display: grid;
+      place-items: center;
+    }
+
+    .levelClearOverlay .box {
+      text-align: center;
+      padding: 18px 18px;
+      border: 2px solid rgba(34, 197, 94, .8);
+      border-radius: 14px;
+      background: rgba(10, 16, 26, .72);
+      box-shadow:
+        0 0 18px rgba(34, 197, 94, .25),
+        0 0 26px rgba(59, 130, 246, .15);
+      max-width: min(520px, 92vw);
+    }
+
+    .levelClearOverlay .big {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 16px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #22c55e;
+      text-shadow: 0 0 10px rgba(34, 197, 94, .6), 0 0 18px rgba(34, 197, 94, .35);
+    }
+
+    .levelClearOverlay .small {
+      margin-top: 12px;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, .72);
+    }
+
+    .levelClearOverlay .hint {
+      margin-top: 14px;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 9px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, .55);
+      animation: coinBlink 1.1s steps(1) infinite;
+    }
+
+
+    .unlockBadge {
+      display: inline-block;
+      margin: 0 0 10px;
+      padding: 10px 14px;
+      border: 2px solid #facc15;
+      /* gold */
+      border-radius: 14px;
+      background: linear-gradient(180deg,
+          rgba(250, 204, 21, .18),
+          rgba(250, 204, 21, .05));
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #fde047;
+      text-shadow:
+        0 0 6px rgba(250, 204, 21, .8),
+        0 0 14px rgba(250, 204, 21, .45),
+        0 0 22px rgba(250, 204, 21, .25);
+      box-shadow:
+        0 0 12px rgba(250, 204, 21, .35),
+        inset 0 0 12px rgba(250, 204, 21, .12);
+      /* NEW: make it a 2-line badge with controlled spacing */
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      row-gap: 10px;
+      /* this is the extra space between lines */
+      line-height: 1.35;
+
+    }
+
+    /* NEW: badge line helpers */
+    .badgeLine {
+      display: block;
+      text-align: center;
+    }
+
+    /* NEW: star + score line, perfectly centred */
+    .badgeScore {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+
+    .badgeScore .star {
+      display: inline-block;
+      transform: translateY(-2px);
+      /* optical centring for Press Start 2P */
+    }
+
 
     .day.peek {
       filter: brightness(1.25);
-      box-shadow: 0 0 18px rgba(255,255,255,.25);
+      box-shadow: 0 0 18px rgba(255, 255, 255, .25);
     }
 
     .day.hidden {
@@ -330,1265 +466,1443 @@
     }
 
 
-    .arcade-text{
-    font-family: "Press Start 2P", system-ui;
-    font-size: 12px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: #22c55e;
-    text-shadow:
-      0 0 8px rgba(34,197,94,.6),
-      0 0 14px rgba(34,197,94,.35);
+    .arcade-text {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #22c55e;
+      text-shadow:
+        0 0 8px rgba(34, 197, 94, .6),
+        0 0 14px rgba(34, 197, 94, .35);
     }
 
 
     @keyframes coinBlink {
-      0%, 49% { opacity: 1; }
-      50%, 100% { opacity: 0; }
+
+      0%,
+      49% {
+        opacity: 1;
+      }
+
+      50%,
+      100% {
+        opacity: 0;
+      }
     }
 
     /* Active starting tile (arcade blink) */
-    .day.start-blink{
+    .day.start-blink {
       animation: startBlink 1.1s steps(1) infinite;
       outline: 2px solid #22c55e;
       outline-offset: -2px;
       box-shadow:
-        0 0 10px rgba(34,197,94,.6),
-        0 0 18px rgba(34,197,94,.35);
+        0 0 10px rgba(34, 197, 94, .6),
+        0 0 18px rgba(34, 197, 94, .35);
     }
 
-    @keyframes startBlink{
-      0%, 49% { opacity: 1; }
-      50%, 100% { opacity: .25; }
+    @keyframes startBlink {
+
+      0%,
+      49% {
+        opacity: 1;
+      }
+
+      50%,
+      100% {
+        opacity: .25;
+      }
     }
 
     /* Game mode: disable calendar tooltips */
-    body.game-mode .tooltip{
+    body.game-mode .tooltip {
       display: none !important;
     }
 
-    body.game-mode .day.bad:hover .tooltip{
+    /* Game mode: hide the availability toolbar */
+    body.game-mode .toolbar {
+      display: none !important;
+    }
+
+    body.game-mode .day.bad:hover .tooltip {
       display: none !important;
     }
 
     /* Fireworks canvas overlay */
-    .fxCanvas{
+    .fxCanvas {
       position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
       z-index: 9999;
-      pointer-events: none; /* never blocks taps */
+      pointer-events: none;
+      /* never blocks taps */
     }
 
     /* Win overlay: black out the page behind the header */
-    .winOverlay{
+    .winOverlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.92);
+      background: rgba(0, 0, 0, .92);
       z-index: 9990;
     }
 
-    .winOverlay .winText{
+    /* Badge-style box for the win screen text */
+    .winOverlay .winBadgeBox {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      row-gap: 10px;
+      padding: 14px 16px;
+      border: 2px solid #facc15;
+      /* gold */
+      border-radius: 14px;
+      background: linear-gradient(180deg,
+          rgba(250, 204, 21, .18),
+          rgba(250, 204, 21, .05));
+      box-shadow:
+        0 0 12px rgba(250, 204, 21, .35),
+        inset 0 0 12px rgba(250, 204, 21, .12);
+    }
+
+    .winOverlay .winBadgeBox .line {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #fde047;
+      text-shadow:
+        0 0 6px rgba(250, 204, 21, .8),
+        0 0 14px rgba(250, 204, 21, .45),
+        0 0 22px rgba(250, 204, 21, .25);
+      line-height: 1.25;
+    }
+
+    .winOverlay .winBadgeBox .line.emph {
+      font-size: 10px;
+      letter-spacing: .10em;
+      opacity: .95;
+    }
+
+
+    .winOverlay .winText {
       position: absolute;
-      top: 110px; /* adjust if your header is taller */
-      left: 50%;
-      transform: translateX(-50%);
+      inset: 0;
+      display: grid;
+      place-items: center;
       text-align: center;
       pointer-events: none;
     }
-    .winOverlay .winText .big{
+
+
+    .winOverlay .winText .big {
       font-family: "Press Start 2P", system-ui;
       font-size: 18px;
       letter-spacing: .12em;
       text-transform: uppercase;
       color: #22c55e;
-      text-shadow: 0 0 10px rgba(34,197,94,.6), 0 0 18px rgba(34,197,94,.35);
+      text-shadow: 0 0 10px rgba(34, 197, 94, .6), 0 0 18px rgba(34, 197, 94, .35);
     }
 
-    .winOverlay.fadeOut{
+    .winOverlay.fadeOut {
       transition: opacity .6s linear;
       opacity: 0;
     }
 
-    .screen-flash{
-  animation: flash 120ms steps(1,end) 1;
-}
-@keyframes flash{
-  0%{ filter: brightness(1); }
-  50%{ filter: brightness(2.2); }
-  100%{ filter: brightness(1); }
-}
+    .screen-flash {
+      animation: flash 120ms steps(1, end) 1;
+    }
 
-.day.revealFace {
-  position: relative;
-}
+    @keyframes flash {
+      0% {
+        filter: brightness(1);
+      }
 
-.day .face {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 34px;
-  line-height: 1;
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.96);
-}
+      50% {
+        filter: brightness(2.2);
+      }
 
-.day.peek .face {
-  opacity: 1;
-  transform: scale(1);
-}
+      100% {
+        filter: brightness(1);
+      }
+    }
 
-.day.hidden .face {
-  opacity: 0;
-}
+    .day.revealFace {
+      position: relative;
+    }
 
-.gameOverOverlay{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.92);
-  z-index: 10050;
-  display: grid;
-  place-items: center;
-}
+    .day .face {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 34px;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.96);
+    }
 
-.gameOverOverlay .txt{
-  text-align: center;
-}
+    .day.peek .face {
+      opacity: 1;
+      transform: scale(1);
+    }
 
-.gameOverOverlay .txt .big{
-  font-family: "Press Start 2P", system-ui;
-  font-size: 18px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: #ef4444;
-  text-shadow: 0 0 10px rgba(239,68,68,.6), 0 0 18px rgba(239,68,68,.35);
-}
+    .day.hidden .face {
+      opacity: 0;
+    }
 
-.gameOverOverlay .txt .small{
-  margin-top: 14px;
-  font-family: "Press Start 2P", system-ui;
-  font-size: 10px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.65);
-}
-  
-/* During a peek, hide the date number + mark so the face fills the cell */
-body.game-mode .day.peek strong{ opacity:0; }
-body.game-mode .day.peek .mark{ opacity:0; }
+    .gameOverOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .92);
+      z-index: 10050;
+      display: grid;
+      place-items: center;
+    }
 
+    .gameOverOverlay .txt {
+      text-align: center;
+    }
 
+    .gameOverOverlay .txt .big {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 18px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #ef4444;
+      text-shadow: 0 0 10px rgba(239, 68, 68, .6), 0 0 18px rgba(239, 68, 68, .35);
+    }
+
+    .gameOverOverlay .txt .small {
+      margin-top: 14px;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, .65);
+    }
+
+    /* During a peek, hide the date number + mark so the face fills the cell */
+    body.game-mode .day.peek strong {
+      opacity: 0;
+    }
+
+    body.game-mode .day.peek .mark {
+      opacity: 0;
+    }
   </style>
 </head>
 
 <body>
-<header>
-  <h1 id="title">Weird Science Band Availability</h1>
-  <div id="unlockBadge" class="unlockBadge" style="display:none;"></div>
-  <p class="sub" id="subtitle">Loading…</p>
-  <p class="sub" id="hud" style="display:none; margin-top:-6px;">
-  <span class="arcade-text" id="hudText"></span>
-  </p>
+  <header>
+    <h1 id="title">Weird Science Band Availability</h1>
+    <div id="unlockBadge" class="unlockBadge" style="display:none;"></div>
+    <p class="sub" id="subtitle">Loading…</p>
+    <p class="sub" id="hud" style="display:none; margin-top:-6px;">
+      <span class="arcade-text" id="hudText"></span>
+    </p>
 
 
-  <div class="toolbar">
-    <div>
-      <label>Show availability for</label><br/>
-      <select id="mode"></select>
+    <div class="toolbar">
+      <div>
+        <label>Show availability for</label><br />
+        <select id="mode"></select>
+      </div>
+
+      <div>
+        <label>Year</label><br />
+        <select id="yearSel"></select>
+      </div>
+
+      <div class="legend">
+        <div class="pill"><span class="dot good"></span> Available ✔</div>
+        <div class="pill"><span class="dot bad"></span> Unavailable ✖</div>
+        <div class="pill" id="rulePill"></div>
+      </div>
     </div>
 
-    <div>
-      <label>Year</label><br/>
-      <select id="yearSel"></select>
-    </div>
+  </header>
 
-    <div class="legend">
-      <div class="pill"><span class="dot good"></span> Available ✔</div>
-      <div class="pill"><span class="dot bad"></span> Unavailable ✖</div>
-      <div class="pill" id="rulePill"></div>
-    </div>
-  </div>
+  <main>
+    <div id="calGrid" class="grid"></div>
 
-</header>
+    <script>
+      (() => {
+        // Google Sheets "Publish to web" CSV
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqqmwi0YjOcvp6PoyFfhEd-YbYt6MxR11lxWhK4g6Hzh3dwWqMcch0xCTDQ8dkZ7qIhxvWjgwKqKpq/pub?gid=0&single=true&output=csv";
 
-<main>
-  <div id="calGrid" class="grid"></div>
+        const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-<script>
-(() => {
-  // Google Sheets "Publish to web" CSV
-  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqqmwi0YjOcvp6PoyFfhEd-YbYt6MxR11lxWhK4g6Hzh3dwWqMcch0xCTDQ8dkZ7qIhxvWjgwKqKpq/pub?gid=0&single=true&output=csv";
+        const elGrid = document.getElementById('calGrid');
+        const elMode = document.getElementById('mode');
+        const elYear = document.getElementById('yearSel');
+        const elRule = document.getElementById('rulePill');
+        const elTitle = document.getElementById('title');
+        const elSubtitle = document.getElementById('subtitle');
+        const elHud = document.getElementById('hud');
+        const elHudText = document.getElementById('hudText');
+        const elBadge = document.getElementById('unlockBadge');
 
-  const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        let coinInserted = false;
+        let gameStarted = false;
+        let currentLevel = 1;                 // 1=Jan ... 12=Dec
+        const clearedMonths = new Set();      // months removed from the grid
+        let score = 0;
+        let lives = 3;
+        let revealMs = 1600; // placeholder for now; we’ll scale it later
+        let monthTimerId = null;
+        let monthDeadline = 0; // performance.now() timestamp
+        let monthSecondsLeft = 0;
 
-  const elGrid = document.getElementById('calGrid');
-  const elMode = document.getElementById('mode');
-  const elYear = document.getElementById('yearSel');
-  const elRule = document.getElementById('rulePill');
-  const elTitle = document.getElementById('title');
-  const elSubtitle = document.getElementById('subtitle');
-  const elHud = document.getElementById('hud');
-  const elHudText = document.getElementById('hudText');
-  const elBadge = document.getElementById('unlockBadge');
+        const BOMB_PASS_BONUS_MS = 450;   // add 0.45s when a bomb expires naturally
+        const FRUIT_HIT_BONUS_MS = 650;   // +0.65s per fruit
+        const MAX_TIMER_SLACK_MS = 6000;  // cap: at most +6s above base
+        // Time bonus: points awarded for time remaining when a month is cleared.
+        // 1 point per 100ms remaining = 10 points per second.
+        const TIME_BONUS_POINTS_PER_100MS = 1;
 
-  let coinInserted = false;
-  let gameStarted = false;
-  let currentLevel = 1;                 // 1=Jan ... 12=Dec
-  const clearedMonths = new Set();      // months removed from the grid
-  let score = 0;
-  let lives = 3;
-  let revealMs = 1600; // placeholder for now; we’ll scale it later
-  let monthTimerId = null;
-  let monthDeadline = 0; // performance.now() timestamp
-  let monthSecondsLeft = 0;
 
-  const BOMB_PASS_BONUS_MS = 450;   // add 0.45s when a bomb expires naturally
-  const FRUIT_HIT_BONUS_MS = 650;   // +0.65s per fruit
-  const MAX_TIMER_SLACK_MS = 6000;  // cap: at most +6s above base
+        function updateHud() {
+          if (!elHud || !elHudText) return;
 
-  function updateHud(){
-    if (!elHud || !elHudText) return;
+          if (!coinInserted) {
+            elHud.style.display = 'none';
+            return;
+          }
 
-    if (!coinInserted){
-      elHud.style.display = 'none';
-      return;
-    }
+          elHud.style.display = '';
+          const t = levelRunning ? `  TIME ${monthSecondsLeft}` : '';
+          elHudText.textContent = `LIVES ${lives}  SCORE ${score}${t}`;
 
-    elHud.style.display = '';
-    const t = levelRunning ? `  TIME ${monthSecondsLeft}` : '';
-    elHudText.textContent = `LIVES ${lives}  SCORE ${score}${t}`;
+        }
 
-  }
+        function updateBadge() {
+          if (!elBadge) return;
 
-  function updateBadge(){
-    if (!elBadge) return;
+          if (isUnlocked()) {
+            const hs = getHighScore();
+            elBadge.style.display = 'inline-block';
+            elBadge.innerHTML = `
+              <div class="badgeLine">ARCADE MODE CLEARED</div>
+              <div class="badgeLine badgeScore">
+                <span class="star">⭐</span>
+                HIGH SCORE ${hs}
+                <span class="star">⭐</span>
+              </div>
+            `;
 
-    if (isUnlocked()){
-      const hs = getHighScore();
-      elBadge.style.display = 'inline-block';
-      elBadge.textContent = `⭐ ARCADE MODE CLEARED · HIGH SCORE ${hs}`;
-    } else {
-      elBadge.style.display = 'none';
-    }
-  }
+          } else {
+            elBadge.style.display = 'none';
+          }
+        }
 
-  function resetToInsertCoin(){
-  stopLevel();          // stops peek loop + clears month timer (your stopLevel already does both)
-  clearPeekTimers();    // belt-and-braces; harmless if already stopped
+        function resetToInsertCoin() {
+          stopLevel();          // stops peek loop + clears month timer (your stopLevel already does both)
+          clearPeekTimers();    // belt-and-braces; harmless if already stopped
 
-  // reset game state
-  clearedMonths.clear();
-  currentLevel = 1;
-  score = 0;
-  lives = 3;
-  coinInserted = false;
-  gameStarted = false;
+          // reset game state
+          clearedMonths.clear();
+          currentLevel = 1;
+          score = 0;
+          lives = 3;
+          coinInserted = false;
+          gameStarted = false;
 
-  // exit game mode (tooltips back)
-  document.body.classList.remove('game-mode');
+          // exit game mode (tooltips back)
+          document.body.classList.remove('game-mode');
 
-  // restore INSERT COIN prompt and re-bind handler
-  elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
-  const coin = document.getElementById('insertCoin');
-  coin.addEventListener('pointerdown', () => {
-    coinInserted = true;
-    document.body.classList.add('game-mode');
-    coin.textContent = 'READY';
-    coin.style.animation = 'none';
-    armStartTile();
-    updateHud();
-  });
+          // restore INSERT COIN prompt and re-bind handler
+          elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
+          const coin = document.getElementById('insertCoin');
+          coin.addEventListener('pointerdown', () => {
+            coinInserted = true;
+            document.body.classList.add('game-mode');
+            coin.textContent = 'READY';
+            coin.style.animation = 'none';
+            armStartTile();
+            updateHud();
+          });
 
-  updateBadge();
+          updateBadge();
 
-  // re-render all months
-  render();
-  updateHud(); // hides HUD because coinInserted=false
-}
+          // re-render all months
+          render();
+          updateHud(); // hides HUD because coinInserted=false
+        }
 
-function triggerGameOver(){
-  stopLevel();
+        function triggerGameOver() {
+          stopLevel();
 
-  const ov = document.createElement('div');
-  ov.className = 'gameOverOverlay';
-  ov.innerHTML = `
+          const ov = document.createElement('div');
+          ov.className = 'gameOverOverlay';
+          ov.innerHTML = `
     <div class="txt">
       <div class="big">GAME OVER</div>
       <div class="small">Click to continue</div>
     </div>
   `;
-  document.body.appendChild(ov);
-
-  // click anywhere to reset
-  ov.addEventListener('pointerdown', () => {
-    ov.remove();
-    resetToInsertCoin();
-  }, { once: true });
-}
-
-
-  function addTimerMs(ms){
-  if (!levelRunning) return;
-  if (!monthDeadline) return;
-
-  const base = monthTimeSecondsForMonth(currentLevel) * 1000;
-  const now = performance.now();
-  const msLeft = Math.max(0, monthDeadline - now);
-
-  // cap: you can’t exceed (base + slack)
-  const cappedLeft = Math.min(msLeft + ms, base + MAX_TIMER_SLACK_MS);
-
-  monthDeadline = now + cappedLeft;
-
-  // refresh displayed seconds immediately
-  monthSecondsLeft = Math.max(0, Math.ceil((monthDeadline - now) / 1000));
-  updateHud();
-}
-
-
-    // ===== Peek loop (step 1: highlight-only, no fruit/bomb yet) =====
-  let levelRunning = false;
-  let activePeek = null;
-  let peekHideTimer = null;
-  let peekNextTimer = null;
-  let bombStreak = 0;
-
-
-  function getRevealMsForMonth(month){
-    // placeholder scaling: later months = less time
-    // tweak later; for now it just proves the loop works.
-    const start = 1600;
-    const step  = 80;
-    return Math.max(650, start - (month - 1) * step);
-  }
-
-  function getCandidatesForMonth(month){
-    // All real day tiles in the month, including past days.
-    const cells = [...elGrid.querySelectorAll(`.day[data-month="${month}"][data-day]`)];
-    return cells.filter(c =>
-      !c.classList.contains('empty') &&
-      !c.classList.contains('hidden')
-    );
-  }
-
-  function clearPeekTimers(){
-    if (peekHideTimer) clearTimeout(peekHideTimer);
-    if (peekNextTimer) clearTimeout(peekNextTimer);
-    peekHideTimer = null;
-    peekNextTimer = null;
-  }
-
-  function stopLevel(){
-    levelRunning = false;
-    clearMonthTimer();
-    clearPeekTimers();
-    if (activePeek) activePeek.classList.remove('peek');
-    activePeek = null;
-  }
-
-  // Fruit table (later we can tune values)
-const FRUITS = [
-  { emoji: '🍒', pts: 50 },
-  { emoji: '🍋', pts: 75 },
-  { emoji: '🍇', pts: 100 },
-  { emoji: '🍓', pts: 125 },
-  { emoji: '🍍', pts: 150 },
-  { emoji: '🍉', pts: 175 },
-];
-
-function bombChanceForMonth(month){
-  // gentler ramp, lower cap
-  return Math.max(
-    0.15,
-    Math.min(0.30, 0.15 + (month - 1) * 0.015)
-  );
-}
-
-// Ensure we can show an icon even on past tiles (which currently have no .mark)
-function getOrCreateMark(cell){
-  let mark = cell.querySelector('.mark');
-  if (!mark){
-    mark = document.createElement('div');
-    mark.className = 'mark';
-    cell.appendChild(mark);
-    cell.dataset.markTemp = '1'; // so we can remove it later
-  }
-  // remember original mark (✔/✖/empty) once
-  if (cell.dataset.origMark === undefined){
-    cell.dataset.origMark = mark.textContent || '';
-  }
-  return mark;
-}
-
-function restoreMark(cell){
-  const mark = cell.querySelector('.mark');
-  if (!mark) return;
-
-  // revert to original and hide
-  mark.textContent = cell.dataset.origMark || '';
-  mark.style.visibility = 'hidden';
-
-  // if we created it just for the game (past tiles), remove it
-  if (cell.dataset.markTemp === '1'){
-    mark.remove();
-    delete cell.dataset.markTemp;
-    delete cell.dataset.origMark;
-  }
-}
-
-// Full-cell face overlay for fruit/bomb during peek
-function ensureFace(cell){
-  let face = cell.querySelector('.face');
-  if (!face){
-    face = document.createElement('div');
-    face.className = 'face';
-    cell.appendChild(face);
-    cell.classList.add('revealFace');
-  }
-  return face;
-}
-function setFace(cell, text){
-  const face = ensureFace(cell);
-  face.textContent = text;
-}
-function clearFace(cell){
-  const face = cell.querySelector('.face');
-  if (face) face.textContent = '';
-}
-
-  function startLevel(){
-    stopLevel(); // clean start
-    bombStreak = 0;
-    levelRunning = true;
-    startMonthTimer();
-    revealMs = getRevealMsForMonth(currentLevel);
-    scheduleNextPeek(150);
-    updateHud();
-  }
-
-  function scheduleNextPeek(delayMs){
-    clearPeekTimers();
-    peekNextTimer = setTimeout(() => {
-      if (!levelRunning) return;
-
-      const candidates = getCandidatesForMonth(currentLevel);
-      if (!candidates.length){
-        // Month cleared
-        stopLevel();
-        setTimeout(() => advanceLevel(), 250);
-        return;
-      }
-
-      const next = candidates[(Math.random() * candidates.length) | 0];
-      showPeek(next);
-    }, delayMs);
-  }
-
-function showPeek(cell){
-  if (!levelRunning) return;
-
-  if (activePeek && activePeek !== cell){
-    activePeek.classList.remove('peek');
-    clearFace(activePeek);
-  }
-
-  activePeek = cell;
-  cell.classList.add('peek');
-
-  // Decide what it is this time
-  let isBomb;
-
-  // hard cap: never allow more than 3 bombs in a row
-  if (bombStreak >= 3){
-    isBomb = false;
-  } else {
-    isBomb = Math.random() < bombChanceForMonth(currentLevel);
-  }
-
-  if (isBomb){
-    bombStreak++;
-    cell.dataset.peekType = 'bomb';
-    setFace(cell, '💣');
-  } else {
-    bombStreak = 0;
-    cell.dataset.peekType = 'fruit';
-    const f = FRUITS[(Math.random() * FRUITS.length) | 0];
-    cell.dataset.peekPts = String(f.pts);
-    setFace(cell, f.emoji);
-  }
-
-  clearPeekTimers();
-  peekHideTimer = setTimeout(() => {
-  if (!levelRunning) return;
-
-  // If a bomb was showing and the player did NOT click it, reward time
-  if (activePeek && activePeek.dataset.peekType === 'bomb'){
-    addTimerMs(BOMB_PASS_BONUS_MS);
-  }
-
-  if (activePeek){
-    activePeek.classList.remove('peek');
-    activePeek = null;
-  }
-
-  scheduleNextPeek(120);
-}, revealMs);
-
-}
-
-  // One delegated handler for the whole grid:
-  elGrid.addEventListener('pointerdown', (e) => {
-    if (!coinInserted) return;
-    if (!levelRunning) return;
-
-    const cell = e.target.closest('.day');
-    if (!cell) return;
-
-// Only accept presses on the currently peeked tile
-if (cell !== activePeek) return;
-
-e.preventDefault();
-
-const t = cell.dataset.peekType || 'fruit';
-
-cell.classList.remove('peek');
-activePeek = null;
-
-clearFace(cell);
-
-if (t === 'bomb'){
-  lives = Math.max(0, lives - 1);
-
-  document.body.classList.add('screen-flash');
-  setTimeout(() => document.body.classList.remove('screen-flash'), 120);
-
-  updateHud();
-
-  if (lives <= 0){
-    triggerGameOver();
-    return;
-  }
-
-  scheduleNextPeek(180);
-  return;
-}
-
-
-// fruit
-const pts = Number(cell.dataset.peekPts || '50');
-score += pts;
-addTimerMs(FRUIT_HIT_BONUS_MS);
-updateHud();
-
-// hide collected fruit tile
-cell.classList.add('hidden');
-
-// If that was the last remaining tile in the month, clear the level
-if (getCandidatesForMonth(currentLevel).length === 0){
-  stopLevel();
-  setTimeout(() => advanceLevel(), 250);
-  return;
-}
-
-// cleanup
-delete cell.dataset.peekType;
-delete cell.dataset.peekFruit;
-delete cell.dataset.peekPts;
-
-scheduleNextPeek(120);
-
-  });
-
-  const UNLOCK_KEY = 'wsCalendarArcadeUnlocked';
-  const HIGH_SCORE_KEY = 'wsCalendarHighScore';
-
-  function getHighScore(){
-    try { return Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0; }
-    catch { return 0; }
-  }
-
-  function setHighScoreIfBetter(score){
-    try {
-      const prev = getHighScore();
-      if (score > prev){
-        localStorage.setItem(HIGH_SCORE_KEY, String(score));
-      }
-    } catch {}
-  }
-
-  function setUnlocked(){
-    try { localStorage.setItem(UNLOCK_KEY, '1'); } catch {}
-  }
-  function isUnlocked(){
-    try { return localStorage.getItem(UNLOCK_KEY) === '1'; } catch { return false; }
-  }
-
-  const pad = n => String(n).padStart(2,'0');
-  const iso = (y,m,d) => `${y}-${pad(m)}-${pad(d)}`;
-
-    const todayISO = () => {
-    const t = new Date();
-    t.setHours(0,0,0,0);
-    return iso(t.getFullYear(), t.getMonth()+1, t.getDate());
-  };
-
-
-  // Capitalise Member Names for display only (internal keys remain lowercase)
-  const displayName = (name) =>
-    String(name || '')
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-
-  // Parse CSV robustly (handles quoted fields + commas)
-  function parseCSV(text) {
-    const rows = [];
-    let row = [];
-    let cur = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i];
-      const next = text[i+1];
-
-      if (inQuotes) {
-        if (ch === '"' && next === '"') {
-          cur += '"';
-          i++;
-        } else if (ch === '"') {
-          inQuotes = false;
-        } else {
-          cur += ch;
+          document.body.appendChild(ov);
+
+          // click anywhere to reset
+          ov.addEventListener('pointerdown', () => {
+            ov.remove();
+            resetToInsertCoin();
+          }, { once: true });
         }
-      } else {
-        if (ch === '"') {
-          inQuotes = true;
-        } else if (ch === ',') {
-          row.push(cur);
-          cur = '';
-        } else if (ch === '\n') {
-          row.push(cur);
-          rows.push(row);
-          row = [];
-          cur = '';
-        } else if (ch === '\r') {
-          // ignore CR
-        } else {
-          cur += ch;
+
+
+        function addTimerMs(ms) {
+          if (!levelRunning) return;
+          if (!monthDeadline) return;
+
+          const base = monthTimeSecondsForMonth(currentLevel) * 1000;
+          const now = performance.now();
+          const msLeft = Math.max(0, monthDeadline - now);
+
+          // cap: you can’t exceed (base + slack)
+          const cappedLeft = Math.min(msLeft + ms, base + MAX_TIMER_SLACK_MS);
+
+          monthDeadline = now + cappedLeft;
+
+          // refresh displayed seconds immediately
+          monthSecondsLeft = Math.max(0, Math.ceil((monthDeadline - now) / 1000));
+          updateHud();
         }
-      }
-    }
-    // last field
-    if (cur.length || row.length) {
-      row.push(cur);
-      rows.push(row);
-    }
-    return rows;
-  }
 
-  function normaliseHeader(h) {
-    return String(h || '').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
-  }
 
-  // Accepts:
-  // - YYYY-MM-DD
-  // - YYYY/MM/DD
-  // - DD/MM/YYYY
-  // Returns ISO YYYY-MM-DD or null
-  function toISODate(s) {
-    const v = String(s || '').trim();
-    if (!v) return null;
+        // ===== Peek loop (step 1: highlight-only, no fruit/bomb yet) =====
+        let levelRunning = false;
+        let activePeek = null;
+        let peekHideTimer = null;
+        let peekNextTimer = null;
+        let bombStreak = 0;
 
-    // YYYY-MM-DD or YYYY/MM/DD
-    let m = v.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
-    if (m) {
-      const y = +m[1], mo = +m[2], d = +m[3];
-      if (isValidYMD(y,mo,d)) return iso(y,mo,d);
-      return null;
-    }
 
-    // DD/MM/YYYY
-    m = v.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
-    if (m) {
-      const d = +m[1], mo = +m[2], y = +m[3];
-      if (isValidYMD(y,mo,d)) return iso(y,mo,d);
-      return null;
-    }
-
-    return null;
-  }
-
-  function isValidYMD(y,m,d) {
-    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return false;
-    if (y < 1900 || y > 2100) return false;
-    if (m < 1 || m > 12) return false;
-    if (d < 1 || d > 31) return false;
-    const dt = new Date(y, m-1, d);
-    return dt.getFullYear() === y && dt.getMonth() === (m-1) && dt.getDate() === d;
-  }
-
-  // Inclusive range expansion
-  function expandDates(startISO, endISO) {
-    const out = [];
-    const [sy, sm, sd] = startISO.split('-').map(Number);
-    const [ey, em, ed] = endISO.split('-').map(Number);
-    let cur = new Date(sy, sm-1, sd);
-    const end = new Date(ey, em-1, ed);
-
-    // guard against inverted ranges
-    if (cur > end) return out;
-
-    while (cur <= end) {
-      out.push(iso(cur.getFullYear(), cur.getMonth()+1, cur.getDate()));
-      cur.setDate(cur.getDate() + 1);
-    }
-    return out;
-  }
-
-  const currentYear = new Date().getFullYear();
-  const yearOptions = [currentYear, currentYear + 1];
-
-  let state = {
-    members: [],          // { name, unavailable: [YYYY-MM-DD...], ranges: [{start,end}...] }
-    byDate: new Map(),    // date -> [names...]
-    year: currentYear,
-    mode: '__ALL__'
-  };
-
-  fetch(CSV_URL, { cache: 'no-store' })
-    .then(r => {
-      if (!r.ok) throw new Error(`Failed to fetch CSV: HTTP ${r.status}`);
-      return r.text();
-    })
-    .then(text => {
-      const rows = parseCSV(text).filter(r => r.some(c => String(c||'').trim() !== ''));
-      if (!rows.length) throw new Error('CSV is empty.');
-
-      const header = rows[0] || [];
-      const h = header.map(normaliseHeader);
-
-      // Find column indices by header name; fallback to first three columns.
-      const idxMember = h.findIndex(x => ['member','name','person','bandmember'].includes(x));
-      const idxStart  = h.findIndex(x => ['startdate','start','from','datestart'].includes(x));
-      const idxEnd    = h.findIndex(x => ['enddate','end','to','dateend'].includes(x));
-
-      const memberCol = idxMember >= 0 ? idxMember : 0;
-      const startCol  = idxStart  >= 0 ? idxStart  : 1;
-      const endCol    = idxEnd    >= 0 ? idxEnd    : 2;
-
-      const memberMap = new Map();      // name -> Set(expanded dates)
-      const memberRanges = new Map();   // name -> Array<{start,end}> (source rows)
-      const byDate = new Map();
-      const years = new Set();
-
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        const nameRaw = (row[memberCol] ?? '').toString().trim();
-        if (!nameRaw) continue;
-
-        const startISO = toISODate(row[startCol]);
-        const endISO = toISODate(row[endCol]) || startISO;
-        if (!startISO || !endISO) continue;
-
-        const dates = expandDates(startISO, endISO);
-        if (!dates.length) continue;
-
-        const name = nameRaw.toLowerCase(); // internal key
-        if (!memberMap.has(name)) memberMap.set(name, new Set());
-        if (!memberRanges.has(name)) memberRanges.set(name, []);
-
-        // store the original row range (source data)
-        memberRanges.get(name).push({ start: startISO, end: endISO });
-
-        for (const d of dates) {
-          memberMap.get(name).add(d);
-          years.add(+d.slice(0,4));
-
-          if (!byDate.has(d)) byDate.set(d, []);
-          byDate.get(d).push(name);
+        function getRevealMsForMonth(month) {
+          // placeholder scaling: later months = less time
+          // tweak later; for now it just proves the loop works.
+          const start = 1600;
+          const step = 80;
+          return Math.max(650, start - (month - 1) * step);
         }
-      }
 
-      const uniqRanges = (ranges) => {
-        const seen = new Set();
-        const out = [];
-        for (const r of ranges) {
-          const key = `${r.start}|${r.end}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          out.push(r);
+        function getCandidatesForMonth(month) {
+          // All real day tiles in the month, including past days.
+          const cells = [...elGrid.querySelectorAll(`.day[data-month="${month}"][data-day]`)];
+          return cells.filter(c =>
+            !c.classList.contains('empty') &&
+            !c.classList.contains('hidden')
+          );
         }
-        out.sort((a,b) => (a.start.localeCompare(b.start) || a.end.localeCompare(b.end)));
-        return out;
-      };
 
-      // Build members array
-      const members = [...memberMap.entries()]
-        .map(([name, set]) => ({
-          name,
-          unavailable: [...set].sort(),
-          ranges: uniqRanges(memberRanges.get(name) || [])
-        }))
-        .sort((a,b) => a.name.localeCompare(b.name));
+        function cheatClearCurrentMonth() {
+          if (!coinInserted) return;
 
-      // Sort tooltip names on each date
-      for (const [d, names] of byDate.entries()) {
-        names.sort((a,b) => a.localeCompare(b));
-        byDate.set(d, names);
-      }
+          // Stop the level cleanly: clears peek timers + month timer
+          stopLevel();
 
-      state.members = members;
-      state.byDate = byDate;
-      // Keep displayed year controlled by the Year dropdown (defaults to current year).
+          // Safety: remove any peek visuals / face
+          if (activePeek) {
+            activePeek.classList.remove('peek');
+            clearFace(activePeek);
+            activePeek = null;
+          }
 
-      updateTitle();
-      updateBadge();
-
-      elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
-
-      const coin = document.getElementById('insertCoin');
-      coin.addEventListener('pointerdown', () => {
-        coinInserted = true;
-
-        // Enter game mode (disable tooltips etc.)
-        document.body.classList.add('game-mode');
-
-        coin.textContent = 'READY';
-        coin.style.animation = 'none';
-        armStartTile();
-        updateHud();
-
-      });
-
-      buildYear();
-      buildMode();
-      render();
-    })
-    .catch(err => {
-      elSubtitle.textContent = 'Failed to load data.';
-      elTitle.textContent = 'Weird Science Band Availability';
-      console.error(err);
-    });
-
-  function buildYear() {
-    elYear.innerHTML = '';
-    yearOptions.forEach(y => {
-      const o = document.createElement('option');
-      o.value = String(y);
-      o.textContent = String(y);
-      elYear.appendChild(o);
-    });
-    elYear.value = String(state.year); // default current year
-    elYear.onchange = () => {
-      state.year = +elYear.value;
-      updateTitle();
-      render();
-    };
-  }
-
-  function updateTitle() {
-    elTitle.textContent = `Weird Science Band Availability for ${state.year}`;
-  }
-
-  function buildMode() {
-    elMode.innerHTML = '<option value="__ALL__">Whole band</option>';
-
-    state.members
-      .map(m => m.name)
-      .sort()
-      .forEach(n => {
-        const o = document.createElement('option');
-        o.value = n;                    // internal key (lowercase)
-        o.textContent = displayName(n);  // display label (capitalised)
-        elMode.appendChild(o);
-      });
-
-    elMode.onchange = () => { state.mode = elMode.value; render(); };
-  }
-
-  function render() {
-    elGrid.innerHTML = '';
-
-    elRule.textContent = state.mode === '__ALL__'
-      ? '✔ only if nobody is unavailable'
-      : `✔ / ✖ for ${displayName(state.mode)}`;
-
-    for (let m = 1; m <= 12; m++) {
-      if (clearedMonths.has(m)) continue; // ✅ don’t render completed months
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `<div class="monthHeader">${MONTHS[m-1]} ${state.year}</div>`;
-
-      const cal = document.createElement('div');
-      cal.className = 'cal';
-
-      const dow = document.createElement('div');
-      dow.className = 'dow';
-      DOW.forEach(d => dow.innerHTML += `<div>${d}</div>`);
-
-      const days = document.createElement('div');
-      days.className = 'days';
-
-      const first = new Date(state.year, m-1, 1);
-      const offset = (first.getDay() + 6) % 7;
-      for (let i = 0; i < offset; i++) days.innerHTML += '<div class="day empty"></div>';
-
-      const count = new Date(state.year, m, 0).getDate();
-      for (let d = 1; d <= count; d++) {
-        const date = iso(state.year, m, d);
-        const names = state.byDate.get(date) || [];
-        const bad = state.mode === '__ALL__' ? names.length > 0 : names.includes(state.mode);
-        const past = date < todayISO();
-
-
-        const cell = document.createElement('div');
-        cell.className = `day ${past ? 'past' : (bad ? 'bad' : 'good')}`;
-        cell.dataset.day = String(d);
-        cell.dataset.month = String(m);
-
-        cell.innerHTML = past
-          ? `<strong>${d}</strong>`
-          : `<strong>${d}</strong><div class="mark">${bad ? '✖' : '✔'}</div>`;
-
-
-        // Tooltip only for unavailable squares:
-        // show the (whole-band) list of unavailable members for that date.
-        if (bad && !past) {
-          const tt = document.createElement('div');
-          tt.className = 'tooltip';
-
-          (state.byDate.get(date) || []).forEach(n => {
-            const row = document.createElement('div');
-            row.textContent = `✖ ${displayName(n)}`;
-            tt.appendChild(row);
+          // Hide every remaining tile in this month (including past days)
+          const cells = getCandidatesForMonth(currentLevel);
+          cells.forEach(c => {
+            c.classList.remove('peek');
+            clearFace(c);
+            c.classList.add('hidden');
           });
 
-          cell.appendChild(tt);
+          // Now advance as if the month had been cleared normally
+          setTimeout(() => advanceLevel(), 60);
         }
 
-        days.appendChild(cell);
-      }
 
-      cal.appendChild(dow);
-      cal.appendChild(days);
-      card.appendChild(cal);
-      elGrid.appendChild(card);
-    }
-
-    // Re-arm the starting tile after every render (once coin inserted)
-    if (coinInserted) armStartTile();
-  }
-
-function armStartTile(){
-    // clear any existing blink
-    elGrid.querySelectorAll('.day.start-blink')
-      .forEach(el => el.classList.remove('start-blink'));
-
-    // pick day 1 in the active month; fallback to the first day tile if needed
-    const start =
-      elGrid.querySelector(`.day[data-month="${currentLevel}"][data-day="1"]`) ||
-      elGrid.querySelector(`.day[data-month="${currentLevel}"]`);
-
-    if (!start) return;
-
-    start.classList.add('start-blink');
-
-    // tap starts the level (temporary behaviour)
-    start.onpointerdown = (e) => {
-      if (!coinInserted) return;
-      if (levelRunning) return;
-      e.preventDefault();
-
-      gameStarted = true; // set, don't gate
-      start.classList.remove('start-blink');
-      elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
-
-      startLevel();
-
-    };
-
-    // double-click clears the month (temporary test mechanic)
-    start.ondblclick = (e) => {
-      e.preventDefault();
-      if (!coinInserted) return;
-      advanceLevel();
-    };
-  }
-
-      function clearMonthTimer(){
-  if (monthTimerId) clearInterval(monthTimerId);
-  monthTimerId = null;
-}
-
-function monthTimeSecondsForMonth(month){
-  // Total time to clear the month. Decreases as months progress.
-  // Tune these numbers to taste.
-  const start = 38;   // January
-  const step  = 2;    // -2s per month
-  return Math.max(16, start - (month - 1) * step); // December bottoms at 16s
-}
-
-function startMonthTimer(){
-  clearMonthTimer();
-
-  monthSecondsLeft = monthTimeSecondsForMonth(currentLevel);
-  monthDeadline = performance.now() + monthSecondsLeft * 1000;
-
-  updateHud();
-
-  monthTimerId = setInterval(() => {
-    const msLeft = monthDeadline - performance.now();
-    const secLeft = Math.max(0, Math.ceil(msLeft / 1000));
-
-    if (secLeft !== monthSecondsLeft){
-      monthSecondsLeft = secLeft;
-      updateHud();
-    }
-
-    if (msLeft <= 0){
-      onMonthTimeUp();
-    }
-  }, 100);
-}
-
-    function onMonthTimeUp(){
-      clearMonthTimer();
-      stopLevel(); // stops peek loop
-
-      lives = Math.max(0, lives - 1);
-
-      if (lives <= 0){
-      triggerGameOver();
-    return;
-    }
-
-
-      document.body.classList.add('screen-flash');
-      setTimeout(() => document.body.classList.remove('screen-flash'), 120);
-
-      // Reset this month (bring back hidden tiles)
-      // Easiest reliable reset is: re-render without clearing the month,
-      // then re-arm the start tile.
-      elSubtitle.innerHTML = `<span class="arcade-text">TIME UP</span>`;
-      render();
-
-      // Go back to READY for the same level
-      setTimeout(() => {
-        elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
-        updateHud();
-      }, 450);
-    }
-
-  function advanceLevel(){
-    clearedMonths.add(currentLevel);
-    currentLevel++;
-
-    if (currentLevel > 12) {
-      winGame();
-      return;
-    }
-
-    elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
-    render();
-    updateHud();
-
-  }
-
-  function winGame(){
-    setUnlocked();
-    setHighScoreIfBetter(score);
-    updateBadge();
-
-
-    elSubtitle.innerHTML = '<span class="arcade-text">ALL CLEAR</span>';
-
-    // Use the same duration as celebrateWin so we reset AFTER the show
-    const durationMs = 14400;
-    celebrateWin({ durationMs, bursts: 28 });
-
-    // Reset state after fireworks + overlay fade
-    setTimeout(() => {
-      // reset game state
-      score = 0;
-      lives = 3;
-      clearedMonths.clear();
-      currentLevel = 1;
-      coinInserted = false;
-      updateHud();
-      gameStarted = false;
-
-      // exit game mode (tooltips back)
-      document.body.classList.remove('game-mode');
-
-      // restore INSERT COIN prompt and re-bind handler
-      elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
-      const coin = document.getElementById('insertCoin');
-      coin.addEventListener('pointerdown', () => {
-        coinInserted = true;
-        updateHud();
-        document.body.classList.add('game-mode');
-        coin.textContent = 'READY';
-        coin.style.animation = 'none';
-        armStartTile();
-      });
-
-      // re-render all months
-      render();
-    }, durationMs + 700); // 700ms covers your overlay fadeOut (650ms)
-  }
-
-    function celebrateWin(opts = {}) {
-      const durationMs = opts.durationMs ?? 14400;   // 4× longer
-      const bursts = opts.bursts ?? 28;              // how many starbursts total
-
-      // Blackout overlay (header remains visible above because it’s outside the overlay stacking)
-      const overlay = document.createElement('div');
-      overlay.className = 'winOverlay';
-      overlay.innerHTML = `
-        <div class="winText">
-          <div class="big">ALL CLEAR</div>
-        </div>
-      `;
-      document.body.appendChild(overlay);
-
-      const canvas = document.createElement('canvas');
-      canvas.className = 'fxCanvas';
-      canvas.style.zIndex = 9995;
-      document.body.appendChild(canvas);
-
-      const ctx = canvas.getContext('2d', { alpha: true });
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-
-      function resize(){
-        const w = Math.floor(window.innerWidth);
-        const h = Math.floor(window.innerHeight);
-        canvas.width = Math.floor(w * dpr);
-        canvas.height = Math.floor(h * dpr);
-        canvas.style.width = w + 'px';
-        canvas.style.height = h + 'px';
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      }
-      resize();
-      window.addEventListener('resize', resize, { passive: true });
-
-      const particles = [];
-      const colors = ['#22c55e', '#3b82f6', '#ec4899', '#ffffff']; // add white pops
-      const rnd = (a,b) => a + Math.random() * (b - a);
-
-      function spawnBurst(){
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-
-        // spread across screen, avoid header area
-        const x = rnd(w * 0.08, w * 0.92);
-        const y = rnd(h * 0.22, h * 0.88);
-
-        const col = colors[(Math.random() * colors.length) | 0];
-
-        // Big, slow “shell” parameters
-        const points = Math.floor(rnd(14, 22));     // fewer points reads bigger
-        const baseRadius = rnd(10, 18);
-        const maxRadius = rnd(260, 460);            // BIG
-        const life = Math.floor(rnd(190, 280));     // SLOW hang
-        const size = rnd(7, 12);                    // chunky pixels
-
-        for (let i = 0; i < points; i++){
-          const angle = (i / points) * Math.PI * 2 + rnd(-0.03, 0.03);
-          particles.push({
-            x, y, angle,
-            radius: baseRadius,
-            expand: (maxRadius - baseRadius) / life, // slow radial expansion
-            col,
-            life,
-            fade: life,
-            size,
-            isFlash: false
-          });
+        function clearPeekTimers() {
+          if (peekHideTimer) clearTimeout(peekHideTimer);
+          if (peekNextTimer) clearTimeout(peekNextTimer);
+          peekHideTimer = null;
+          peekNextTimer = null;
         }
 
-        // centre flash to sell the “boom”
-        if (Math.random() < 0.6){
-          particles.push({
-            x, y,
-            angle: 0,
-            radius: 0,
-            expand: 0,
-            col: '#ffffff',
-            life: 26,
-            fade: 26,
-            size: rnd(14, 24),
-            isFlash: true
-          });
+        function stopLevel() {
+          levelRunning = false;
+          clearMonthTimer();
+          clearPeekTimers();
+          if (activePeek) activePeek.classList.remove('peek');
+          activePeek = null;
         }
-      }
 
-      const t0 = performance.now();
-      const burstEvery = durationMs / bursts; // spread bursts evenly
-      let lastBurstElapsed = -burstEvery;     // so we spawn immediately
+        // Fruit table (later we can tune values)
+        const FRUITS = [
+          { emoji: '🍒', pts: 50 },
+          { emoji: '🍋', pts: 75 },
+          { emoji: '🍇', pts: 100 },
+          { emoji: '🍓', pts: 125 },
+          { emoji: '🍍', pts: 150 },
+          { emoji: '🍉', pts: 175 },
+        ];
 
-      function cleanup(){
-        window.removeEventListener('resize', resize);
-        canvas.remove();
+        function bombChanceForMonth(month) {
+          // gentler ramp, lower cap
+          return Math.max(
+            0.15,
+            Math.min(0.30, 0.15 + (month - 1) * 0.015)
+          );
+        }
 
-        overlay.classList.add('fadeOut');
-        setTimeout(() => overlay.remove(), 650);
-      }
+        // Ensure we can show an icon even on past tiles (which currently have no .mark)
+        function getOrCreateMark(cell) {
+          let mark = cell.querySelector('.mark');
+          if (!mark) {
+            mark = document.createElement('div');
+            mark.className = 'mark';
+            cell.appendChild(mark);
+            cell.dataset.markTemp = '1'; // so we can remove it later
+          }
+          // remember original mark (✔/✖/empty) once
+          if (cell.dataset.origMark === undefined) {
+            cell.dataset.origMark = mark.textContent || '';
+          }
+          return mark;
+        }
 
-      function tick(){
-        const now = performance.now();
-        const elapsed = now - t0;
+        function restoreMark(cell) {
+          const mark = cell.querySelector('.mark');
+          if (!mark) return;
 
-        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+          // revert to original and hide
+          mark.textContent = cell.dataset.origMark || '';
+          mark.style.visibility = 'hidden';
 
-        // spawn bursts across most of the show; taper near the end
-        if (elapsed < durationMs * 0.92) {
-          if (elapsed - lastBurstElapsed >= burstEvery) {
-            spawnBurst();
-            if (Math.random() < 0.22) spawnBurst(); // occasional double for “finale” feel
-            lastBurstElapsed = elapsed;
+          // if we created it just for the game (past tiles), remove it
+          if (cell.dataset.markTemp === '1') {
+            mark.remove();
+            delete cell.dataset.markTemp;
+            delete cell.dataset.origMark;
           }
         }
 
-        // draw particles
-        for (let i = particles.length - 1; i >= 0; i--){
-          const p = particles[i];
-          p.life--;
-
-          // slow radial expansion (unless flash)
-          if (!p.isFlash) p.radius += p.expand;
-
-          const px = p.isFlash ? p.x : (p.x + Math.cos(p.angle) * p.radius);
-          const py = p.isFlash ? p.y : (p.y + Math.sin(p.angle) * p.radius + (p.radius * 0.010)); // tiny gravity drift
-
-          const alpha = Math.max(0, p.life / p.fade);
-          ctx.globalAlpha = alpha;
-          ctx.fillStyle = p.col;
-
-          ctx.fillRect(px - p.size/2, py - p.size/2, p.size, p.size);
-
-          if (p.life <= 0) particles.splice(i, 1);
+        // Full-cell face overlay for fruit/bomb during peek
+        function ensureFace(cell) {
+          let face = cell.querySelector('.face');
+          if (!face) {
+            face = document.createElement('div');
+            face.className = 'face';
+            cell.appendChild(face);
+            cell.classList.add('revealFace');
+          }
+          return face;
+        }
+        function setFace(cell, text) {
+          const face = ensureFace(cell);
+          face.textContent = text;
+        }
+        function clearFace(cell) {
+          const face = cell.querySelector('.face');
+          if (face) face.textContent = '';
         }
 
-        if (elapsed < durationMs || particles.length){
+        function startLevel() {
+          stopLevel(); // clean start
+          bombStreak = 0;
+          levelRunning = true;
+          startMonthTimer();
+          revealMs = getRevealMsForMonth(currentLevel);
+          scheduleNextPeek(150);
+          updateHud();
+        }
+
+        function scheduleNextPeek(delayMs) {
+          clearPeekTimers();
+          peekNextTimer = setTimeout(() => {
+            if (!levelRunning) return;
+
+            const candidates = getCandidatesForMonth(currentLevel);
+            if (!candidates.length) {
+              // Month cleared
+              stopLevel();
+              setTimeout(() => advanceLevel(), 250);
+              return;
+            }
+
+            const next = candidates[(Math.random() * candidates.length) | 0];
+            showPeek(next);
+          }, delayMs);
+        }
+
+        function showPeek(cell) {
+          if (!levelRunning) return;
+
+          if (activePeek && activePeek !== cell) {
+            activePeek.classList.remove('peek');
+            clearFace(activePeek);
+          }
+
+          activePeek = cell;
+          cell.classList.add('peek');
+
+          // Decide what it is this time
+          let isBomb;
+
+          // hard cap: never allow more than 3 bombs in a row
+          if (bombStreak >= 3) {
+            isBomb = false;
+          } else {
+            isBomb = Math.random() < bombChanceForMonth(currentLevel);
+          }
+
+          if (isBomb) {
+            bombStreak++;
+            cell.dataset.peekType = 'bomb';
+            setFace(cell, '💣');
+          } else {
+            bombStreak = 0;
+            cell.dataset.peekType = 'fruit';
+            const f = FRUITS[(Math.random() * FRUITS.length) | 0];
+            cell.dataset.peekPts = String(f.pts);
+            setFace(cell, f.emoji);
+          }
+
+          clearPeekTimers();
+          peekHideTimer = setTimeout(() => {
+            if (!levelRunning) return;
+
+            // If a bomb was showing and the player did NOT click it, reward time
+            if (activePeek && activePeek.dataset.peekType === 'bomb') {
+              addTimerMs(BOMB_PASS_BONUS_MS);
+            }
+
+            if (activePeek) {
+              activePeek.classList.remove('peek');
+              activePeek = null;
+            }
+
+            scheduleNextPeek(120);
+          }, revealMs);
+
+        }
+
+        // One delegated handler for the whole grid:
+        elGrid.addEventListener('pointerdown', (e) => {
+          if (!coinInserted) return;
+          if (!levelRunning) return;
+
+          const cell = e.target.closest('.day');
+          if (!cell) return;
+
+          // Only accept presses on the currently peeked tile
+          if (cell !== activePeek) return;
+
+          e.preventDefault();
+
+          const t = cell.dataset.peekType || 'fruit';
+
+          cell.classList.remove('peek');
+          activePeek = null;
+
+          clearFace(cell);
+
+          if (t === 'bomb') {
+            lives = Math.max(0, lives - 1);
+
+            document.body.classList.add('screen-flash');
+            setTimeout(() => document.body.classList.remove('screen-flash'), 120);
+
+            updateHud();
+
+            if (lives <= 0) {
+              triggerGameOver();
+              return;
+            }
+
+            scheduleNextPeek(180);
+            return;
+          }
+
+
+          // fruit
+          const pts = Number(cell.dataset.peekPts || '50');
+          score += pts;
+          addTimerMs(FRUIT_HIT_BONUS_MS);
+          updateHud();
+
+          // hide collected fruit tile
+          cell.classList.add('hidden');
+
+          // If that was the last remaining tile in the month, clear the level
+          if (getCandidatesForMonth(currentLevel).length === 0) {
+            stopLevel();
+            setTimeout(() => advanceLevel(), 250);
+            return;
+          }
+
+          // cleanup
+          delete cell.dataset.peekType;
+          delete cell.dataset.peekFruit;
+          delete cell.dataset.peekPts;
+
+          scheduleNextPeek(120);
+
+        });
+
+        const UNLOCK_KEY = 'wsCalendarArcadeUnlocked';
+        const HIGH_SCORE_KEY = 'wsCalendarHighScore';
+
+        function getHighScore() {
+          try { return Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0; }
+          catch { return 0; }
+        }
+
+        function setHighScoreIfBetter(score) {
+          try {
+            const prev = getHighScore();
+            if (score > prev) {
+              localStorage.setItem(HIGH_SCORE_KEY, String(score));
+            }
+          } catch { }
+        }
+
+        function setUnlocked() {
+          try { localStorage.setItem(UNLOCK_KEY, '1'); } catch { }
+        }
+        function isUnlocked() {
+          try { return localStorage.getItem(UNLOCK_KEY) === '1'; } catch { return false; }
+        }
+
+        const pad = n => String(n).padStart(2, '0');
+        const iso = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
+
+        const todayISO = () => {
+          const t = new Date();
+          t.setHours(0, 0, 0, 0);
+          return iso(t.getFullYear(), t.getMonth() + 1, t.getDate());
+        };
+
+
+        // Capitalise Member Names for display only (internal keys remain lowercase)
+        const displayName = (name) =>
+          String(name || '')
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+
+        // Parse CSV robustly (handles quoted fields + commas)
+        function parseCSV(text) {
+          const rows = [];
+          let row = [];
+          let cur = '';
+          let inQuotes = false;
+
+          for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            const next = text[i + 1];
+
+            if (inQuotes) {
+              if (ch === '"' && next === '"') {
+                cur += '"';
+                i++;
+              } else if (ch === '"') {
+                inQuotes = false;
+              } else {
+                cur += ch;
+              }
+            } else {
+              if (ch === '"') {
+                inQuotes = true;
+              } else if (ch === ',') {
+                row.push(cur);
+                cur = '';
+              } else if (ch === '\n') {
+                row.push(cur);
+                rows.push(row);
+                row = [];
+                cur = '';
+              } else if (ch === '\r') {
+                // ignore CR
+              } else {
+                cur += ch;
+              }
+            }
+          }
+          // last field
+          if (cur.length || row.length) {
+            row.push(cur);
+            rows.push(row);
+          }
+          return rows;
+        }
+
+        function normaliseHeader(h) {
+          return String(h || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        // Accepts:
+        // - YYYY-MM-DD
+        // - YYYY/MM/DD
+        // - DD/MM/YYYY
+        // Returns ISO YYYY-MM-DD or null
+        function toISODate(s) {
+          const v = String(s || '').trim();
+          if (!v) return null;
+
+          // YYYY-MM-DD or YYYY/MM/DD
+          let m = v.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
+          if (m) {
+            const y = +m[1], mo = +m[2], d = +m[3];
+            if (isValidYMD(y, mo, d)) return iso(y, mo, d);
+            return null;
+          }
+
+          // DD/MM/YYYY
+          m = v.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+          if (m) {
+            const d = +m[1], mo = +m[2], y = +m[3];
+            if (isValidYMD(y, mo, d)) return iso(y, mo, d);
+            return null;
+          }
+
+          return null;
+        }
+
+        function isValidYMD(y, m, d) {
+          if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return false;
+          if (y < 1900 || y > 2100) return false;
+          if (m < 1 || m > 12) return false;
+          if (d < 1 || d > 31) return false;
+          const dt = new Date(y, m - 1, d);
+          return dt.getFullYear() === y && dt.getMonth() === (m - 1) && dt.getDate() === d;
+        }
+
+        // Inclusive range expansion
+        function expandDates(startISO, endISO) {
+          const out = [];
+          const [sy, sm, sd] = startISO.split('-').map(Number);
+          const [ey, em, ed] = endISO.split('-').map(Number);
+          let cur = new Date(sy, sm - 1, sd);
+          const end = new Date(ey, em - 1, ed);
+
+          // guard against inverted ranges
+          if (cur > end) return out;
+
+          while (cur <= end) {
+            out.push(iso(cur.getFullYear(), cur.getMonth() + 1, cur.getDate()));
+            cur.setDate(cur.getDate() + 1);
+          }
+          return out;
+        }
+
+        const currentYear = new Date().getFullYear();
+        const yearOptions = [currentYear, currentYear + 1];
+
+        let state = {
+          members: [],          // { name, unavailable: [YYYY-MM-DD...], ranges: [{start,end}...] }
+          byDate: new Map(),    // date -> [names...]
+          year: currentYear,
+          mode: '__ALL__'
+        };
+
+        fetch(CSV_URL, { cache: 'no-store' })
+          .then(r => {
+            if (!r.ok) throw new Error(`Failed to fetch CSV: HTTP ${r.status}`);
+            return r.text();
+          })
+          .then(text => {
+            const rows = parseCSV(text).filter(r => r.some(c => String(c || '').trim() !== ''));
+            if (!rows.length) throw new Error('CSV is empty.');
+
+            const header = rows[0] || [];
+            const h = header.map(normaliseHeader);
+
+            // Find column indices by header name; fallback to first three columns.
+            const idxMember = h.findIndex(x => ['member', 'name', 'person', 'bandmember'].includes(x));
+            const idxStart = h.findIndex(x => ['startdate', 'start', 'from', 'datestart'].includes(x));
+            const idxEnd = h.findIndex(x => ['enddate', 'end', 'to', 'dateend'].includes(x));
+
+            const memberCol = idxMember >= 0 ? idxMember : 0;
+            const startCol = idxStart >= 0 ? idxStart : 1;
+            const endCol = idxEnd >= 0 ? idxEnd : 2;
+
+            const memberMap = new Map();      // name -> Set(expanded dates)
+            const memberRanges = new Map();   // name -> Array<{start,end}> (source rows)
+            const byDate = new Map();
+            const years = new Set();
+
+            for (let i = 1; i < rows.length; i++) {
+              const row = rows[i];
+              const nameRaw = (row[memberCol] ?? '').toString().trim();
+              if (!nameRaw) continue;
+
+              const startISO = toISODate(row[startCol]);
+              const endISO = toISODate(row[endCol]) || startISO;
+              if (!startISO || !endISO) continue;
+
+              const dates = expandDates(startISO, endISO);
+              if (!dates.length) continue;
+
+              const name = nameRaw.toLowerCase(); // internal key
+              if (!memberMap.has(name)) memberMap.set(name, new Set());
+              if (!memberRanges.has(name)) memberRanges.set(name, []);
+
+              // store the original row range (source data)
+              memberRanges.get(name).push({ start: startISO, end: endISO });
+
+              for (const d of dates) {
+                memberMap.get(name).add(d);
+                years.add(+d.slice(0, 4));
+
+                if (!byDate.has(d)) byDate.set(d, []);
+                byDate.get(d).push(name);
+              }
+            }
+
+            const uniqRanges = (ranges) => {
+              const seen = new Set();
+              const out = [];
+              for (const r of ranges) {
+                const key = `${r.start}|${r.end}`;
+                if (seen.has(key)) continue;
+                seen.add(key);
+                out.push(r);
+              }
+              out.sort((a, b) => (a.start.localeCompare(b.start) || a.end.localeCompare(b.end)));
+              return out;
+            };
+
+            // Build members array
+            const members = [...memberMap.entries()]
+              .map(([name, set]) => ({
+                name,
+                unavailable: [...set].sort(),
+                ranges: uniqRanges(memberRanges.get(name) || [])
+              }))
+              .sort((a, b) => a.name.localeCompare(b.name));
+
+            // Sort tooltip names on each date
+            for (const [d, names] of byDate.entries()) {
+              names.sort((a, b) => a.localeCompare(b));
+              byDate.set(d, names);
+            }
+
+            state.members = members;
+            state.byDate = byDate;
+            // Keep displayed year controlled by the Year dropdown (defaults to current year).
+
+            updateTitle();
+            updateBadge();
+
+            elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
+
+            const coin = document.getElementById('insertCoin');
+            coin.addEventListener('pointerdown', () => {
+              coinInserted = true;
+
+              // Enter game mode (disable tooltips etc.)
+              document.body.classList.add('game-mode');
+
+              coin.textContent = 'READY';
+              coin.style.animation = 'none';
+              armStartTile();
+              updateHud();
+
+            });
+
+            buildYear();
+            buildMode();
+            render();
+          })
+          .catch(err => {
+            elSubtitle.textContent = 'Failed to load data.';
+            elTitle.textContent = 'Weird Science Band Availability';
+            console.error(err);
+          });
+
+        function buildYear() {
+          elYear.innerHTML = '';
+          yearOptions.forEach(y => {
+            const o = document.createElement('option');
+            o.value = String(y);
+            o.textContent = String(y);
+            elYear.appendChild(o);
+          });
+          elYear.value = String(state.year); // default current year
+          elYear.onchange = () => {
+            state.year = +elYear.value;
+            updateTitle();
+            render();
+          };
+        }
+
+        function updateTitle() {
+          elTitle.textContent = `Weird Science Band Availability for ${state.year}`;
+        }
+
+        function buildMode() {
+          elMode.innerHTML = '<option value="__ALL__">Whole band</option>';
+
+          state.members
+            .map(m => m.name)
+            .sort()
+            .forEach(n => {
+              const o = document.createElement('option');
+              o.value = n;                    // internal key (lowercase)
+              o.textContent = displayName(n);  // display label (capitalised)
+              elMode.appendChild(o);
+            });
+
+          elMode.onchange = () => { state.mode = elMode.value; render(); };
+        }
+
+        function render() {
+          elGrid.innerHTML = '';
+
+          elRule.textContent = state.mode === '__ALL__'
+            ? '✔ only if nobody is unavailable'
+            : `✔ / ✖ for ${displayName(state.mode)}`;
+
+          for (let m = 1; m <= 12; m++) {
+            if (clearedMonths.has(m)) continue; // ✅ don’t render completed months
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<div class="monthHeader">${MONTHS[m - 1]} ${state.year}</div>`;
+
+            const cal = document.createElement('div');
+            cal.className = 'cal';
+
+            const dow = document.createElement('div');
+            dow.className = 'dow';
+            DOW.forEach(d => dow.innerHTML += `<div>${d}</div>`);
+
+            const days = document.createElement('div');
+            days.className = 'days';
+
+            const first = new Date(state.year, m - 1, 1);
+            const offset = (first.getDay() + 6) % 7;
+            for (let i = 0; i < offset; i++) days.innerHTML += '<div class="day empty"></div>';
+
+            const count = new Date(state.year, m, 0).getDate();
+            for (let d = 1; d <= count; d++) {
+              const date = iso(state.year, m, d);
+              const names = state.byDate.get(date) || [];
+              const bad = state.mode === '__ALL__' ? names.length > 0 : names.includes(state.mode);
+              const past = date < todayISO();
+
+
+              const cell = document.createElement('div');
+              cell.className = `day ${past ? 'past' : (bad ? 'bad' : 'good')}`;
+              cell.dataset.day = String(d);
+              cell.dataset.month = String(m);
+
+              cell.innerHTML = past
+                ? `<strong>${d}</strong>`
+                : `<strong>${d}</strong><div class="mark">${bad ? '✖' : '✔'}</div>`;
+
+
+              // Tooltip only for unavailable squares:
+              // show the (whole-band) list of unavailable members for that date.
+              if (bad && !past) {
+                const tt = document.createElement('div');
+                tt.className = 'tooltip';
+
+                (state.byDate.get(date) || []).forEach(n => {
+                  const row = document.createElement('div');
+                  row.textContent = `✖ ${displayName(n)}`;
+                  tt.appendChild(row);
+                });
+
+                cell.appendChild(tt);
+              }
+
+              days.appendChild(cell);
+            }
+
+            cal.appendChild(dow);
+            cal.appendChild(days);
+            card.appendChild(cal);
+            elGrid.appendChild(card);
+          }
+
+          // Re-arm the starting tile after every render (once coin inserted)
+          if (coinInserted) armStartTile();
+        }
+
+        function armStartTile() {
+          // clear any existing blink
+          elGrid.querySelectorAll('.day.start-blink')
+            .forEach(el => el.classList.remove('start-blink'));
+
+          // pick day 1 in the active month; fallback to the first day tile if needed
+          const start =
+            elGrid.querySelector(`.day[data-month="${currentLevel}"][data-day="1"]`) ||
+            elGrid.querySelector(`.day[data-month="${currentLevel}"]`);
+
+          if (!start) return;
+
+          start.classList.add('start-blink');
+
+          // tap starts the level (temporary behaviour)
+          start.onpointerdown = (e) => {
+            if (!coinInserted) return;
+            if (levelRunning) return;
+            e.preventDefault();
+
+            gameStarted = true; // set, don't gate
+            start.classList.remove('start-blink');
+            elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
+
+            startLevel();
+
+          };
+
+          // double-click first tile clears the month (hidden cheat)
+          start.ondblclick = (e) => {
+            e.preventDefault();
+            cheatClearCurrentMonth();
+          };
+
+        }
+        function clearMonthTimer() {
+          if (monthTimerId) clearInterval(monthTimerId);
+          monthTimerId = null;
+        }
+
+        function monthTimeSecondsForMonth(month) {
+          // Total time to clear the month. Decreases as months progress.
+          // Tune these numbers to taste.
+          const start = 38;   // January
+          const step = 2;    // -2s per month
+          return Math.max(16, start - (month - 1) * step); // December bottoms at 16s
+        }
+
+        function startMonthTimer() {
+          clearMonthTimer();
+
+          monthSecondsLeft = monthTimeSecondsForMonth(currentLevel);
+          monthDeadline = performance.now() + monthSecondsLeft * 1000;
+
+          updateHud();
+
+          monthTimerId = setInterval(() => {
+            const msLeft = monthDeadline - performance.now();
+            const secLeft = Math.max(0, Math.ceil(msLeft / 1000));
+
+            if (secLeft !== monthSecondsLeft) {
+              monthSecondsLeft = secLeft;
+              updateHud();
+            }
+
+            if (msLeft <= 0) {
+              onMonthTimeUp();
+            }
+          }, 100);
+        }
+
+        function onMonthTimeUp() {
+          clearMonthTimer();
+          stopLevel(); // stops peek loop
+
+          lives = Math.max(0, lives - 1);
+
+          if (lives <= 0) {
+            triggerGameOver();
+            return;
+          }
+
+
+          document.body.classList.add('screen-flash');
+          setTimeout(() => document.body.classList.remove('screen-flash'), 120);
+
+          // Reset this month (bring back hidden tiles)
+          // Easiest reliable reset is: re-render without clearing the month,
+          // then re-arm the start tile.
+          elSubtitle.innerHTML = `<span class="arcade-text">TIME UP</span>`;
+          render();
+
+          // Go back to READY for the same level
+          setTimeout(() => {
+            elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
+            updateHud();
+          }, 450);
+        }
+
+        function advanceLevel() {
+          // Capture which month we just cleared (1=Jan ... 12=Dec)
+          const cleared = currentLevel;
+
+          // Compute remaining time (ms) using the monthDeadline you already maintain
+          const msLeft = Math.max(0, monthDeadline ? (monthDeadline - performance.now()) : 0);
+
+          // Convert remaining time to points (1 point per 100ms * rate)
+          const bonusPts = Math.max(
+            0,
+            Math.floor(msLeft / 100) * TIME_BONUS_POINTS_PER_100MS
+          );
+
+          // Always award the bonus (including December) unless you decide otherwise
+          if (bonusPts > 0) {
+            score += bonusPts;
+            updateHud();
+          }
+
+          // Mark month cleared and advance
+          clearedMonths.add(cleared);
+          currentLevel++;
+
+          // If December was cleared, that wins the game: DO NOT show the level-clear overlay
+          if (cleared === 12) {
+            winGame({
+              bonusPts,
+              msLeft
+            });
+            return;
+          }
+
+          // For Jan–Nov: show overlay, then render next level after dismissal
+          showLevelClearOverlay({
+            clearedMonth: cleared,
+            bonusPts,
+            msLeft,
+            onDone: () => {
+              elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
+              render();
+              updateHud();
+            }
+          });
+        }
+
+
+        function showLevelClearOverlay({ clearedMonth, bonusPts, msLeft, onDone }) {
+          const ov = document.createElement('div');
+          ov.className = 'levelClearOverlay';
+
+          const sec = Math.max(0, Math.ceil(msLeft / 1000));
+
+          ov.innerHTML = `
+    <div class="box">
+      <div class="big">LEVEL CLEARED</div>
+      <div class="small">TIME BONUS +${bonusPts}  (${sec}s LEFT)</div>
+      <div class="hint">CLICK TO CONTINUE</div>
+    </div>
+  `;
+
+          document.body.appendChild(ov);
+
+          // Click anywhere to continue
+          ov.addEventListener('pointerdown', () => {
+            ov.remove();
+            if (typeof onDone === 'function') onDone();
+          }, { once: true });
+        }
+
+
+        function winGame({ bonusPts = 0, msLeft = 0 } = {}) {
+
+          setUnlocked();
+          setHighScoreIfBetter(score);
+          updateBadge();
+
+
+          elSubtitle.innerHTML = '<span class="arcade-text">ALL CLEAR</span>';
+
+          // Use the same duration as celebrateWin so we reset AFTER the show
+          const durationMs = 14400;
+          celebrateWin({ durationMs, bursts: 28, bonusPts, msLeft });
+
+          // Reset state after fireworks + overlay fade
+          setTimeout(() => {
+            // reset game state
+            score = 0;
+            lives = 3;
+            clearedMonths.clear();
+            currentLevel = 1;
+            coinInserted = false;
+            updateHud();
+            gameStarted = false;
+
+            // exit game mode (tooltips back)
+            document.body.classList.remove('game-mode');
+
+            // restore INSERT COIN prompt and re-bind handler
+            elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
+            const coin = document.getElementById('insertCoin');
+            coin.addEventListener('pointerdown', () => {
+              coinInserted = true;
+              updateHud();
+              document.body.classList.add('game-mode');
+              coin.textContent = 'READY';
+              coin.style.animation = 'none';
+              armStartTile();
+            });
+
+            // re-render all months
+            render();
+          }, durationMs + 700); // 700ms covers your overlay fadeOut (650ms)
+        }
+
+        function celebrateWin(opts = {}) {
+          const bonusPts = opts.bonusPts ?? 0;
+          const msLeft = opts.msLeft ?? 0;
+          const secLeft = Math.max(0, Math.ceil(msLeft / 1000));
+          const durationMs = opts.durationMs ?? 14400;   // 4× longer
+          const bursts = opts.bursts ?? 28;              // how many starbursts total
+
+          // Blackout overlay (header remains visible above because it’s outside the overlay stacking)
+          const overlay = document.createElement('div');
+          overlay.className = 'winOverlay';
+          overlay.innerHTML = `
+            <div class="winText">
+              <div class="winBadgeBox">
+                <div class="line">LEVEL CLEAR</div>
+                <div class="line">TIME BONUS +${bonusPts} (${secLeft}s LEFT)</div>
+                <div class="badgeLine badgeScore">
+                <span class="star">⭐</span>
+                <div class="line">ARCADE MODE CLEARED</div>
+                <span class="star">⭐</span>
+            </div>
+          `;
+
+          document.body.appendChild(overlay);
+
+          const canvas = document.createElement('canvas');
+          canvas.className = 'fxCanvas';
+          canvas.style.zIndex = 9995;
+          document.body.appendChild(canvas);
+
+          const ctx = canvas.getContext('2d', { alpha: true });
+          const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+          function resize() {
+            const w = Math.floor(window.innerWidth);
+            const h = Math.floor(window.innerHeight);
+            canvas.width = Math.floor(w * dpr);
+            canvas.height = Math.floor(h * dpr);
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          }
+          resize();
+          window.addEventListener('resize', resize, { passive: true });
+
+          const particles = [];
+          const colors = ['#22c55e', '#3b82f6', '#ec4899', '#ffffff']; // add white pops
+          const rnd = (a, b) => a + Math.random() * (b - a);
+
+          function spawnBurst() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            // spread across screen, avoid header area
+            const x = rnd(w * 0.08, w * 0.92);
+            const y = rnd(h * 0.22, h * 0.88);
+
+            const col = colors[(Math.random() * colors.length) | 0];
+
+            // Big, slow “shell” parameters
+            const points = Math.floor(rnd(14, 22));     // fewer points reads bigger
+            const baseRadius = rnd(10, 18);
+            const maxRadius = rnd(260, 460);            // BIG
+            const life = Math.floor(rnd(190, 280));     // SLOW hang
+            const size = rnd(7, 12);                    // chunky pixels
+
+            for (let i = 0; i < points; i++) {
+              const angle = (i / points) * Math.PI * 2 + rnd(-0.03, 0.03);
+              particles.push({
+                x, y, angle,
+                radius: baseRadius,
+                expand: (maxRadius - baseRadius) / life, // slow radial expansion
+                col,
+                life,
+                fade: life,
+                size,
+                isFlash: false
+              });
+            }
+
+            // centre flash to sell the “boom”
+            if (Math.random() < 0.6) {
+              particles.push({
+                x, y,
+                angle: 0,
+                radius: 0,
+                expand: 0,
+                col: '#ffffff',
+                life: 26,
+                fade: 26,
+                size: rnd(14, 24),
+                isFlash: true
+              });
+            }
+          }
+
+          const t0 = performance.now();
+          const burstEvery = durationMs / bursts; // spread bursts evenly
+          let lastBurstElapsed = -burstEvery;     // so we spawn immediately
+
+          function cleanup() {
+            window.removeEventListener('resize', resize);
+            canvas.remove();
+
+            overlay.classList.add('fadeOut');
+            setTimeout(() => overlay.remove(), 650);
+          }
+
+          function tick() {
+            const now = performance.now();
+            const elapsed = now - t0;
+
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+            // spawn bursts across most of the show; taper near the end
+            if (elapsed < durationMs * 0.92) {
+              if (elapsed - lastBurstElapsed >= burstEvery) {
+                spawnBurst();
+                if (Math.random() < 0.22) spawnBurst(); // occasional double for “finale” feel
+                lastBurstElapsed = elapsed;
+              }
+            }
+
+            // draw particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+              const p = particles[i];
+              p.life--;
+
+              // slow radial expansion (unless flash)
+              if (!p.isFlash) p.radius += p.expand;
+
+              const px = p.isFlash ? p.x : (p.x + Math.cos(p.angle) * p.radius);
+              const py = p.isFlash ? p.y : (p.y + Math.sin(p.angle) * p.radius + (p.radius * 0.010)); // tiny gravity drift
+
+              const alpha = Math.max(0, p.life / p.fade);
+              ctx.globalAlpha = alpha;
+              ctx.fillStyle = p.col;
+
+              ctx.fillRect(px - p.size / 2, py - p.size / 2, p.size, p.size);
+
+              if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            if (elapsed < durationMs || particles.length) {
+              requestAnimationFrame(tick);
+            } else {
+              cleanup();
+            }
+          }
+
           requestAnimationFrame(tick);
-        } else {
-          cleanup();
         }
-      }
 
-      requestAnimationFrame(tick);
-    }
+        updateBadge();
 
-    updateBadge();
+      })();
 
-})();
-
-</script>
+    </script>
 </body>
+
 </html>
