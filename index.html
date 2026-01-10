@@ -128,6 +128,33 @@
       background: var(--bad);
     }
 
+    .dot.gig {
+      background: #ffd36a;
+      box-shadow:
+        0 0 6px rgba(255, 211, 106, 0.95),
+        0 0 14px rgba(255, 211, 106, 0.65);
+    }
+
+    /* Gig days: subtle glow + clear gold outline */
+    .day.gig {
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.00) 40%),
+        rgba(255, 211, 106, 0.22);
+
+      /* crisp gold outline */
+      border: 2px solid rgba(255, 215, 120, 0.66);
+      outline: 1px solid rgba(255, 240, 180, 0.89);
+
+      box-shadow:
+        0 0 10px rgba(255, 211, 106, 0.55),
+        0 0 18px rgba(255, 211, 106, 0.35);
+    }
+
+    .day.gig:hover {
+      filter: brightness(1.10);
+    }
+
+
     main {
       max-width: 1200px;
       margin: auto;
@@ -619,27 +646,79 @@
     }
 
     @keyframes zxBorder {
-      0%   { background: #000; }
-      12%  { background: #fff; }
-      24%  { background: #000; }
-      36%  { background: #fff; }
-      48%  { background: #000; }
-      60%  { background: #ff2b2b; }
-      72%  { background: #000; }
-      84%  { background: #fff; }
-      100% { background: #000; }
+      0% {
+        background: #000;
+      }
+
+      12% {
+        background: #fff;
+      }
+
+      24% {
+        background: #000;
+      }
+
+      36% {
+        background: #fff;
+      }
+
+      48% {
+        background: #000;
+      }
+
+      60% {
+        background: #ff2b2b;
+      }
+
+      72% {
+        background: #000;
+      }
+
+      84% {
+        background: #fff;
+      }
+
+      100% {
+        background: #000;
+      }
     }
 
     @keyframes zxInvert {
-      0%   { filter: none; }
-      12%  { filter: invert(1) contrast(1.4); }
-      24%  { filter: none; }
-      36%  { filter: invert(1) contrast(1.4); }
-      48%  { filter: none; }
-      60%  { filter: invert(1) contrast(1.6) brightness(1.1); }
-      72%  { filter: none; }
-      84%  { filter: invert(1) contrast(1.4); }
-      100% { filter: none; }
+      0% {
+        filter: none;
+      }
+
+      12% {
+        filter: invert(1) contrast(1.4);
+      }
+
+      24% {
+        filter: none;
+      }
+
+      36% {
+        filter: invert(1) contrast(1.4);
+      }
+
+      48% {
+        filter: none;
+      }
+
+      60% {
+        filter: invert(1) contrast(1.6) brightness(1.1);
+      }
+
+      72% {
+        filter: none;
+      }
+
+      84% {
+        filter: invert(1) contrast(1.4);
+      }
+
+      100% {
+        filter: none;
+      }
     }
 
     .day.revealFace {
@@ -744,7 +823,7 @@
       <div class="legend">
         <div class="pill" id="availPill"><span class="dot good"></span> Available ✔</div>
         <div class="pill"><span class="dot bad"></span> Unavailable ✖</div>
-        <div class="pill" id="rulePill"></div>
+        <div class="pill"><span class="dot gig"></span> Gig ★ </div>
       </div>
     </div>
 
@@ -758,6 +837,7 @@
       (() => {
         // IIFE BLOCK
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqqmwi0YjOcvp6PoyFfhEd-YbYt6MxR11lxWhK4g6Hzh3dwWqMcch0xCTDQ8dkZ7qIhxvWjgwKqKpq/pub?gid=0&single=true&output=csv";
+        const GIGS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqqmwi0YjOcvp6PoyFfhEd-YbYt6MxR11lxWhK4g6Hzh3dwWqMcch0xCTDQ8dkZ7qIhxvWjgwKqKpq/pub?gid=337833741&single=true&output=csv";
 
         const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -765,7 +845,6 @@
         const elGrid = document.getElementById('calGrid');
         const elMode = document.getElementById('mode');
         const elYear = document.getElementById('yearSel');
-        const elRule = document.getElementById('rulePill');
         const elTitle = document.getElementById('title');
         const elSubtitle = document.getElementById('subtitle');
         const elHud = document.getElementById('hud');
@@ -774,7 +853,7 @@
         const elAvailPill = document.getElementById('availPill');
 
 
- // ---------- CHIP SFX (iPhone-safe, no samples) ----------
+        // ---------- CHIP SFX (iPhone-safe, no samples) ----------
         const CHIP = (() => {
           let ctx = null;
           let unlocked = false;
@@ -1009,7 +1088,7 @@
           }
 
 
-         function bomb(opts = {}) {
+          function bomb(opts = {}) {
             unlock();
             const c = getCtx();
             const t0 = c.currentTime;
@@ -1155,7 +1234,7 @@
             osc.stop(t0 + step * 2 + 0.08);
           }
 
-                    // ---------- CHIP MUSIC (looping, scheduled) ----------
+          // ---------- CHIP MUSIC (looping, scheduled) ----------
           const MUSIC = (() => {
 
             const LEAD_LEVEL = 0.15; // 1.0 = current loudness
@@ -1163,8 +1242,8 @@
             let prevLead = null;
             let prevBass = null;
             let prevArp = null;
-            let bassFilt = null;    
-            
+            let bassFilt = null;
+
             let padOsc1 = null, padOsc2 = null, padOsc3 = null;
             let padGain = null;
             let padFilt = null;
@@ -1576,15 +1655,15 @@
                   }
                 }
 
-              // IMPORTANT: don't clear prevBass on a rest
-              // prevBass = null;
+                // IMPORTANT: don't clear prevBass on a rest
+                // prevBass = null;
 
               } else {
                 const hz = (typeof bassNote === 'number' && bassNote < 200) ? midiToHz(bassNote) : bassNote;
 
                 // glide pitch change
-                  bassOsc.frequency.cancelScheduledValues(t);
-                  bassOsc.frequency.setValueAtTime(hz, t);
+                bassOsc.frequency.cancelScheduledValues(t);
+                bassOsc.frequency.setValueAtTime(hz, t);
 
 
                 // if new note: retrigger amp + filter env
@@ -1615,7 +1694,7 @@
               }
 
               // ARP (chord sparkle)
-             const arpNote = patternArp[idx];
+              const arpNote = patternArp[idx];
 
               if (arpNote == null) {
                 if (prevArp != null) arpGain.gain.setTargetAtTime(0.0001, t, 0.01);
@@ -1636,16 +1715,16 @@
 
               // DRUMS on a 16-step grid
               const drumStep = idx % 16; // 0–15 every bar, even in a 32-step loop
-           
+
               // DRUMS on a 16-step grid, repeating every bar
-        
+
               if (drumStep === 0 || drumStep === 8) drumKick(t);          // 1 and 3
               if (drumStep === 4 || drumStep === 12) drumSnare(t);        // 2 and 4
               if (drumStep % 2 === 0) drumHat(t - 0.002);
 
               // Little turnaround fill at the very end of bar 2
-             if (idx === 30) drumSnare(t);
-             if (idx === 31) { drumSnare(t); drumHat(t - 0.002); }
+              if (idx === 30) drumSnare(t);
+              if (idx === 31) { drumSnare(t); drumHat(t - 0.002); }
 
               step++;
               nextNoteTime += stepDur;
@@ -1671,13 +1750,13 @@
 
               // LEAD: hooky, fewer notes, longer holds (repeat notes to sustain)
               // const L1 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 81, 81, 79, 79];
-             //  const L2 = [76, 76, null, null, 76, 76, 79, 79, 81, 81, null, null, 79, 79, null, null];
+              //  const L2 = [76, 76, null, null, 76, 76, 79, 79, 81, 81, null, null, 79, 79, null, null];
 
-             // const L3 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 86, 86, 84, 84];
-             // const L4 = [83, 83, null, null, 81, 81, 79, 79, 77, 77, null, null, 76, 76, null, null];
+              // const L3 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 86, 86, 84, 84];
+              // const L4 = [83, 83, null, null, 81, 81, 79, 79, 77, 77, null, null, 76, 76, null, null];
 
               // Repeat phrase (8 bars total)
-             // patternLead = opts.lead ?? bars(L1, L2, L3, L4, L1, L2, L3, L4);
+              // patternLead = opts.lead ?? bars(L1, L2, L3, L4, L1, L2, L3, L4);
 
               // Bass: roots plus approach notes, gives that “driving” feel.
               const B_C = [36, null, 36, 40, 43, null, 45, null, 47, null, 45, null, 43, null, 40, null];
@@ -1714,7 +1793,7 @@
 
               // PAD CHORDS
 
-             const P_Cmaj7 = [
+              const P_Cmaj7 = [
                 [72, 76, 79, 83], null, null, null,
                 null, null, null, null,
                 null, null, null, null,
@@ -1949,7 +2028,7 @@
                 // If you’d rather not call it from here, you can remove this bit.
               }, 0);
 
-                // ✅ After the fanfare ends, fade the music bus back down (optional)
+              // ✅ After the fanfare ends, fade the music bus back down (optional)
               const approxLengthSec = (chordHits.length * 2 * beat) + (2.8 * beat);
               musicGain.gain.setTargetAtTime(0.0001, t0 + approxLengthSec, 0.20);
 
@@ -2679,16 +2758,66 @@
         let state = {
           members: [],          // { name, unavailable: [YYYY-MM-DD...], ranges: [{start,end}...] }
           byDate: new Map(),    // date -> [names...]
+          gigsByDate: new Map(), // date -> venue string (or array later)
           year: currentYear,
           mode: '__ALL__'
         };
 
-        fetch(CSV_URL, { cache: 'no-store' })
-          .then(r => {
-            if (!r.ok) throw new Error(`Failed to fetch CSV: HTTP ${r.status}`);
-            return r.text();
-          })
-          .then(text => {
+        function loadGigs() {
+          return fetch(GIGS_URL, { cache: 'no-store' })
+            .then(r => {
+              if (!r.ok) throw new Error(`Failed to fetch GIGS CSV: HTTP ${r.status}`);
+              return r.text();
+            })
+            .then(text => {
+              const rows = parseCSV(text).filter(r => r.some(c => String(c || '').trim() !== ''));
+              if (!rows.length) return new Map();
+
+              // Expecting: Col A = venue/location, Col B = date (or vice versa)
+              // We'll detect which column looks like a date.
+              const out = new Map();
+
+              for (let i = 1; i < rows.length; i++) {
+                const a = (rows[i][0] ?? '').toString().trim();
+                const b = (rows[i][1] ?? '').toString().trim();
+
+                const aISO = toISODate(a);
+                const bISO = toISODate(b);
+
+                let dateISO = null;
+                let venue = null;
+
+                if (aISO && !bISO) { dateISO = aISO; venue = b; }
+                else if (bISO && !aISO) { dateISO = bISO; venue = a; }
+                else if (bISO && aISO) { dateISO = bISO; venue = a; } // both look date: pick col B as date
+                else continue;
+
+                if (!dateISO) continue;
+                if (!venue) venue = 'Gig';
+
+                // If two gigs land on same date, join them nicely
+                if (out.has(dateISO)) out.set(dateISO, out.get(dateISO) + ' · ' + venue);
+                else out.set(dateISO, venue);
+              }
+
+              return out;
+            })
+            .catch(err => {
+              console.error(err);
+              return new Map(); // fail safe: no gigs instead of crashing
+            });
+        }
+
+        Promise.all([
+          fetch(CSV_URL, { cache: 'no-store' })
+            .then(r => {
+              if (!r.ok) throw new Error(`Failed to fetch CSV: HTTP ${r.status}`);
+              return r.text();
+            }),
+          loadGigs()
+        ])
+          .then(([text, gigsMap]) => {
+            state.gigsByDate = gigsMap;
             const rows = parseCSV(text).filter(r => r.some(c => String(c || '').trim() !== ''));
             if (!rows.length) throw new Error('CSV is empty.');
 
@@ -2838,10 +2967,6 @@
         function render() {
           elGrid.innerHTML = '';
 
-          elRule.textContent = state.mode === '__ALL__'
-            ? '✔ only if nobody is unavailable'
-            : `✔ / ✖ for ${displayName(state.mode)}`;
-
           for (let m = 1; m <= 12; m++) {
             if (clearedMonths.has(m)) continue; // ✅ don’t render completed months
             const card = document.createElement('div');
@@ -2865,26 +2990,32 @@
             const count = new Date(state.year, m, 0).getDate();
             for (let d = 1; d <= count; d++) {
               const date = iso(state.year, m, d);
+              const gigVenue = state.gigsByDate?.get(date) || '';
+              const hasGig = !!gigVenue;
               const names = state.byDate.get(date) || [];
               const bad = state.mode === '__ALL__' ? names.length > 0 : names.includes(state.mode);
               const past = date < todayISO();
 
-
               const cell = document.createElement('div');
-              cell.className = `day ${past ? 'past' : (bad ? 'bad' : 'good')}`;
+              cell.className = `day ${past ? 'past' : (bad ? 'bad' : 'good')}${(!past && hasGig) ? ' gig' : ''}`;
               cell.dataset.day = String(d);
               cell.dataset.month = String(m);
 
               cell.innerHTML = past
                 ? `<strong>${d}</strong>`
-                : `<strong>${d}</strong><div class="mark">${bad ? '✖' : '✔'}</div>`;
-
+                : `<strong>${d}</strong><div class="mark">${hasGig ? '★' : (bad ? '✖' : '✔')}</div>`;
 
               // Tooltip only for unavailable squares:
               // show the (whole-band) list of unavailable members for that date.
-              if (bad && !past) {
+              if (!past && (bad || hasGig)) {
                 const tt = document.createElement('div');
                 tt.className = 'tooltip';
+
+                if (hasGig) {
+                  const row = document.createElement('div');
+                  row.textContent = `★ ${gigVenue}`;
+                  tt.appendChild(row);
+                }
 
                 (state.byDate.get(date) || []).forEach(n => {
                   const row = document.createElement('div');
