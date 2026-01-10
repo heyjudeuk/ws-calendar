@@ -2,6 +2,12 @@
 <html lang="en-GB">
 
 <head>
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Weird Science Band Availability</title>
@@ -796,6 +802,54 @@
       z-index: 9990;
       /* above grid, below win overlay */
     }
+
+    /* Floating CHEAT text */
+    .cheatFloat {
+      position: fixed;
+      z-index: 10080;
+      pointer-events: none;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #fbbf24;
+      /* gold */
+      text-shadow:
+        0 0 8px rgba(251, 191, 36, .65),
+        0 0 14px rgba(251, 191, 36, .35);
+      transform: translate(-50%, -100%);
+      opacity: 1;
+      transition: opacity 0.45s linear, transform 0.45s linear;
+    }
+
+    .cheatFloat.fade {
+      opacity: 0;
+      transform: translate(-50%, -140%);
+    }
+
+
+    /* Floating COMBO text */
+    .comboFloat {
+      position: fixed;
+      z-index: 10080;
+      pointer-events: none;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: #22c55e;
+      text-shadow:
+        0 0 8px rgba(34, 197, 94, .6),
+        0 0 14px rgba(34, 197, 94, .35);
+      transform: translate(-50%, -100%);
+      opacity: 1;
+      transition: opacity 0.45s linear, transform 0.45s linear;
+    }
+
+    .comboFloat.fade {
+      opacity: 0;
+      transform: translate(-50%, -140%);
+    }
   </style>
 </head>
 
@@ -1004,6 +1058,103 @@
             osc2.stop(t0 + total);
           }
 
+          // Combo chime
+
+          function comboChime(mult = 2, opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.22;     // overall loudness
+            const step = opts.step ?? 0.085;     // spacing between notes
+            const tail = opts.tail ?? 1.55;      // how long it rings
+
+            // “Chime” notes: a bright little climb
+            const notes2 = [784.0, 1174.66];                 // G5, D6
+            const notes3 = [784.0, 1174.66, 1568.0];         // G5, D6, G6
+            const notes = (mult >= 3) ? notes3 : notes2;
+
+            // Gentle brightness shaping (prevents harsh beep)
+            const lpf = c.createBiquadFilter();
+            lpf.type = 'lowpass';
+            lpf.frequency.setValueAtTime(9000, t0);
+            lpf.Q.setValueAtTime(0.8, t0);
+
+            const hpf = c.createBiquadFilter();
+            hpf.type = 'highpass';
+            hpf.frequency.setValueAtTime(250, t0);
+            hpf.Q.setValueAtTime(0.7, t0);
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+
+            hpf.connect(lpf);
+            lpf.connect(out);
+            out.connect(c.destination);
+
+            // Very small “air” echo to make it feel like a chime, not a beep
+            const delay = c.createDelay(0.25);
+            delay.delayTime.setValueAtTime(0.09, t0);
+            const fb = c.createGain();
+            fb.gain.setValueAtTime(0.22, t0);
+            delay.connect(fb);
+            fb.connect(delay);
+
+            const wet = c.createGain();
+            wet.gain.setValueAtTime(0.18, t0);
+
+            // Tap some of the signal into the delay return
+            lpf.connect(delay);
+            delay.connect(wet);
+            wet.connect(out);
+
+            // FM bell voice: carrier + modulator
+            const carrier = c.createOscillator();
+            carrier.type = 'sine';
+
+            const mod = c.createOscillator();
+            mod.type = 'sine';
+
+            const modGain = c.createGain();
+            modGain.gain.setValueAtTime(0, t0); // we shape this per note
+
+            mod.connect(modGain);
+            modGain.connect(carrier.frequency);
+
+            carrier.connect(hpf);
+
+            // Start oscillators once
+            carrier.start(t0);
+            mod.start(t0);
+
+            // Per-note envelopes
+            for (let i = 0; i < notes.length; i++) {
+              const ti = t0 + i * step;
+              const f = notes[i];
+
+              // Carrier frequency
+              carrier.frequency.setValueAtTime(f, ti);
+
+              // Modulator frequency & depth: higher depth at start, then quickly decays
+              mod.frequency.setValueAtTime(f * 2.01, ti); // slight detune for shimmer
+
+              const depthStart = f * 0.9; // FM depth (bigger = more bell)
+              modGain.gain.setValueAtTime(0.0001, ti);
+              modGain.gain.exponentialRampToValueAtTime(depthStart, ti + 0.006);
+              modGain.gain.exponentialRampToValueAtTime(f * 0.08, ti + 0.09);
+
+              // Amplitude envelope: fast attack, long ring
+              out.gain.setValueAtTime(0.0001, ti);
+              out.gain.exponentialRampToValueAtTime(vol, ti + 0.006);
+              out.gain.exponentialRampToValueAtTime(0.0002, ti + tail);
+            }
+
+            const total = notes.length * step + tail + 0.08;
+            carrier.stop(t0 + total);
+            mod.stop(t0 + total);
+
+            // Clean up (filters/delay nodes can be GC’d afterwards)
+          }
 
           // Gentle ringing chime when a FRUIT is revealed
           function revealFruit(opts = {}) {
@@ -2038,9 +2189,7 @@
 
           })();
 
-
-          return { unlock, coin, fruit, bomb, revealFruit, revealBomb, levelClear, gameOver, music: MUSIC };
-
+          return { unlock, coin, fruit, bomb, revealFruit, revealBomb, comboChime, levelClear, gameOver, music: MUSIC };
 
         })();
 
@@ -2057,6 +2206,8 @@
         let monthTimerId = null;
         let monthDeadline = 0; // performance.now() timestamp
         let monthSecondsLeft = 0;
+        let startTapTimer = null;
+        let startLastTapAt = 0;
 
         const BOMB_PASS_BONUS_MS = 450;   // add 0.45s when a bomb expires naturally
         const FRUIT_HIT_BONUS_MS = 650;   // +0.65s per fruit
@@ -2306,10 +2457,24 @@
 
         // ===== Peek loop (step 1: highlight-only, no fruit/bomb yet) =====
         let levelRunning = false;
-        let activePeek = null;
+
+        // NEW: multiple active peeks in a wave
+        let activePeeks = new Set();   // Set<HTMLElement>
+
+        // Timers
         let peekHideTimer = null;
         let peekNextTimer = null;
+
+        // Existing
         let bombStreak = 0;
+
+        // NEW: wave bookkeeping for combo scoring
+        let waveId = 0;               // increments each spawn wave
+        let waveFruitHits = 0;        // how many fruits collected in this wave
+        let waveBaseSum = 0;          // sum of base points collected in this wave
+        let waveAwarded = 0;          // total points awarded for this wave (base + combo bonus)
+        let waveMultApplied = 1;      // 1, 2, or 3 (so we only show "combo" when it upgrades)
+
 
 
         function getRevealMsForMonth(month) {
@@ -2332,15 +2497,22 @@
         function cheatClearCurrentMonth() {
           if (!coinInserted) return;
 
+          // Re-find the current start tile safely (it’s scoped locally here)
+          const start =
+            elGrid.querySelector(`.day[data-month="${currentLevel}"][data-day="1"]`) ||
+            elGrid.querySelector(`.day[data-month="${currentLevel}"]`);
+
+          CHIP.coin();
+
+          if (start) showCheatFloat(start, start._lastTapXY);
+
+          if (start) {
+            start.classList.add('cheat-flash');
+            setTimeout(() => start.classList.remove('cheat-flash'), 120);
+          }
+
           // Stop the level cleanly: clears peek timers + month timer
           stopLevel();
-
-          // Safety: remove any peek visuals / face
-          if (activePeek) {
-            activePeek.classList.remove('peek');
-            clearFace(activePeek);
-            activePeek = null;
-          }
 
           // Hide every remaining tile in this month (including past days)
           const cells = getCandidatesForMonth(currentLevel);
@@ -2362,13 +2534,25 @@
           peekNextTimer = null;
         }
 
+        function clearActivePeeks({ rewardBombPass = false } = {}) {
+          // Remove peek visuals and faces for any still-active tiles
+          for (const c of activePeeks) {
+            if (rewardBombPass && c.dataset.peekType === 'bomb') {
+              addTimerMs(BOMB_PASS_BONUS_MS);
+            }
+            c.classList.remove('peek');
+            clearFace(c);
+          }
+          activePeeks.clear();
+        }
+
         function stopLevel() {
           levelRunning = false;
           clearMonthTimer();
           clearPeekTimers();
-          if (activePeek) activePeek.classList.remove('peek');
-          activePeek = null;
+          clearActivePeeks({ rewardBombPass: false });
         }
+
 
         // Fruit table (later we can tune values)
         const FRUITS = [
@@ -2398,38 +2582,6 @@
 
           // Clamp so it stays reasonable
           return Math.max(100, Math.min(176, t));
-        }
-
-        // Ensure we can show an icon even on past tiles (which currently have no .mark)
-        function getOrCreateMark(cell) {
-          let mark = cell.querySelector('.mark');
-          if (!mark) {
-            mark = document.createElement('div');
-            mark.className = 'mark';
-            cell.appendChild(mark);
-            cell.dataset.markTemp = '1'; // so we can remove it later
-          }
-          // remember original mark (✔/✖/empty) once
-          if (cell.dataset.origMark === undefined) {
-            cell.dataset.origMark = mark.textContent || '';
-          }
-          return mark;
-        }
-
-        function restoreMark(cell) {
-          const mark = cell.querySelector('.mark');
-          if (!mark) return;
-
-          // revert to original and hide
-          mark.textContent = cell.dataset.origMark || '';
-          mark.style.visibility = 'hidden';
-
-          // if we created it just for the game (past tiles), remove it
-          if (cell.dataset.markTemp === '1') {
-            mark.remove();
-            delete cell.dataset.markTemp;
-            delete cell.dataset.origMark;
-          }
         }
 
         // Full-cell face overlay for fruit/bomb during peek
@@ -2477,64 +2629,77 @@
               return;
             }
 
-            const next = candidates[(Math.random() * candidates.length) | 0];
-            showPeek(next);
+            spawnWave(candidates);
+
           }, delayMs);
         }
 
-        function showPeek(cell) {
+        function spawnWave(candidates) {
           if (!levelRunning) return;
 
-          if (activePeek && activePeek !== cell) {
-            activePeek.classList.remove('peek');
-            clearFace(activePeek);
+          // Clear any previous peek visuals (we don’t reward bomb-pass here;
+          // bomb-pass is only awarded when a wave expires naturally)
+          clearActivePeeks({ rewardBombPass: false });
+
+          // Start a new wave (for combo bookkeeping later)
+          waveId++;
+          waveFruitHits = 0;
+          waveBaseSum = 0;
+          waveAwarded = 0;
+          waveMultApplied = 1;
+
+          // Choose how many to spawn: 1–3, but never more than remaining squares
+          const maxSpawn = Math.min(3, candidates.length);
+          const spawnCount = 1 + ((Math.random() * maxSpawn) | 0); // 1..maxSpawn
+
+          // Pick unique random cells
+          const pool = candidates.slice();
+          const picked = [];
+          for (let i = 0; i < spawnCount; i++) {
+            const idx = (Math.random() * pool.length) | 0;
+            picked.push(pool[idx]);
+            pool.splice(idx, 1);
           }
 
-          activePeek = cell;
-          cell.classList.add('peek');
+          // Reveal each picked tile
+          for (const cell of picked) {
+            activePeeks.add(cell);
+            cell.classList.add('peek');
 
-          // Decide what it is this time
-          let isBomb;
+            // Decide bomb vs fruit using existing logic
+            let isBomb;
+            if (bombStreak >= 3) {
+              isBomb = false; // hard cap: never allow >3 bombs in a row
+            } else {
+              isBomb = Math.random() < bombChanceForMonth(currentLevel);
+            }
 
-          // hard cap: never allow more than 3 bombs in a row
-          if (bombStreak >= 3) {
-            isBomb = false;
-          } else {
-            isBomb = Math.random() < bombChanceForMonth(currentLevel);
+            if (isBomb) {
+              bombStreak++;
+              cell.dataset.peekType = 'bomb';
+              CHIP.revealFruit();
+              setFace(cell, '💣');
+            } else {
+              bombStreak = 0;
+              cell.dataset.peekType = 'fruit';
+              const f = FRUITS[(Math.random() * FRUITS.length) | 0];
+              cell.dataset.peekFruit = f.emoji;
+              cell.dataset.peekPts = String(f.pts);
+              CHIP.revealFruit();
+              setFace(cell, f.emoji);
+            }
           }
 
-          if (isBomb) {
-            bombStreak++;
-            cell.dataset.peekType = 'bomb';
-            CHIP.revealFruit();
-            setFace(cell, '💣');
-          } else {
-            bombStreak = 0;
-            cell.dataset.peekType = 'fruit';
-            const f = FRUITS[(Math.random() * FRUITS.length) | 0];
-            cell.dataset.peekPts = String(f.pts);
-            CHIP.revealFruit();
-            setFace(cell, f.emoji);
-          }
-
+          // Hide the wave after revealMs, reward bomb-pass for any bombs left unclicked
           clearPeekTimers();
           peekHideTimer = setTimeout(() => {
             if (!levelRunning) return;
 
-            // If a bomb was showing and the player did NOT click it, reward time
-            if (activePeek && activePeek.dataset.peekType === 'bomb') {
-              addTimerMs(BOMB_PASS_BONUS_MS);
-            }
-
-            if (activePeek) {
-              activePeek.classList.remove('peek');
-              activePeek = null;
-            }
-
+            clearActivePeeks({ rewardBombPass: true });
             scheduleNextPeek(120);
           }, revealMs);
-
         }
+
 
         // One delegated handler for the whole grid:
         elGrid.addEventListener('pointerdown', (e) => {
@@ -2544,15 +2709,21 @@
           const cell = e.target.closest('.day');
           if (!cell) return;
 
-          // Only accept presses on the currently peeked tile
-          if (cell !== activePeek) return;
+          // Only accept presses on currently peeked tiles
+          if (!activePeeks.has(cell)) return;
 
           e.preventDefault();
+
+          // Remember tap point for combo float positioning
+          cell._lastTapXY = {
+            x: (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX),
+            y: (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY)
+          };
 
           const t = cell.dataset.peekType || 'fruit';
 
           cell.classList.remove('peek');
-          activePeek = null;
+          activePeeks.delete(cell);
 
           clearFace(cell);
 
@@ -2569,15 +2740,19 @@
               return;
             }
 
-            scheduleNextPeek(180);
+            if (activePeeks.size === 0) {
+              clearPeekTimers();
+              scheduleNextPeek(120);
+            }
             return;
+
           }
 
 
           // fruit
           CHIP.fruit();
           const pts = Number(cell.dataset.peekPts || '50');
-          score += pts;
+          applyWaveFruitScore(cell, pts);
           addTimerMs(FRUIT_HIT_BONUS_MS);
           updateHud();
 
@@ -2600,7 +2775,10 @@
           delete cell.dataset.peekFruit;
           delete cell.dataset.peekPts;
 
-          scheduleNextPeek(120);
+          if (activePeeks.size === 0) {
+            clearPeekTimers();
+            scheduleNextPeek(120);
+          }
 
         });
 
@@ -3053,27 +3231,50 @@
 
           start.classList.add('start-blink');
 
-          // tap starts the level (temporary behaviour)
+          // tap starts the level 
+
           start.onpointerdown = (e) => {
             if (!coinInserted) return;
-            if (levelRunning) return;
+            if (levelRunning) return; // ✅ don’t allow cheat / start taps mid-level
             e.preventDefault();
+            start._lastTapXY = { x: e.clientX, y: e.clientY };
 
-            gameStarted = true; // set, don't gate
-            start.classList.remove('start-blink');
-            elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
+            const now = performance.now();
 
-            startLevel();
+            // SECOND TAP → CHEAT
+            if (startTapTimer && (now - startLastTapAt) < 350) {
+              clearTimeout(startTapTimer);
+              startTapTimer = null;
+              startLastTapAt = 0;
 
+              cheatClearCurrentMonth();
+              return;
+            }
+
+            // FIRST TAP → arm delayed start
+            startLastTapAt = now;
+
+            if (startTapTimer) clearTimeout(startTapTimer);
+
+            startTapTimer = setTimeout(() => {
+              startTapTimer = null;
+
+              // If level already started some other way, do nothing
+              if (levelRunning) return;
+
+              gameStarted = true;
+              start.classList.remove('start-blink');
+              elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
+
+              CHIP.revealFruit();
+
+              startLevel();
+            }, 260);
           };
 
-          // double-click first tile clears the month (hidden cheat)
-          start.ondblclick = (e) => {
-            e.preventDefault();
-            cheatClearCurrentMonth();
-          };
 
         }
+
         function clearMonthTimer() {
           if (monthTimerId) clearInterval(monthTimerId);
           monthTimerId = null;
@@ -3120,7 +3321,6 @@
             triggerGameOver();
             return;
           }
-
 
           document.body.classList.add('zx-flash');
           setTimeout(() => document.body.classList.remove('zx-flash'), 260);
@@ -3207,6 +3407,82 @@
           }, { once: true });
         }
 
+        function showCheatFloat(cell, xy) {
+          const el = document.createElement('div');
+          el.className = 'cheatFloat';
+          el.textContent = 'CHEAT!';
+
+          let x, y;
+          if (xy && typeof xy.x === 'number' && typeof xy.y === 'number') {
+            x = xy.x;
+            y = xy.y;
+          } else {
+            const r = cell.getBoundingClientRect();
+            x = r.left + r.width / 2;
+            y = r.top + r.height * 0.15;
+          }
+
+          el.style.left = `${x}px`;
+          el.style.top = `${y}px`;
+
+          document.body.appendChild(el);
+
+          setTimeout(() => el.classList.add('fade'), 1000);
+          setTimeout(() => el.remove(), 1500);
+        }
+
+
+        function showComboFloat(cell, mult, xy) {
+          const el = document.createElement('div');
+          el.className = 'comboFloat';
+          el.textContent = `COMBO x${mult}`;
+
+          let x, y;
+
+          if (xy && typeof xy.x === 'number' && typeof xy.y === 'number') {
+            x = xy.x;
+            y = xy.y;
+          } else {
+            const r = cell.getBoundingClientRect();
+            x = r.left + r.width / 2;
+            y = r.top + r.height * 0.15;
+          }
+
+          el.style.left = `${x}px`;
+          el.style.top = `${y}px`;
+
+          document.body.appendChild(el);
+
+          setTimeout(() => el.classList.add('fade'), 1000);
+          setTimeout(() => el.remove(), 1500);
+        }
+
+        function applyWaveFruitScore(cell, pts) {
+          // 1) Always award the base points for this fruit
+          score += pts;
+
+          // 2) Track wave totals
+          waveFruitHits += 1;
+          waveBaseSum += pts;
+
+          // 3) If we’ve now hit 2 or 3 fruits in THIS wave, upgrade multiplier
+          const newMult = Math.min(3, waveFruitHits);
+
+          if (newMult > waveMultApplied) {
+            // Retroactively multiply all fruits collected so far in this wave.
+            // We already awarded base points for each fruit, so we add just the "extra".
+            const bonus = waveBaseSum * (newMult - waveMultApplied);
+
+            score += bonus;
+            waveAwarded += bonus;
+            waveMultApplied = newMult;
+
+            // Show the combo text above the fruit that triggered the upgrade
+            CHIP.comboChime(newMult);
+            showComboFloat(cell, newMult, cell._lastTapXY);
+
+          }
+        }
 
         function winGame({ bonusPts = 0, msLeft = 0 } = {}) {
 
@@ -3216,7 +3492,6 @@
           setUnlocked();
           setHighScoreIfBetter(score);
           updateBadge();
-
 
           elSubtitle.innerHTML = '<span class="arcade-text">ALL CLEAR</span>';
 
@@ -3433,7 +3708,6 @@
           setManualMusic(!manualMusicOn);
         });
 
-
         updateBadge();
 
       })();
@@ -3441,5 +3715,4 @@
     </script>
 
 </body>
-
 </html>
