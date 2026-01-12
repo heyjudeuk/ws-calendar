@@ -1,0 +1,3895 @@
+<!doctype html>
+<html lang="en-GB">
+
+<head>
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Weird Science Band Availability</title>
+
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #252525;
+      --card: #0c1220;
+      --muted: #9fb0c3;
+      --text: #e6eef7;
+      --border: #2b3a55;
+      --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+      --radius: 14px;
+
+      /* Arcade palette */
+      --good: #3b82f6;
+      /* blue */
+      --good2: rgba(59, 130, 246, .18);
+
+      --bad: #ef4444;
+      --bad2: rgba(239, 68, 68, .18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(900px 600px at 50% 0%, rgba(34, 197, 94, .10), transparent 60%),
+        radial-gradient(900px 600px at 15% 15%, rgba(239, 68, 68, .10), transparent 60%),
+        linear-gradient(#0b0f14, #070a10 60%, #05070a);
+      color: var(--text);
+    }
+
+    header {
+      padding: 22px 16px 10px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 16px;
+      line-height: 1.4;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      text-shadow:
+        0 0 10px rgba(34, 197, 94, .25),
+        0 0 14px rgba(239, 68, 68, .18);
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      background: rgba(18, 25, 37, .65);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    select {
+      background: #0e1522;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 14px;
+      min-width: 220px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--border);
+      background: #0e1522;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot.good {
+      background: var(--good);
+    }
+
+    .dot.bad {
+      background: var(--bad);
+    }
+
+    .dot.gig {
+      background: #ffd36a;
+      box-shadow:
+        0 0 6px rgba(255, 211, 106, 0.95),
+        0 0 14px rgba(255, 211, 106, 0.65);
+    }
+
+    /* Gig days: subtle glow + clear gold outline */
+    .day.gig {
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.00) 40%),
+        rgba(255, 211, 106, 0.22);
+
+      /* crisp gold outline */
+      border: 2px solid rgba(255, 215, 120, 0.66);
+      outline: 1px solid rgba(255, 240, 180, 0.89);
+
+      box-shadow:
+        0 0 10px rgba(255, 211, 106, 0.55),
+        0 0 18px rgba(255, 211, 106, 0.35);
+    }
+
+    .day.gig:hover {
+      filter: brightness(1.10);
+    }
+
+
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 10px 16px 28px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    @media (max-width:980px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width:640px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: rgba(18, 25, 37, .75);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .monthHeader {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+
+    .cal {
+      padding: 10px;
+    }
+
+    .dow,
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+
+    .dow {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+
+    .day {
+      position: relative;
+      min-height: 42px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+    }
+
+    .day strong {
+      font-weight: 700;
+    }
+
+    .day.good {
+      background: var(--good2);
+      border: 1px solid rgba(59, 130, 246, .45);
+    }
+
+    .day.bad {
+      background: var(--bad2);
+      border: 1px solid rgba(217, 119, 6, .45);
+      background-image: repeating-linear-gradient(45deg,
+          rgba(0, 0, 0, .14),
+          rgba(0, 0, 0, .14) 7px,
+          transparent 7px,
+          transparent 14px);
+    }
+
+    .day.empty {
+      background: transparent;
+    }
+
+    .day.past {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, .12);
+      color: rgba(255, 255, 255, .55);
+    }
+
+    .day.past .mark {
+      display: none;
+    }
+
+    /* hides ✔ / ✖ */
+    .mark {
+      font-size: 12px;
+    }
+
+    .day.past .tooltip {
+      display: none !important;
+    }
+
+    .tooltip {
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #07101c;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      box-shadow: var(--shadow);
+      display: none;
+      white-space: nowrap;
+      text-align: left;
+      z-index: 10;
+    }
+
+    .day.bad:hover .tooltip {
+      display: block;
+    }
+
+    .tooltip div {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    /* Arcade typography accents */
+    label,
+    .pill,
+    th {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    select {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+    }
+
+    .monthHeader {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .day strong {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 11px;
+    }
+
+    .mark {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .02em;
+    }
+
+    .chip {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 9px;
+      padding: 4px 8px;
+    }
+
+    /* Pixel-ish borders */
+    .card,
+    .toolbar,
+    select,
+    .pill,
+    .raw,
+    .tooltip {
+      border-width: 2px;
+      border-style: solid;
+      box-shadow: var(--shadow);
+    }
+
+    .day {
+      border-radius: 8px;
+    }
+
+    /* Buttony hover feel */
+    .day.bad:hover {
+      filter: brightness(1.08);
+    }
+
+    .day.past {
+      cursor: default;
+    }
+
+    /* INSERT COIN prompt */
+    .insert-coin {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-block;
+      animation: coinBlink 1.1s steps(1) infinite;
+      color: #22c55e;
+      text-shadow:
+        0 0 8px rgba(34, 197, 94, .6),
+        0 0 14px rgba(34, 197, 94, .35);
+    }
+
+    /* Level clear overlay */
+    .levelClearOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .86);
+      z-index: 10020;
+      display: grid;
+      place-items: center;
+    }
+
+    .levelClearOverlay .box {
+      text-align: center;
+      padding: 18px 18px;
+      border: 2px solid rgba(34, 197, 94, .8);
+      border-radius: 14px;
+      background: rgba(10, 16, 26, .72);
+      box-shadow:
+        0 0 18px rgba(34, 197, 94, .25),
+        0 0 26px rgba(59, 130, 246, .15);
+      max-width: min(520px, 92vw);
+    }
+
+    .levelClearOverlay .big {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 16px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #22c55e;
+      text-shadow: 0 0 10px rgba(34, 197, 94, .6), 0 0 18px rgba(34, 197, 94, .35);
+    }
+
+    .levelClearOverlay .small {
+      margin-top: 12px;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, .72);
+    }
+
+    .levelClearOverlay .hint {
+      margin-top: 14px;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 9px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, .55);
+      animation: coinBlink 1.1s steps(1) infinite;
+    }
+
+
+    .unlockBadge {
+      display: inline-block;
+      margin: 0 0 10px;
+      padding: 10px 14px;
+      border: 2px solid #facc15;
+      /* gold */
+      border-radius: 14px;
+      background: linear-gradient(180deg,
+          rgba(250, 204, 21, .18),
+          rgba(250, 204, 21, .05));
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #fde047;
+      text-shadow:
+        0 0 6px rgba(250, 204, 21, .8),
+        0 0 14px rgba(250, 204, 21, .45),
+        0 0 22px rgba(250, 204, 21, .25);
+      box-shadow:
+        0 0 12px rgba(250, 204, 21, .35),
+        inset 0 0 12px rgba(250, 204, 21, .12);
+      /* NEW: make it a 2-line badge with controlled spacing */
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      row-gap: 10px;
+      /* this is the extra space between lines */
+      line-height: 1.35;
+
+    }
+
+    /* NEW: badge line helpers */
+    .badgeLine {
+      display: block;
+      text-align: center;
+    }
+
+    /* NEW: star + score line, perfectly centred */
+    .badgeScore {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+
+    .badgeScore .star {
+      display: inline-block;
+      transform: translateY(-2px);
+      /* optical centring for Press Start 2P */
+    }
+
+
+    .day.peek {
+      filter: brightness(1.25);
+      box-shadow: 0 0 18px rgba(255, 255, 255, .25);
+    }
+
+    .day.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+
+    .arcade-text {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #22c55e;
+      text-shadow:
+        0 0 8px rgba(34, 197, 94, .6),
+        0 0 14px rgba(34, 197, 94, .35);
+    }
+
+
+    @keyframes coinBlink {
+
+      0%,
+      49% {
+        opacity: 1;
+      }
+
+      50%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    /* Active starting tile (arcade blink) */
+    .day.start-blink {
+      animation: startBlink 1.1s steps(1) infinite;
+      outline: 2px solid #22c55e;
+      outline-offset: -2px;
+      box-shadow:
+        0 0 10px rgba(34, 197, 94, .6),
+        0 0 18px rgba(34, 197, 94, .35);
+    }
+
+    @keyframes startBlink {
+
+      0%,
+      49% {
+        opacity: 1;
+      }
+
+      50%,
+      100% {
+        opacity: .25;
+      }
+    }
+
+    /* Game mode: disable calendar tooltips */
+    body.game-mode .tooltip {
+      display: none !important;
+    }
+
+    /* Game mode: hide the availability toolbar */
+    body.game-mode .toolbar {
+      display: none !important;
+    }
+
+    body.game-mode .day.bad:hover .tooltip {
+      display: none !important;
+    }
+
+    /* Fireworks canvas overlay */
+    .fxCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9999;
+      pointer-events: none;
+      /* never blocks taps */
+    }
+
+    /* Win overlay: black out the page behind the header */
+    .winOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .92);
+      z-index: 9990;
+    }
+
+    /* Badge-style box for the win screen text */
+    .winOverlay .winBadgeBox {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      row-gap: 10px;
+      padding: 14px 16px;
+      border: 2px solid #facc15;
+      /* gold */
+      border-radius: 14px;
+      background: linear-gradient(180deg,
+          rgba(250, 204, 21, .18),
+          rgba(250, 204, 21, .05));
+      box-shadow:
+        0 0 12px rgba(250, 204, 21, .35),
+        inset 0 0 12px rgba(250, 204, 21, .12);
+    }
+
+    .winOverlay .winBadgeBox .line {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #fde047;
+      text-shadow:
+        0 0 6px rgba(250, 204, 21, .8),
+        0 0 14px rgba(250, 204, 21, .45),
+        0 0 22px rgba(250, 204, 21, .25);
+      line-height: 1.25;
+    }
+
+    .winOverlay .winBadgeBox .line.emph {
+      font-size: 10px;
+      letter-spacing: .10em;
+      opacity: .95;
+    }
+
+
+    .winOverlay .winText {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      pointer-events: none;
+    }
+
+
+    .winOverlay .winText .big {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 18px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #22c55e;
+      text-shadow: 0 0 10px rgba(34, 197, 94, .6), 0 0 18px rgba(34, 197, 94, .35);
+    }
+
+    .winOverlay.fadeOut {
+      transition: opacity .6s linear;
+      opacity: 0;
+    }
+
+    /* ZX-style hit flash: harsh strobe + brief invert */
+    body.zx-flash {
+      animation: zxBorder 260ms steps(1, end) 1;
+    }
+
+    body.zx-flash #calGrid {
+      animation: zxInvert 260ms steps(1, end) 1;
+    }
+
+    @keyframes zxBorder {
+      0% {
+        background: #000;
+      }
+
+      12% {
+        background: #fff;
+      }
+
+      24% {
+        background: #000;
+      }
+
+      36% {
+        background: #fff;
+      }
+
+      48% {
+        background: #000;
+      }
+
+      60% {
+        background: #ff2b2b;
+      }
+
+      72% {
+        background: #000;
+      }
+
+      84% {
+        background: #fff;
+      }
+
+      100% {
+        background: #000;
+      }
+    }
+
+    @keyframes zxInvert {
+      0% {
+        filter: none;
+      }
+
+      12% {
+        filter: invert(1) contrast(1.4);
+      }
+
+      24% {
+        filter: none;
+      }
+
+      36% {
+        filter: invert(1) contrast(1.4);
+      }
+
+      48% {
+        filter: none;
+      }
+
+      60% {
+        filter: invert(1) contrast(1.6) brightness(1.1);
+      }
+
+      72% {
+        filter: none;
+      }
+
+      84% {
+        filter: invert(1) contrast(1.4);
+      }
+
+      100% {
+        filter: none;
+      }
+    }
+
+    .day.revealFace {
+      position: relative;
+    }
+
+    .day .face {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 34px;
+      line-height: 1;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.96);
+    }
+
+    .day.peek .face {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .day.hidden .face {
+      opacity: 0;
+    }
+
+    .gameOverOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .92);
+      z-index: 10050;
+      display: grid;
+      place-items: center;
+    }
+
+    .gameOverOverlay .txt {
+      text-align: center;
+    }
+
+    .gameOverOverlay .txt .big {
+      font-family: "Press Start 2P", system-ui;
+      font-size: 18px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #ef4444;
+      text-shadow: 0 0 10px rgba(239, 68, 68, .6), 0 0 18px rgba(239, 68, 68, .35);
+    }
+
+    .gameOverOverlay .txt .small {
+      margin-top: 14px;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, .65);
+    }
+
+    /* During a peek, hide the date number + mark so the face fills the cell */
+    body.game-mode .day.peek strong {
+      opacity: 0;
+    }
+
+    body.game-mode .day.peek .mark {
+      opacity: 0;
+    }
+
+    .fxCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      /* crucial */
+      z-index: 9990;
+      /* above grid, below win overlay */
+    }
+
+    /* Floating CHEAT text */
+    .cheatFloat {
+      position: fixed;
+      z-index: 10080;
+      pointer-events: none;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #fbbf24;
+      /* gold */
+      text-shadow:
+        0 0 8px rgba(251, 191, 36, .65),
+        0 0 14px rgba(251, 191, 36, .35);
+      transform: translate(-50%, -100%);
+      opacity: 1;
+      transition: opacity 0.45s linear, transform 0.45s linear;
+    }
+
+    .cheatFloat.fade {
+      opacity: 0;
+      transform: translate(-50%, -140%);
+    }
+
+
+    /* Floating COMBO text */
+    .comboFloat {
+      position: fixed;
+      z-index: 10080;
+      pointer-events: none;
+      font-family: "Press Start 2P", system-ui;
+      font-size: 10px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: #22c55e;
+      text-shadow:
+        0 0 8px rgba(34, 197, 94, .6),
+        0 0 14px rgba(34, 197, 94, .35);
+      transform: translate(-50%, -100%);
+      opacity: 1;
+      transition: opacity 0.45s linear, transform 0.45s linear;
+    }
+
+    .comboFloat.fade {
+      opacity: 0;
+      transform: translate(-50%, -140%);
+    }
+
+    #arcadeBanner {
+      width: 100%;
+      max-width: 980px;
+      height: auto;
+      margin: 6px auto 2px;
+      display: none;
+      /* default hidden until game starts */
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1 id="title">Weird Science Band Availability</h1>
+    <img id="arcadeBanner" src="arcade-banner.webp" alt="Arcade banner" style="display:none;" />
+    <div id="unlockBadge" class="unlockBadge" style="display:none;"></div>
+    <p class="sub" id="subtitle">Loading…</p>
+    <p class="sub" id="hud" style="display:none; margin-top:-6px;">
+      <span class="arcade-text" id="hudText"></span>
+    </p>
+
+
+    <div class="toolbar">
+      <div>
+        <label>Show availability for</label><br />
+        <select id="mode"></select>
+      </div>
+
+      <div>
+        <label>Year</label><br />
+        <select id="yearSel"></select>
+      </div>
+
+      <div class="legend">
+        <div class="pill" id="availPill"><span class="dot good"></span> Available ✔</div>
+        <div class="pill"><span class="dot bad"></span> Unavailable ✖</div>
+        <div class="pill"><span class="dot gig"></span> Gig ★ </div>
+      </div>
+    </div>
+
+  </header>
+
+  <main>
+    <div id="calGrid" class="grid"></div>
+    <canvas id="fxCanvas" class="fxCanvas"></canvas>
+
+    <script>
+      (() => {
+        // IIFE BLOCK
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqqmwi0YjOcvp6PoyFfhEd-YbYt6MxR11lxWhK4g6Hzh3dwWqMcch0xCTDQ8dkZ7qIhxvWjgwKqKpq/pub?gid=0&single=true&output=csv";
+        const GIGS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqqmwi0YjOcvp6PoyFfhEd-YbYt6MxR11lxWhK4g6Hzh3dwWqMcch0xCTDQ8dkZ7qIhxvWjgwKqKpq/pub?gid=337833741&single=true&output=csv";
+
+        const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+        const elGrid = document.getElementById('calGrid');
+        const elMode = document.getElementById('mode');
+        const elYear = document.getElementById('yearSel');
+        const elTitle = document.getElementById('title');
+        const elSubtitle = document.getElementById('subtitle');
+        const elHud = document.getElementById('hud');
+        const elHudText = document.getElementById('hudText');
+        const elBadge = document.getElementById('unlockBadge');
+        const elArcadeBanner = document.getElementById('arcadeBanner');
+        const elLegend = document.querySelector('.legend');
+        const elAvailPill = document.getElementById('availPill');
+
+        function setArcadeHeaderMode(on) {
+          if (on) {
+            if (elArcadeBanner) elArcadeBanner.style.display = 'block';
+            if (elTitle) elTitle.style.display = 'none';
+            if (elBadge) elBadge.style.display = 'none';
+            if (elLegend) elLegend.style.display = 'none';
+          } else {
+            if (elArcadeBanner) elArcadeBanner.style.display = 'none';
+            if (elTitle) elTitle.style.display = '';
+            if (elLegend) elLegend.style.display = '';
+
+            updateTitle();
+            updateBadge();
+          }
+        }
+    
+        // ---------- CHIP SFX (iPhone-safe, no samples) ----------
+        const CHIP = (() => {
+          let ctx = null;
+          let unlocked = false;
+
+          function getCtx() {
+            if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+            return ctx;
+          }
+
+          function unlock() {
+            const c = getCtx();
+
+            // Ask iOS to resume
+            if (c.state === 'suspended') {
+              try { c.resume(); } catch { }
+            }
+
+            // Prime the pipeline once, but do it *next tick* so resume has time to take effect
+            if (!unlocked) {
+              unlocked = true;
+              setTimeout(() => {
+                try {
+                  const b = c.createBuffer(1, 1, c.sampleRate);
+                  const src = c.createBufferSource();
+                  src.buffer = b;
+                  src.connect(c.destination);
+                  src.start(0);
+                } catch { }
+              }, 0);
+            }
+          }
+
+          // Game over: slow falling minor motif (the opposite of a fanfare)
+          function gameOver(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.16;
+            const step = opts.step ?? 0.14;
+
+            // Downward, slightly ominous: A4 -> G4 -> E4 -> C4 (minor-ish fall)
+            const notes = opts.notes ?? [440.0, 392.0, 329.63, 261.63];
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            const osc = c.createOscillator();
+            osc.type = 'triangle'; // softer = sadder
+            osc.connect(out);
+
+            // Tiny wobble for “defeat”
+            const wob = c.createOscillator();
+            wob.type = 'sine';
+            wob.frequency.setValueAtTime(5.5, t0);
+
+            const wobAmt = c.createGain();
+            wobAmt.gain.setValueAtTime(6, t0); // Hz depth
+            wob.connect(wobAmt).connect(osc.frequency);
+
+            // Per-note envelope (longer decay = “opposite of fanfare”)
+            for (let i = 0; i < notes.length; i++) {
+              const ti = t0 + i * step;
+
+              osc.frequency.setValueAtTime(notes[i], ti);
+
+              out.gain.setValueAtTime(0.0001, ti);
+              out.gain.exponentialRampToValueAtTime(vol, ti + 0.012);
+              out.gain.exponentialRampToValueAtTime(0.0001, ti + step + 0.10);
+            }
+
+            // Little low “thud” tail
+            const bass = c.createOscillator();
+            bass.type = 'square';
+            bass.frequency.setValueAtTime(78, t0 + step * notes.length - 0.02); // ~E2
+
+            const bGain = c.createGain();
+            bGain.gain.setValueAtTime(0.0001, t0 + step * notes.length - 0.02);
+            bGain.gain.exponentialRampToValueAtTime(vol * 0.35, t0 + step * notes.length + 0.01);
+            bGain.gain.exponentialRampToValueAtTime(0.0001, t0 + step * notes.length + 0.22);
+
+            bass.connect(bGain).connect(c.destination);
+
+            const total = notes.length * step + 0.35;
+
+            osc.start(t0);
+            wob.start(t0);
+            bass.start(t0 + step * notes.length - 0.02);
+
+            osc.stop(t0 + total);
+            wob.stop(t0 + total);
+            bass.stop(t0 + step * notes.length + 0.25);
+          }
+
+          // Level cleared fanfare (chip jingle)
+          function levelClear(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.14;
+            const step = opts.step ?? 0.085;
+
+            // A bright, happy little cadence: C5 E5 G5 C6  B5 G5 E5
+            const notes = opts.notes ?? [523.25, 659.25, 783.99, 1046.50, 987.77, 783.99, 659.25];
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            // Main voice (chip)
+            const osc = c.createOscillator();
+            osc.type = 'square';
+            osc.connect(out);
+
+            // Optional soft support voice (adds “fanfare” without samples)
+            const osc2 = c.createOscillator();
+            osc2.type = 'triangle';
+
+            const out2 = c.createGain();
+            out2.gain.setValueAtTime(0.0001, t0);
+            out2.connect(c.destination);
+
+            osc2.connect(out2);
+
+            for (let i = 0; i < notes.length; i++) {
+              const ti = t0 + i * step;
+
+              osc.frequency.setValueAtTime(notes[i], ti);
+              osc2.frequency.setValueAtTime(notes[i] / 2, ti); // octave below
+
+              // plucky envelope per note
+              out.gain.setValueAtTime(0.0001, ti);
+              out.gain.exponentialRampToValueAtTime(vol, ti + 0.006);
+              out.gain.exponentialRampToValueAtTime(0.0001, ti + step);
+
+              out2.gain.setValueAtTime(0.0001, ti);
+              out2.gain.exponentialRampToValueAtTime(vol * 0.35, ti + 0.006);
+              out2.gain.exponentialRampToValueAtTime(0.0001, ti + step);
+            }
+
+            const total = notes.length * step + 0.05;
+            osc.start(t0);
+            osc2.start(t0);
+
+            osc.stop(t0 + total);
+            osc2.stop(t0 + total);
+          }
+
+          // Combo chime
+
+          function comboChime(mult = 2, opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.22;     // overall loudness
+            const step = opts.step ?? 0.085;     // spacing between notes
+            const tail = opts.tail ?? 1.55;      // how long it rings
+
+            // “Chime” notes: a bright little climb
+            const notes2 = [784.0, 1174.66];                 // G5, D6
+            const notes3 = [784.0, 1174.66, 1568.0];         // G5, D6, G6
+            const notes = (mult >= 3) ? notes3 : notes2;
+
+            // Gentle brightness shaping (prevents harsh beep)
+            const lpf = c.createBiquadFilter();
+            lpf.type = 'lowpass';
+            lpf.frequency.setValueAtTime(9000, t0);
+            lpf.Q.setValueAtTime(0.8, t0);
+
+            const hpf = c.createBiquadFilter();
+            hpf.type = 'highpass';
+            hpf.frequency.setValueAtTime(250, t0);
+            hpf.Q.setValueAtTime(0.7, t0);
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+
+            hpf.connect(lpf);
+            lpf.connect(out);
+            out.connect(c.destination);
+
+            // Very small “air” echo to make it feel like a chime, not a beep
+            const delay = c.createDelay(0.25);
+            delay.delayTime.setValueAtTime(0.09, t0);
+            const fb = c.createGain();
+            fb.gain.setValueAtTime(0.22, t0);
+            delay.connect(fb);
+            fb.connect(delay);
+
+            const wet = c.createGain();
+            wet.gain.setValueAtTime(0.18, t0);
+
+            // Tap some of the signal into the delay return
+            lpf.connect(delay);
+            delay.connect(wet);
+            wet.connect(out);
+
+            // FM bell voice: carrier + modulator
+            const carrier = c.createOscillator();
+            carrier.type = 'sine';
+
+            const mod = c.createOscillator();
+            mod.type = 'sine';
+
+            const modGain = c.createGain();
+            modGain.gain.setValueAtTime(0, t0); // we shape this per note
+
+            mod.connect(modGain);
+            modGain.connect(carrier.frequency);
+
+            carrier.connect(hpf);
+
+            // Start oscillators once
+            carrier.start(t0);
+            mod.start(t0);
+
+            // Per-note envelopes
+            for (let i = 0; i < notes.length; i++) {
+              const ti = t0 + i * step;
+              const f = notes[i];
+
+              // Carrier frequency
+              carrier.frequency.setValueAtTime(f, ti);
+
+              // Modulator frequency & depth: higher depth at start, then quickly decays
+              mod.frequency.setValueAtTime(f * 2.01, ti); // slight detune for shimmer
+
+              const depthStart = f * 0.9; // FM depth (bigger = more bell)
+              modGain.gain.setValueAtTime(0.0001, ti);
+              modGain.gain.exponentialRampToValueAtTime(depthStart, ti + 0.006);
+              modGain.gain.exponentialRampToValueAtTime(f * 0.08, ti + 0.09);
+
+              // Amplitude envelope: fast attack, long ring
+              out.gain.setValueAtTime(0.0001, ti);
+              out.gain.exponentialRampToValueAtTime(vol, ti + 0.006);
+              out.gain.exponentialRampToValueAtTime(0.0002, ti + tail);
+            }
+
+            const total = notes.length * step + tail + 0.08;
+            carrier.stop(t0 + total);
+            mod.stop(t0 + total);
+
+            // Clean up (filters/delay nodes can be GC’d afterwards)
+          }
+
+          // Gentle ringing chime when a FRUIT is revealed
+          function revealFruit(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.14;
+            const dur = opts.dur ?? 0.65;
+
+            // Master gain
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            // Bell-like oscillator
+            const osc = c.createOscillator();
+            osc.type = 'sine'; // softer, more bell-like than square
+
+            // Musical interval: perfect fifth (very pleasing)
+            const base = opts.base ?? 988.0; // G5
+            const fifth = base * 1.5;        // D6
+
+            osc.frequency.setValueAtTime(base, t0);
+            osc.frequency.setValueAtTime(fifth, t0 + 0.03);
+
+            // Long, gentle decay (the "ring")
+            out.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+            out.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+            // Very subtle vibrato for shimmer
+            const vib = c.createOscillator();
+            vib.type = 'sine';
+            vib.frequency.setValueAtTime(6, t0);
+
+            const vibAmt = c.createGain();
+            vibAmt.gain.setValueAtTime(4, t0);
+
+            vib.connect(vibAmt).connect(osc.frequency);
+
+            osc.connect(out);
+
+            osc.start(t0);
+            vib.start(t0);
+
+            osc.stop(t0 + dur);
+            vib.stop(t0 + dur);
+          }
+
+          // Chime when a BOMB is revealed (warning ping, slightly nasty)
+          function revealBomb(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.11;
+            const step = opts.step ?? 0.060;
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            const osc = c.createOscillator();
+            osc.type = 'square';
+            osc.connect(out);
+
+            // Two-note “uh-oh” (tritone-ish tension)
+            const n1 = opts.n1 ?? 740.0;   // ~F#5
+            const n2 = opts.n2 ?? 523.25;  // C5
+
+            osc.frequency.setValueAtTime(n1, t0);
+            out.gain.exponentialRampToValueAtTime(vol, t0 + 0.003);
+            out.gain.exponentialRampToValueAtTime(0.0001, t0 + step);
+
+            osc.frequency.setValueAtTime(n2, t0 + step);
+            out.gain.setValueAtTime(0.0001, t0 + step);
+            out.gain.exponentialRampToValueAtTime(vol * 1.05, t0 + step + 0.003);
+            out.gain.exponentialRampToValueAtTime(0.0001, t0 + step * 2);
+
+            osc.start(t0);
+            osc.stop(t0 + step * 2 + 0.03);
+          }
+
+
+          function bomb(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+
+            const vol = opts.volume ?? 0.28;
+            const dur = opts.dur ?? 0.6; // LONGER = ZX feel
+
+            // =========================
+            // NOISE EXPLOSION (core)
+            // =========================
+            const len = Math.floor(c.sampleRate * dur);
+            const buf = c.createBuffer(1, len, c.sampleRate);
+            const data = buf.getChannelData(0);
+
+            // Rough ZX-style noise: no smoothing, heavy decay
+            for (let i = 0; i < len; i++) {
+              const k = 1 - i / len;           // decay 1 → 0
+              const grit = Math.random() * 2 - 1;
+              data[i] = grit * k * 0.95;
+            }
+
+            const noise = c.createBufferSource();
+            noise.buffer = buf;
+
+            const nGain = c.createGain();
+            nGain.gain.setValueAtTime(vol, t0);
+            nGain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+            // Aggressive low-pass sweep (this is VERY ZX)
+            const lp = c.createBiquadFilter();
+            lp.type = 'lowpass';
+            lp.frequency.setValueAtTime(4200, t0);
+            lp.frequency.exponentialRampToValueAtTime(140, t0 + dur);
+
+            noise.connect(lp).connect(nGain).connect(c.destination);
+
+            // =========================
+            // LOW RUMBLE (optional but very ZX)
+            // =========================
+            const osc = c.createOscillator();
+            osc.type = 'square';
+
+            const oGain = c.createGain();
+            oGain.gain.setValueAtTime(vol * 0.35, t0);
+            oGain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+            // Very low pitch slide = speaker abuse
+            osc.frequency.setValueAtTime(95, t0);
+            osc.frequency.exponentialRampToValueAtTime(28, t0 + dur);
+
+            // Slow wobble (feels like unstable hardware)
+            const wob = c.createOscillator();
+            wob.type = 'sine';
+            wob.frequency.setValueAtTime(8, t0);
+
+            const wobAmt = c.createGain();
+            wobAmt.gain.setValueAtTime(14, t0);
+            wob.connect(wobAmt).connect(osc.frequency);
+
+            osc.connect(oGain).connect(c.destination);
+
+            // =========================
+            // START / STOP
+            // =========================
+            noise.start(t0);
+            noise.stop(t0 + dur);
+
+            wob.start(t0);
+            wob.stop(t0 + dur);
+
+            osc.start(t0);
+            osc.stop(t0 + dur);
+          }
+
+          function coin(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+            const vol = opts.volume ?? 0.12;
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            const osc = c.createOscillator();
+            osc.type = 'square';
+
+            // (your existing coin code, but using c instead of ctx)
+            const notes = opts.notes ?? [523.25, 659.25, 783.99, 987.77];
+            const step = opts.step ?? 0.07;
+            const total = step * notes.length + 0.06;
+
+            out.gain.setValueAtTime(0.0001, t0);
+            for (let i = 0; i < notes.length; i++) {
+              const ti = t0 + i * step;
+              osc.frequency.setValueAtTime(notes[i], ti);
+              out.gain.setValueAtTime(0.0001, ti);
+              out.gain.exponentialRampToValueAtTime(vol, ti + 0.004);
+              out.gain.exponentialRampToValueAtTime(0.0001, ti + step);
+            }
+
+            osc.connect(out);
+            osc.start(t0);
+            osc.stop(t0 + total);
+          }
+
+          function fruit(opts = {}) {
+            unlock();
+            const c = getCtx();
+            const t0 = c.currentTime;
+            const vol = opts.volume ?? 0.10;
+
+            const out = c.createGain();
+            out.gain.setValueAtTime(0.0001, t0);
+            out.connect(c.destination);
+
+            const osc = c.createOscillator();
+            osc.type = 'square';
+            osc.connect(out);
+
+            const a = opts.a ?? 988.0;
+            const b = opts.b ?? 1318.5;
+            const cHz = opts.c ?? 1760.0;
+            const step = opts.step ?? 0.055;
+
+            osc.frequency.setValueAtTime(a, t0);
+            out.gain.exponentialRampToValueAtTime(vol, t0 + 0.004);
+            out.gain.exponentialRampToValueAtTime(0.0001, t0 + step);
+
+            osc.frequency.setValueAtTime(b, t0 + step);
+            out.gain.setValueAtTime(0.0001, t0 + step);
+            out.gain.exponentialRampToValueAtTime(vol, t0 + step + 0.004);
+            out.gain.exponentialRampToValueAtTime(0.0001, t0 + step * 2);
+
+            if (opts.sparkle !== false) {
+              osc.frequency.setValueAtTime(cHz, t0 + step * 2);
+              out.gain.setValueAtTime(0.0001, t0 + step * 2);
+              out.gain.exponentialRampToValueAtTime(vol * 0.75, t0 + step * 2 + 0.003);
+              out.gain.exponentialRampToValueAtTime(0.0001, t0 + step * 2 + 0.030);
+            }
+
+            osc.start(t0);
+            osc.stop(t0 + step * 2 + 0.08);
+          }
+
+          // ---------- CHIP MUSIC (looping, scheduled) ----------
+          const MUSIC = (() => {
+
+            const LEAD_LEVEL = 0.15; // 1.0 = current loudness
+
+            let prevLead = null;
+            let prevBass = null;
+            let prevArp = null;
+            let bassFilt = null;
+
+            let padOsc1 = null, padOsc2 = null, padOsc3 = null;
+            let padGain = null;
+            let padFilt = null;
+
+            let prevPadRoot = null;
+
+            let playing = false;
+            let timerId = null;
+
+            let noiseBuf = null;
+
+            // LEAD (Mini V / Minimoog-style subtractive)
+            let leadOsc1 = null;   // saw 8'
+            let leadOsc2 = null;   // saw 8' (detuned)
+            let leadOsc3 = null;   // triangle 16'
+
+            let leadMix = null;   // sums oscillators
+            let leadFilt = null;   // low-pass filter (ladder-style approximation)
+            let leadGain = null;   // amp envelope (keep this name)
+
+            function bars(...barArrays) {
+              // each bar array must be length 16 (16th notes)
+              const out = [];
+              for (const b of barArrays) out.push(...b);
+              return out;
+            }
+
+            function getNoiseBuffer() {
+              const c = getCtx();
+              if (noiseBuf) return noiseBuf;
+
+              // 1 second of noise we can slice from
+              const len = c.sampleRate * 1;
+              const buf = c.createBuffer(1, len, c.sampleRate);
+              const data = buf.getChannelData(0);
+              for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+
+              noiseBuf = buf;
+              return noiseBuf;
+            }
+
+            // separate music bus so you can control volume/ducking
+            let musicGain = null;
+            let drumGain = null;
+
+            // running voices (keep oscillators alive; change freq + envelope)
+            let bassOsc = null, bassGain = null;
+            let arpOsc = null, arpGain = null;
+            let patternArp = [];
+
+            // scheduler
+            let step = 0;
+            let nextNoteTime = 0;
+
+            // tuneables
+            let tempo = 132;          // BPM
+            let stepsPerBeat = 4;     // 16th notes (4 per beat)
+            let patternLead = [];
+            let patternBass = [];
+            let patternPad = [];
+
+
+            function ensureDrumBus() {
+              const c = getCtx();
+              ensureBus();
+              if (!drumGain) {
+                drumGain = c.createGain();
+                drumGain.gain.value = 1.3; // drum volume
+                drumGain.connect(musicGain);
+              }
+            }
+
+            function drumKick(t) {
+              const c = getCtx();
+              ensureDrumBus();
+
+              const o = c.createOscillator();
+              o.type = 'sine';
+
+              const g = c.createGain();
+              g.gain.setValueAtTime(0.0001, t);
+              g.gain.exponentialRampToValueAtTime(0.12, t + 0.005);
+              g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+
+              // pitch drop gives the “thump”
+              o.frequency.setValueAtTime(140, t);
+              o.frequency.exponentialRampToValueAtTime(55, t + 0.10);
+
+              o.connect(g).connect(drumGain);
+              o.start(t);
+              o.stop(t + 0.13);
+            }
+
+            function drumHat(t) {
+              const c = getCtx();
+              ensureDrumBus(); // makes sure drumGain exists and is connected
+
+              // Use cached noise buffer (no per-hit allocation)
+              const src = c.createBufferSource();
+              src.buffer = getNoiseBuffer();
+
+              // Random slice so it doesn't sound identical each hit
+              const offset = 0.25;
+              const dur = 0.03;                   // hat length (seconds)
+
+              const hp = c.createBiquadFilter();
+              hp.type = 'highpass';
+              hp.frequency.setValueAtTime(6000, t);
+
+              const g = c.createGain();
+              g.gain.setValueAtTime(0.0001, t);
+              g.gain.exponentialRampToValueAtTime(0.045, t + 0.004);      // attack was 0.002 // change first value for vol
+              g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.006); // tiny tail
+
+              const lp = c.createBiquadFilter();
+              lp.type = 'lowpass';
+              lp.frequency.setValueAtTime(12000, t);
+
+              src.connect(hp).connect(lp).connect(g).connect(drumGain);
+
+              // Start with offset+duration (slice from the cached buffer)
+              src.start(t, offset, dur);
+              src.stop(t + dur + 0.02);
+            }
+
+            function drumSnare(t) {
+              const c = getCtx();
+              ensureDrumBus();
+
+              const src = c.createBufferSource();
+              src.buffer = getNoiseBuffer();
+
+              const offset = Math.random() * 0.7;
+              const dur = 0.08; // snare length
+
+              const bp = c.createBiquadFilter();
+              bp.type = 'bandpass';
+              bp.frequency.setValueAtTime(1800, t);
+              bp.Q.setValueAtTime(0.8, t);
+
+              const g = c.createGain();
+              g.gain.setValueAtTime(0.0001, t);
+              g.gain.exponentialRampToValueAtTime(0.16, t + 0.004);     // louder snare
+              g.gain.exponentialRampToValueAtTime(0.0001, t + dur);     // decay
+
+              src.connect(bp).connect(g).connect(drumGain);
+
+              src.start(t, offset, dur);
+              src.stop(t + dur + 0.02);
+            }
+
+
+            function ensureBus() {
+              const c = getCtx();
+              if (!musicGain) {
+                musicGain = c.createGain();
+                musicGain.gain.value = 0.0001;
+
+                const comp = c.createDynamicsCompressor();
+                comp.threshold.value = -18;
+                comp.knee.value = 10;
+                comp.ratio.value = 12;
+                comp.attack.value = 0.003;
+                comp.release.value = 0.12;
+
+                musicGain.connect(comp);
+                comp.connect(c.destination);
+
+                //musicGain.connect(c.destination);
+
+              }
+            }
+
+            function midiToHz(m) {
+              return 440 * Math.pow(2, (m - 69) / 12);
+            }
+
+            function ensureVoices() {
+              const c = getCtx();
+              ensureBus();
+              ensureDrumBus();
+
+              if (!padOsc1) {
+                padOsc1 = c.createOscillator();
+                padOsc1.type = 'sawtooth';
+
+                padOsc2 = c.createOscillator();
+                padOsc2.type = 'sawtooth';
+
+                padOsc3 = c.createOscillator();
+                padOsc3.type = 'sawtooth';
+
+                padFilt = c.createBiquadFilter();
+                padFilt.type = 'lowpass';
+                padFilt.frequency.value = 600;  // pad brightness; tweak 600..1400
+                padFilt.Q.value = 1.0;          // gentle
+
+                padGain = c.createGain();
+                padGain.gain.value = 0.0001;
+
+                padOsc1.detune.value = -2;
+                //padOsc2.detune.value = +2;
+                //padOsc3.detune.value = +4;
+
+                // Mix the oscillators into one filter -> gain -> bus
+                padOsc1.connect(padFilt);
+                padOsc2.connect(padFilt);
+                padOsc3.connect(padFilt);
+                padFilt.connect(padGain).connect(musicGain);
+
+                padOsc1.start();
+                padOsc2.start();
+                padOsc3.start();
+              }
+
+
+              if (!leadOsc1) {
+                // Mini V / Minimoog-ish 3-osc subtractive lead
+
+                // Oscillators
+                leadOsc1 = c.createOscillator();
+                leadOsc1.type = 'sawtooth';     // OSC 1 saw 8'
+
+                leadOsc2 = c.createOscillator();
+                leadOsc2.type = 'sawtooth';     // OSC 2 saw 8'
+                leadOsc2.detune.value = 16.5;   // +1.54% fine ≈ +26.5 cents
+
+                leadOsc3 = c.createOscillator();
+                leadOsc3.type = 'triangle';     // OSC 3 triangle 16'
+                leadOsc3.detune.value = 20;
+
+                // Per-osc levels (OSC3 is -2 dB vs 1 & 2)
+                const leadG1 = c.createGain();
+                const leadG2 = c.createGain();
+                const leadG3 = c.createGain();
+                leadG1.gain.value = 1.0;
+                leadG2.gain.value = 1.0;
+                leadG3.gain.value = 0.794; // -2 dB (10^(-2/20))
+
+                // Mixer
+                leadMix = c.createGain();
+                leadMix.gain.value = 0.35; // pre-filter trim (tweak if too loud)
+
+                // Filter (cutoff 130 Hz, emphasis 2.97)
+                leadFilt = c.createBiquadFilter();
+                leadFilt.type = 'lowpass';
+                leadFilt.frequency.value = 130;
+                leadFilt.Q.value = 3.0;
+
+                // Output amp
+                leadGain = c.createGain();
+                leadGain.gain.value = 0.0001;
+
+                // Wire it up: osc -> oscGain -> mix -> filter -> amp -> music bus
+                leadOsc1.connect(leadG1); leadG1.connect(leadMix);
+                leadOsc2.connect(leadG2); leadG2.connect(leadMix);
+                leadOsc3.connect(leadG3); leadG3.connect(leadMix);
+
+                leadMix.connect(leadFilt);
+                leadFilt.connect(leadGain).connect(musicGain);
+
+                // Start
+                leadOsc1.start();
+                leadOsc2.start();
+                leadOsc3.start();
+              }
+
+
+              if (!bassOsc) {
+                bassOsc = c.createOscillator();
+                bassOsc.type = 'sawtooth';
+
+                bassFilt = c.createBiquadFilter();
+                bassFilt.type = 'lowpass';
+                bassFilt.frequency.value = 180;     // will be modulated by env
+                bassFilt.Q.value = 7;              // resonance; tweak 6..14
+
+                bassGain = c.createGain();
+                bassGain.gain.value = 0.0001;
+
+                // osc -> filter -> gain -> music bus
+                bassOsc.connect(bassFilt).connect(bassGain).connect(musicGain);
+                bassOsc.start();
+              }
+
+              if (!arpOsc) {
+                arpOsc = c.createOscillator();
+                arpOsc.type = 'square';
+
+                arpFilt = c.createBiquadFilter();
+                arpFilt.type = 'lowpass';
+                arpFilt.frequency.value = 1200; // brightness
+                arpFilt.Q.value = 1.2;
+
+                arpGain = c.createGain();
+                arpGain.gain.value = 0.0001;
+
+                arpOsc.connect(arpFilt).connect(arpGain).connect(musicGain);
+                arpOsc.start();
+              }
+
+            }
+
+            function setMusicVolume(v) {
+              ensureBus();
+              const c = getCtx();
+              musicGain.gain.cancelScheduledValues(c.currentTime);
+              musicGain.gain.setTargetAtTime(Math.max(0.0001, v), c.currentTime, 0.03);
+            }
+
+            // Main theme song instruments
+
+            function scheduleStep(t) {
+              const c = getCtx();
+              const spb = 60 / tempo;                       // seconds per beat
+              const stepDur = spb / stepsPerBeat;           // seconds per 16th
+
+              const len = Math.max(
+                patternPad?.length || 0,
+                patternLead?.length || 0,
+                patternBass?.length || 0,
+                patternArp?.length || 0
+              ) || 32;
+
+              const idx = step % len;
+
+              // PAD: sustain one root per bar (16 steps = 1 bar)
+              const bar = Math.floor(idx / 16);
+              const barStep = idx % 16;
+              const chord = patternPad[idx] || null;
+
+              if (barStep === 0) {
+
+                // If no chord this bar, fade pad out (but DO NOT return; keep scheduling others)
+                if (!chord) {
+                  padGain.gain.setTargetAtTime(0.0001, t, 0.2);
+                } else {
+
+                  // Use the first two notes of the chord for a wide pad
+                  const hz1 = midiToHz(chord[0]); // root
+                  const hz2 = midiToHz(chord[1]); // 3rd
+                  const hz3 = midiToHz(chord[3]); // 7th / duplicated top note
+
+                  padOsc1.frequency.cancelScheduledValues(t);
+                  padOsc2.frequency.cancelScheduledValues(t);
+                  padOsc3.frequency.cancelScheduledValues(t);
+
+                  padOsc1.frequency.setValueAtTime(hz1, t);
+                  padOsc2.frequency.setValueAtTime(hz2, t);
+                  padOsc3.frequency.setValueAtTime(hz3, t);
+
+                  const padAttack = 0.35;
+                  const padRelease = 0.45;
+                  const padLevel = 0.020;
+
+                  padGain.gain.cancelScheduledValues(t);
+                  padGain.gain.setTargetAtTime(padLevel, t, padAttack);
+
+                  const barDur = stepDur * 16;
+                  padGain.gain.setTargetAtTime(0.0001, t + barDur - 0.05, padRelease);
+                }
+              }
+
+              // LEAD (Mini V / 3-osc subtractive, filter+amp contours, glide)
+              const leadNote = patternLead[idx];
+
+              const leadGlide = 0.005; // seconds; tweak 0.02..0.08
+
+              // --- Mini V style settings (mapped to WebAudio) ---
+
+              // Loudness contour (Attack 0.52ms, Decay 1.83s, Sustain 3.98/10)
+              const ampA = 0.00052;
+              const ampD = 1.83;
+              const ampS = 0.398;      // 3.98/10
+              const ampPeak = 0.075;   // overall loudness peak; tweak 0.05..0.10
+
+              // Filter (Cutoff 130Hz, Emphasis 2.97, Amount 61.54%, Attack 16ms, Decay 768ms, Sustain 3.8/10)
+              const leadBaseCut = 130;
+              const filtQ = 3.0;
+              const filtAmt = 0.6154;
+              const filtA = 0.016;
+              const filtD = 0.768;
+              const filtS = 0.38;    // 3.8/10
+
+              // How far the contour can open the filter (WebAudio needs a "span" value)
+              const filtSpan = 2200;   // tweak 1500..3500 depending on brightness
+
+              // Release on note-off (Mini V patch view you gave doesn’t mention release; keep short and click-safe)
+              const rel = 0.08;
+
+              if (leadNote == null) {
+                // release to silence
+                if (prevLead != null) {
+                  leadGain.gain.cancelScheduledValues(t);
+                  leadGain.gain.setValueAtTime(Math.max(0.0001, leadGain.gain.value), t);
+                  leadGain.gain.setTargetAtTime(0.0001, t, rel);
+
+                  if (leadFilt) {
+                    leadFilt.Q.value = filtQ;
+                    leadFilt.frequency.cancelScheduledValues(t);
+                    leadFilt.frequency.setValueAtTime(Math.max(leadBaseCut, leadFilt.frequency.value || leadBaseCut), t);
+                    leadFilt.frequency.setTargetAtTime(leadBaseCut, t, rel);
+                  }
+                }
+                prevLead = null;
+
+              } else {
+                const hz = (typeof leadNote === 'number' && leadNote < 200) ? midiToHz(leadNote) : leadNote;
+
+                // Osc ranges:
+                // OSC1: 8' -> hz
+                // OSC2: 8' -> hz
+                // OSC3: 16' -> hz/2
+                leadOsc1.frequency.cancelScheduledValues(t);
+                leadOsc2.frequency.cancelScheduledValues(t);
+                leadOsc3.frequency.cancelScheduledValues(t);
+
+                leadOsc1.frequency.setTargetAtTime(hz, t, leadGlide);
+                leadOsc2.frequency.setTargetAtTime(hz, t, leadGlide);
+                leadOsc3.frequency.setTargetAtTime(hz * 0.5, t, leadGlide);
+
+                // optional tiny pitch wobble
+                //leadOsc1.frequency.setTargetAtTime(hz * 1.0015, t + 0.10, 0.06);
+                //leadOsc1.frequency.setTargetAtTime(hz, t + 0.22, 0.06);
+
+                if (prevLead !== leadNote) {
+                  // AMP contour: A -> D -> Sustain
+                  leadGain.gain.cancelScheduledValues(t);
+                  leadGain.gain.setValueAtTime(Math.max(0.0001, leadGain.gain.value), t);
+                  leadGain.gain.linearRampToValueAtTime(ampPeak, t + ampA);
+                  leadGain.gain.linearRampToValueAtTime(ampPeak * ampS, t + ampA + ampD);
+
+                  // FILTER contour (filter mod on): A -> D -> Sustain
+                  if (leadFilt) {
+                    leadFilt.Q.value = filtQ;
+
+                    const peakCut = leadBaseCut + (filtSpan * filtAmt);
+                    const susCut = leadBaseCut + (filtSpan * filtAmt * filtS);
+
+                    leadFilt.frequency.cancelScheduledValues(t);
+                    leadFilt.frequency.setValueAtTime(leadBaseCut, t);
+                    leadFilt.frequency.linearRampToValueAtTime(peakCut, t + filtA);
+                    leadFilt.frequency.linearRampToValueAtTime(susCut, t + filtA + filtD);
+                  }
+
+                } else {
+                  // same note held: keep sustain level, don't re-trigger contours
+                  leadGain.gain.cancelScheduledValues(t);
+                  leadGain.gain.setTargetAtTime(ampPeak * ampS, t, 0.06);
+
+                  if (leadFilt) {
+                    leadFilt.Q.value = filtQ;
+                    // hold wherever it currently is; don't "bite" again
+                    leadFilt.frequency.cancelScheduledValues(t);
+                    leadFilt.frequency.setTargetAtTime(Math.max(leadBaseCut, leadFilt.frequency.value || leadBaseCut), t, 0.10);
+                  }
+                }
+
+                prevLead = leadNote;
+              }
+
+
+              // BASS (moog-ish)
+              const bassNote = patternBass[idx];
+
+              const glide = 0.03;       // seconds; tweak 0.01..0.05
+              const ampAttack = 0.012;
+              const ampRelease = 0.045;
+
+              const baseCut = 120;      // Hz (closed)
+              const envCut = 650;      // Hz (open on attack) tweak 500..1400
+              const filtAttack = 0.010;
+              const filtRelease = 0.080;
+
+              if (bassNote == null) {
+                // TRUE REST (global): gate off, don't hold through nulls
+                bassGain.gain.cancelScheduledValues(t);
+                bassGain.gain.setValueAtTime(Math.max(0.0001, bassGain.gain.value), t);
+                bassGain.gain.setTargetAtTime(0.0001, t, ampRelease);
+
+                if (bassFilt) {
+                  bassFilt.frequency.cancelScheduledValues(t);
+                  bassFilt.frequency.setValueAtTime(Math.max(baseCut, bassFilt.frequency.value || baseCut), t);
+                  bassFilt.frequency.setTargetAtTime(baseCut, t, 0.03); // close gently on silence
+                }
+
+                // Clear so the next note re-triggers amp + filter bite cleanly
+                prevBass = null;
+
+              } else {
+                const hz = (typeof bassNote === 'number' && bassNote < 200) ? midiToHz(bassNote) : bassNote;
+
+                // glide pitch change
+                bassOsc.frequency.cancelScheduledValues(t);
+                bassOsc.frequency.setValueAtTime(hz, t);
+
+                // if new note: retrigger amp + filter env
+                if (prevBass !== bassNote) {
+                  // AMP env (click-safe)
+                  bassGain.gain.cancelScheduledValues(t);
+                  bassGain.gain.setValueAtTime(Math.max(0.0001, bassGain.gain.value), t);
+                  bassGain.gain.setTargetAtTime(0.060, t, ampAttack); // bass loudness; tweak 0.04..0.08
+
+                  // FILTER env (the “moog” character)
+                  if (bassFilt) {
+                    bassFilt.frequency.cancelScheduledValues(t);
+                    bassFilt.frequency.setValueAtTime(baseCut, t);
+                    bassFilt.frequency.setTargetAtTime(envCut, t, filtAttack);
+                    bassFilt.frequency.setTargetAtTime(baseCut, t + 0.06, filtRelease); // closes after bite
+                  }
+
+                } else {
+                  // same note: hold steady, no re-attack
+                  bassGain.gain.cancelScheduledValues(t);
+                  bassGain.gain.setTargetAtTime(0.050, t, 0.03);
+
+                  if (bassFilt) {
+                    bassFilt.frequency.cancelScheduledValues(t);
+                    bassFilt.frequency.setTargetAtTime(baseCut + 120, t, 0.04);
+                  }
+                }
+
+                prevBass = bassNote;
+              }
+
+
+              // ARP
+              const arpNote = patternArp[idx];
+
+              // Pluck envelope (no sustain = no overlap/delay feel)
+              const arpPeak = 0.045;  // overall arp level
+              const arpA = 0.004;  // attack (click-safe)
+              const arpD = Math.min(0.035, stepDur * 0.35);
+              const arpFloor = 0.00001; // tiny, only to keep maths stable
+              const arpGlide = 0.00; // keep your tiny glide
+
+              if (arpNote == null) {
+                // REST: do not “re-hit” the tail; just shut the gate
+                arpGain.gain.cancelScheduledValues(t);
+                arpGain.gain.setTargetAtTime(0.0, t, 0.005);
+                prevArp = null;
+
+              } else {
+                const hz = (typeof arpNote === 'number' && arpNote < 200) ? midiToHz(arpNote) : arpNote;
+
+                // pitch (keep glide)
+                arpOsc.frequency.setTargetAtTime(hz, t, arpGlide);
+
+                // Retrigger every note as a pluck (even if same note), because arp patterns are per-step
+                if (arpGain.gain.cancelAndHoldAtTime) arpGain.gain.cancelAndHoldAtTime(t);
+                else arpGain.gain.cancelScheduledValues(t);
+
+                // Start from current value to avoid discontinuities
+                arpGain.gain.setValueAtTime(0.0, t);
+
+                // Up quickly, then decay back down
+                arpGain.gain.linearRampToValueAtTime(arpPeak, t + arpA);
+                arpGain.gain.exponentialRampToValueAtTime(arpFloor, t + arpA + arpD);
+
+                prevArp = arpNote;
+              }
+
+
+              // Theme song pattern
+
+              // DRUMS on a 16-step grid
+              const drumStep = idx % 16; // 0–15 every bar, even in a 32-step loop
+
+              // DRUMS on a 16-step grid, repeating every bar
+
+              if (drumStep === 0 || drumStep === 8) drumKick(t);          // 1 and 3
+              if (drumStep === 4 || drumStep === 12) drumSnare(t);        // 2 and 4
+              if (drumStep % 2 === 0) drumHat(t - 0.002);
+
+              // Little turnaround fill at the very end of bar 2
+              if (idx === 30) drumSnare(t);
+              if (idx === 31) { drumSnare(t); drumHat(t - 0.002); }
+
+              step++;
+              nextNoteTime += stepDur;
+            }
+
+            function scheduler() {
+              const c = getCtx();
+              const lookahead = 0.10; // schedule 100ms ahead
+              while (nextNoteTime < c.currentTime + lookahead) {
+                scheduleStep(nextNoteTime);
+              }
+            }
+
+            function start(opts = {}) {
+              unlock();
+              const c = getCtx();
+              ensureVoices();
+
+              // Apply tempo if provided
+              if (typeof opts.tempo === 'number' && Number.isFinite(opts.tempo)) {
+                tempo = opts.tempo;
+              }
+
+              // --- LEAD — A section (8 bars) from MIDI ---
+
+              const LA1 = [78, 78, 78, 78, 76, 76, 78, 78, 78, 78, 76, 76, 76, 76, 81, 81];
+              const LA2 = [81, 81, 81, 81, 79, 79, 78, 78, 78, 78, 78, 78, 76, 76, null, null];
+              const LA3 = [81, 81, 83, 83, 83, 83, 84, 84, 84, 84, 84, 84, 86, 86, 83, 83];
+              const LA4 = [83, 83, 83, 83, 83, 83, 83, null, null, null, 79, 79, 81, 81, 81, 81];
+              const LA5 = [82, 82, 82, 82, 82, 82, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84];
+              const LA6 = [85, 85, 85, 85, 85, 85, 86, 86, 86, 86, 86, 86, 86, null, null, null];
+              const LA7 = [87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, null, null, 88, 88];
+              const LA8 = [88, 88, 88, 88, 88, 88, 88, 88, null, null, 79, 79, 78, 78, 76, 76];
+
+
+              // --- LEAD — B section (8 bars) from b-lead.mid ---
+
+              const LB1 = [74, 74, 74, 74, 74, 74, 78, 78, 78, 78, 78, 78, 78, 78, 69, 69];
+              const LB2 = [69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69];
+              const LB3 = [74, 74, 74, 74, 74, 74, 76, 76, 76, 76, 76, 76, 76, 76, 73, 73];
+              const LB4 = [73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73];
+              const LB5 = [74, 74, 74, 74, 74, 74, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76];
+              const LB6 = [70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 79, 79, 78, 78];
+              const LB7 = [76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76];
+              const LB8 = [76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76];
+
+
+              // Full lead timeline: A x4, then B x1 (40 bars total)
+              patternLead = opts.lead ?? bars(
+                // A x4              
+                LA1, LA2, LA3, LA4, LA5, LA6, LA7, LA8,
+
+                // B x1
+                LB1, LB2, LB3, LB4, LB5, LB6, LB7, LB8
+
+              );
+
+              // --- A SECTION (8 bars) BASS  ---
+              // 16 steps per bar (16th notes). Use null for “no new note”.
+
+              const BA1 = [50, null, 50, null, 50, null, 50, null, 50, null, 50, null, 50, null, 50, null];
+              const BA2 = [45, null, 45, null, 45, null, 45, null, 45, null, 45, null, 40, 43, 45, null];
+              const BA3 = [38, null, 38, null, 38, null, 38, null, 38, null, 38, null, 38, null, 38, null];
+              const BA4 = [43, null, 43, null, 43, null, 43, null, 43, null, 43, null, 43, null, 43, null];
+              const BA5 = [43, null, 43, null, 43, null, 43, null, 43, null, 43, null, 43, null, 43, null];
+              const BA6 = [42, null, 42, null, 42, null, 42, null, 42, null, 42, null, 42, null, 42, null];
+              const BA7 = [47, null, 47, null, 47, null, 47, null, 47, null, 47, null, 47, null, 47, null];
+              const BA8 = [45, null, 45, null, 45, null, 45, null, 45, null, 45, null, 45, null, 45, null];
+
+              // --- B SECTION (8 bars) BASS from b-bass.mid ---
+
+              const BB1 = [42, 42, 42, 42, null, null, 42, 42, 42, 42, 42, 42, 42, 42, null, null];
+              const BB2 = [47, 47, 47, 47, null, null, 47, 47, 47, 47, 47, 47, 47, 47, 47, null];
+              const BB3 = [40, 40, 40, 40, null, null, 40, 40, 40, 40, 40, 40, 40, 40, 40, null];
+              const BB4 = [45, 45, 45, 45, null, null, 45, 45, 45, 45, 45, 45, 45, 45, null, null];
+              const BB5 = [43, 43, 43, 43, null, null, 43, 43, 43, 43, 43, 43, 43, 43, null, null];
+              const BB6 = [43, 43, 43, 43, null, null, 43, 43, 43, 43, 43, 43, 43, 43, null, null];
+              const BB7 = [53, 53, 53, 53, 53, 53, 53, 53, 57, null, 61, 61, 64, 64, 54, 54];
+              const BB8 = [57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57];
+
+
+              // Full bass timeline: A x4, then B x1 (40 bars total)
+              patternBass = opts.bass ?? bars(
+                // A x4
+                BA1, BA2, BA3, BA4, BA5, BA6, BA7, BA8,
+
+                // B x1
+                BB1, BB2, BB3, BB4, BB5, BB6, BB7, BB8
+              );
+
+              // --- ARP ---
+              // A section: no arp (32 bars of rests)
+              const AR = Array(16).fill(null);
+
+              // B section (8 bars) from arp.mid
+              const AB1 = [78, null, 81, null, 78, null, 85, null, 78, null, 88, null, 78, null, 92, null];
+              const AB2 = [83, null, 86, null, 83, null, 90, null, 83, null, 93, null, 83, null, 90, null];
+              const AB3 = [76, null, 79, null, 76, null, 83, null, 76, null, 86, null, 76, null, 90, null];
+              const AB4 = [81, null, 85, null, 81, null, 88, null, 81, null, 91, null, 81, null, 95, null];
+              const AB5 = [79, null, 83, null, 79, null, 86, null, 79, null, 90, null, 79, null, 93, null];
+              const AB6 = [79, null, 82, null, 79, null, 86, null, 79, null, 89, null, 79, null, 86, null];
+              const AB7 = [74, null, 78, null, 74, null, 81, null, 74, null, 78, null, 74, null, 81, null];
+              const AB8 = [81, null, 85, null, 81, null, 88, null, 81, null, 91, null, 81, null, 95, null];
+
+              // Full arp timeline: A x4 (32 bars), then B x1 (8 bars)
+              patternArp = opts.arp ?? bars(
+                // A x4
+                AR, AR, AR, AR, AR, AR, AR, AR,
+
+                // B x1
+                AB1, AB2, AB3, AB4, AB5, AB6, AB7, AB8
+              );
+
+              // PAD — A section (8 bars) from MIDI
+              // One chord per bar: chord at step 0, then nulls.
+              // MIDI contained triads; we duplicate the top note as the 4th slot so chord[3] exists.
+              // Shifted +12 (one octave) so the pad sits above the bass.
+
+              const PA1 = [[54, 61, 64, 64], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA2 = [[55, 57, 60, 60], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA3 = [[54, 60, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA4 = [[54, 59, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA5 = [[53, 59, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA6 = [[52, 57, 61, 61], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA7 = [[57, 61, 63, 63], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA8 = [[55, 61, 66, 66], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+
+              // PAD — B section (8 bars) from MIDI
+              // MIDI contained triads; duplicate the top note as the 4th slot so chord[3] exists.
+              // Shifted +12 (one octave) to match A pad register.
+
+              const PB1 = [[57, 61, 64, 64], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB2 = [[57, 59, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB3 = [[55, 59, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB4 = [[55, 61, 66, 66], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB5 = [[54, 57, 59, 59], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB6 = [[53, 59, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB7 = [[57, 61, 64, 64], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB8 = [[55, 61, 64, 64], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+
+
+              // Full pad timeline: A x4, then B x1 (40 bars total)
+              patternPad = opts.pad ?? bars(
+                // A x4
+                PA1, PA2, PA3, PA4, PA5, PA6, PA7, PA8,
+
+                // B x1
+                PB1, PB2, PB3, PB4, PB5, PB6, PB7, PB8
+              );
+
+              step = 0;
+              nextNoteTime = c.currentTime + 0.02;
+              playing = true;
+
+              setMusicVolume(opts.volume ?? 0.20);
+
+              if (timerId) clearInterval(timerId);
+              timerId = setInterval(scheduler, 25);
+            }
+
+            function stop(opts = {}) {
+              if (!playing) return;
+              playing = false;
+              if (timerId) clearInterval(timerId);
+              timerId = null;
+
+              if (musicGain) {
+                const c = getCtx();
+                const fade = opts.fade ?? 0.10;
+                musicGain.gain.setTargetAtTime(0.0001, c.currentTime, fade);
+              }
+            }
+
+            // Win tune: scheduled one-shot using the existing AudioContext
+            function win(opts = {}) {
+              unlock();
+              const c = getCtx();
+              ensureBus();
+
+              const t0 = c.currentTime + 0.02;
+              const vol = opts.volume ?? 0.22;
+              const stepDur = opts.step ?? 0.12;
+
+              // Simple uplifting line (MIDI): C5 E5 G5 C6 B5 G5 E5 C5
+              const notes = opts.notes ?? [72, 76, 79, 84, 83, 79, 76, 72];
+
+              const o = c.createOscillator();
+              o.type = 'square';
+              const g = c.createGain();
+              g.gain.setValueAtTime(0.0001, t0);
+              o.connect(g).connect(musicGain);
+
+              for (let i = 0; i < notes.length; i++) {
+                const ti = t0 + i * stepDur;
+                o.frequency.setValueAtTime(midiToHz(notes[i]), ti);
+
+                g.gain.setValueAtTime(0.0001, ti);
+                g.gain.exponentialRampToValueAtTime(vol, ti + 0.01);
+                g.gain.exponentialRampToValueAtTime(0.0001, ti + stepDur * 0.95);
+              }
+
+              o.start(t0);
+              o.stop(t0 + notes.length * stepDur + 0.05);
+            }
+
+            // Long win fanfare: one-shot (about 12–14 seconds)
+            function fanfare(opts = {}) {
+              unlock();
+              const c = getCtx();
+              ensureBus();
+
+              // ✅ IMPORTANT: winGame() calls MUSIC.stop() first which fades musicGain to ~silent.
+              // So we must bring the bus back up for the fanfare to be audible.
+              const fanfareVol = opts.volume ?? 0.30;
+              setMusicVolume(Math.max(0.12, fanfareVol)); // raise bus volume immediately
+
+              const t0 = c.currentTime + 0.03;
+              const vol = opts.volume ?? 0.24;
+
+              // Tempo for fanfare (independent of level music)
+              const bpm = opts.tempo ?? 156;
+              const beat = 60 / bpm;         // seconds per beat
+              const step = beat / 2;         // 8th notes (easier than 16ths)
+
+              // Helper: schedule a single note with a simple chip envelope
+              function playNote(oscType, midi, t, dur, level) {
+                if (midi == null) return;
+
+                const o = c.createOscillator();
+                o.type = oscType;
+
+                const g = c.createGain();
+                g.gain.setValueAtTime(0.0001, t);
+
+                o.frequency.setValueAtTime(midiToHz(midi), t);
+
+                // quick attack, then decay
+                g.gain.exponentialRampToValueAtTime(level, t + 0.01);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+                o.connect(g).connect(musicGain);
+
+                o.start(t);
+                o.stop(t + dur + 0.02);
+              }
+
+              // Helper: play a chord (stacked notes)
+              function playChord(midiNotes, t, dur, oscType, level) {
+                for (const m of midiNotes) playNote(oscType, m, t, dur, level);
+              }
+
+              // --- FANFARE CONTENT ---
+              // Chords (city-pop / arcade friendly): Cmaj7, Am7, Fmaj7, G7, then a lift
+              const Cmaj7 = [72, 76, 79, 83];   // C5 E5 G5 B5
+              const Am7 = [69, 72, 76, 79];   // A4 C5 E5 G5
+              const Fmaj7 = [65, 69, 72, 76];   // F4 A4 C5 E5
+              const G7 = [67, 71, 74, 77];   // G4 B4 D5 F5
+
+              // 8 bars of chords, 2 beats each (so 16 chord hits)
+              const chordHits = [
+                Cmaj7, Cmaj7,
+                Am7, Am7,
+                Fmaj7, Fmaj7,
+                G7, G7,
+
+                Cmaj7, Cmaj7,
+                Fmaj7, Fmaj7,
+                G7, G7,
+                Cmaj7, Cmaj7
+              ];
+
+              // Melody (8th-note steps). null = rest
+              // This is long enough to feel like a proper “victory theme”
+              const melody = [
+                84, 83, 79, 76,  // C6 B5 G5 E5
+                79, 83, 84, null,
+                86, 84, 83, 79,
+                76, 79, 83, null,
+
+                84, 83, 79, 76,
+                79, 83, 84, 86,
+                88, 86, 84, 83,
+                84, null, null, null,
+
+                83, 81, 79, 76,
+                79, 81, 83, null,
+                84, 83, 79, 76,
+                79, 83, 84, null,
+
+                86, 84, 83, 79,
+                76, 79, 83, 84,
+                86, 88, 91, 88,
+                86, 84, 83, 84
+              ];
+
+              // Bass hits (on the chord roots)
+              const bassRoots = [
+                36, 36,  // C2
+                33, 33,  // A1
+                29, 29,  // F1
+                31, 31,  // G1
+
+                36, 36,
+                29, 29,
+                31, 31,
+                36, 36
+              ];
+
+              // Schedule chords + bass every 2 beats
+              for (let i = 0; i < chordHits.length; i++) {
+                const t = t0 + i * (2 * beat);
+
+                // soft pad-ish chord (saw), short-ish so it feels “chip”
+                playChord(chordHits[i], t, 1.8 * beat, 'sawtooth', vol * 0.20);
+
+                // bass thump (triangle)
+                playNote('triangle', bassRoots[i], t, 0.9 * beat, vol * 0.30);
+
+                // simple drum accents using your existing drum functions
+                // (kick on each chord hit; snare every other)
+                ensureDrumBus();
+                drumKick(t);
+                if (i % 2 === 1) drumSnare(t);
+                drumHat(t + 0.5 * beat);
+                drumHat(t + 1.0 * beat);
+              }
+
+              // Schedule melody on 8th notes
+              for (let i = 0; i < melody.length; i++) {
+                const t = t0 + i * step;
+                const m = melody[i];
+
+                // Lead: square (classic)
+                playNote('square', m, t, step * 0.95, vol * 0.33);
+
+                // Little harmony shimmer on some notes (every 4th step)
+                if (m != null && i % 4 === 0) {
+                  playNote('triangle', m - 12, t, step * 0.95, vol * 0.16); // octave below
+                }
+              }
+
+              // Final “tag” chord + sparkle (big ending)
+              const tEnd = t0 + (chordHits.length * 2 * beat);
+              playChord([72, 76, 79, 84], tEnd, 2.6 * beat, 'sawtooth', vol * 0.28); // C major spread
+              playChord([84, 88, 91], tEnd + 0.3 * beat, 2.0 * beat, 'square', vol * 0.18);
+
+              // Tiny sparkle using your existing coin arpeggio as a flourish
+              setTimeout(() => {
+                // Uses CHIP.coin sound which is already defined outside MUSIC
+                // If you’d rather not call it from here, you can remove this bit.
+              }, 0);
+
+              // ✅ After the fanfare ends, fade the music bus back down (optional)
+              const approxLengthSec = (chordHits.length * 2 * beat) + (2.8 * beat);
+              musicGain.gain.setTargetAtTime(0.0001, t0 + approxLengthSec, 0.20);
+
+            }
+
+            return { start, stop, win, fanfare, setMusicVolume };
+
+          })();
+
+          return { unlock, coin, fruit, bomb, revealFruit, revealBomb, comboChime, levelClear, gameOver, music: MUSIC };
+
+        })();
+
+        window.addEventListener('touchstart', () => CHIP.unlock(), { once: true, passive: true });
+        window.addEventListener('pointerdown', () => CHIP.unlock(), { once: true });
+
+        let coinInserted = false;
+        let gameStarted = false;
+        let currentLevel = 1;                 // 1=Jan ... 12=Dec
+        const clearedMonths = new Set();      // months removed from the grid
+        let score = 0;
+        let lives = 3;
+        let revealMs = 1600; // placeholder for now; we’ll scale it later
+        let monthTimerId = null;
+        let monthDeadline = 0; // performance.now() timestamp
+        let monthSecondsLeft = 0;
+        let startTapTimer = null;
+        let startLastTapAt = 0;
+
+        const BOMB_PASS_BONUS_MS = 450;   // add 0.45s when a bomb expires naturally
+        const FRUIT_HIT_BONUS_MS = 650;   // +0.65s per fruit
+        const MAX_TIMER_SLACK_MS = 6000;  // cap: at most +6s above base
+        // Time bonus: points awarded for time remaining when a month is cleared.
+        // 1 point per 100ms remaining = 10 points per second.
+        const TIME_BONUS_POINTS_PER_100MS = 1;
+
+        // ---------- FX PARTICLES (global, persists across DOM changes) ----------
+        const fx = (() => {
+          const canvas = document.getElementById('fxCanvas');
+          const ctx = canvas.getContext('2d', { alpha: true });
+
+          let dpr = 1;
+          let w = 0, h = 0;
+          let raf = 0;
+          const particles = [];
+
+          function resize() {
+            dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+            w = Math.floor(window.innerWidth);
+            h = Math.floor(window.innerHeight);
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          }
+
+          function emitBurst(x, y, opts = {}) {
+            const count = opts.count ?? 18;
+            const speedMin = opts.speedMin ?? 140;
+            const speedMax = opts.speedMax ?? 360;
+            const lifeMin = opts.lifeMin ?? 260;
+            const lifeMax = opts.lifeMax ?? 520;
+            const sizeMin = opts.sizeMin ?? 2;
+            const sizeMax = opts.sizeMax ?? 4;
+
+            const now = performance.now();
+
+            for (let i = 0; i < count; i++) {
+              const a = Math.random() * Math.PI * 2;
+              const sp = speedMin + Math.random() * (speedMax - speedMin);
+              const vx = Math.cos(a) * sp;
+              const vy = Math.sin(a) * sp;
+
+              const life = lifeMin + Math.random() * (lifeMax - lifeMin);
+              const size = sizeMin + Math.random() * (sizeMax - sizeMin);
+
+              // A couple of "spark types" mixed together
+              const kind = Math.random() < 0.75 ? 'spark' : 'star';
+
+              particles.push({
+                x, y,
+                vx, vy,
+                g: 820,            // gravity-ish
+                drag: 0.985,       // air resistance
+                size,
+                kind,
+                born: now,
+                life
+              });
+            }
+
+            // Ensure loop is running
+            if (!raf) raf = requestAnimationFrame(tick);
+          }
+
+          function drawStar(px, py, r, rot) {
+            // simple 4-point star
+            ctx.save();
+            ctx.translate(px, py);
+            ctx.rotate(rot);
+            ctx.beginPath();
+            ctx.moveTo(0, -r);
+            ctx.lineTo(r * 0.35, -r * 0.35);
+            ctx.lineTo(r, 0);
+            ctx.lineTo(r * 0.35, r * 0.35);
+            ctx.lineTo(0, r);
+            ctx.lineTo(-r * 0.35, r * 0.35);
+            ctx.lineTo(-r, 0);
+            ctx.lineTo(-r * 0.35, -r * 0.35);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+
+          function tick(t) {
+            ctx.clearRect(0, 0, w, h);
+
+            // Draw
+            for (let i = particles.length - 1; i >= 0; i--) {
+              const p = particles[i];
+              const age = t - p.born;
+              if (age >= p.life) {
+                particles.splice(i, 1);
+                continue;
+              }
+
+              const dt = 1 / 60; // stable-ish
+              p.vx *= p.drag;
+              p.vy = (p.vy * p.drag) + p.g * dt;
+              p.x += p.vx * dt;
+              p.y += p.vy * dt;
+
+              const k = 1 - (age / p.life);        // 1..0
+              const alpha = Math.max(0, Math.min(1, k));
+
+              // Glow-ish without choosing explicit colours: use white and alpha
+              ctx.globalAlpha = alpha;
+
+              if (p.kind === 'spark') {
+                ctx.fillStyle = 'rgba(255,255,255,1)';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+              } else {
+                ctx.fillStyle = 'rgba(255,255,255,1)';
+                drawStar(p.x, p.y, p.size * 2.2, age * 0.02);
+              }
+            }
+
+            ctx.globalAlpha = 1;
+
+            if (particles.length) {
+              raf = requestAnimationFrame(tick);
+            } else {
+              raf = 0;
+            }
+          }
+
+          resize();
+          window.addEventListener('resize', resize);
+
+          return { emitBurst };
+        })();
+
+        function updateHud() {
+          if (!elHud || !elHudText) return;
+
+          if (!coinInserted) {
+            elHud.style.display = 'none';
+            return;
+          }
+
+          elHud.style.display = '';
+          const t = levelRunning ? `  TIME ${monthSecondsLeft}` : '';
+          elHudText.textContent = `LIVES ${lives}  SCORE ${score}${t}`;
+
+        }
+
+        function updateBadge() {
+          if (!elBadge) return;
+
+          if (isUnlocked()) {
+            const hs = getHighScore();
+            elBadge.style.display = 'inline-block';
+            elBadge.innerHTML = `
+              <div class="badgeLine">ARCADE MODE CLEARED</div>
+              <div class="badgeLine badgeScore">
+                <span class="star">⭐</span>
+                HIGH SCORE ${hs}
+                <span class="star">⭐</span>
+              </div>
+            `;
+
+          } else {
+            elBadge.style.display = 'none';
+          }
+        }
+
+        function resetToInsertCoin() {
+          stopLevel();          // stops peek loop + clears month timer (your stopLevel already does both)
+          clearPeekTimers();    // belt-and-braces; harmless if already stopped
+
+          // reset game state
+          clearedMonths.clear();
+          currentLevel = 1;
+          score = 0;
+          lives = 3;
+          coinInserted = false;
+          gameStarted = false;
+
+          // exit game mode (tooltips back)
+          document.body.classList.remove('game-mode');
+          setArcadeHeaderMode(false);
+
+          // restore INSERT COIN prompt and re-bind handler
+          elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
+          const coin = document.getElementById('insertCoin');
+          coin.addEventListener('pointerdown', () => {
+            CHIP.coin({ notes: [523.25, 659.25, 783.99, 987.77], step: 0.07 }); // C5 E5 G5 B5
+            coinInserted = true;
+            document.body.classList.add('game-mode');
+            setArcadeHeaderMode(true);
+            coin.textContent = 'READY';
+            coin.style.animation = 'none';
+            armStartTile();
+            updateHud();
+          });
+
+          updateBadge();
+
+          // re-render all months
+          render();
+          updateHud(); // hides HUD because coinInserted=false
+        }
+
+        function triggerGameOver() {
+          CHIP.music.stop({ fade: 0.06 });
+          stopLevel();
+          CHIP.gameOver();
+          const ov = document.createElement('div');
+          ov.className = 'gameOverOverlay';
+          ov.innerHTML = `
+    <div class="txt">
+      <div class="big">GAME OVER</div>
+      <div class="small">Click to continue</div>
+    </div>
+  `;
+          document.body.appendChild(ov);
+
+          // click anywhere to reset
+          ov.addEventListener('pointerdown', () => {
+            ov.remove();
+            resetToInsertCoin();
+          }, { once: true });
+        }
+
+
+        function addTimerMs(ms) {
+          if (!levelRunning) return;
+          if (!monthDeadline) return;
+
+          const base = monthTimeSecondsForMonth(currentLevel) * 1000;
+          const now = performance.now();
+          const msLeft = Math.max(0, monthDeadline - now);
+
+          // cap: you can’t exceed (base + slack)
+          const cappedLeft = Math.min(msLeft + ms, base + MAX_TIMER_SLACK_MS);
+
+          monthDeadline = now + cappedLeft;
+
+          // refresh displayed seconds immediately
+          monthSecondsLeft = Math.max(0, Math.ceil((monthDeadline - now) / 1000));
+          updateHud();
+        }
+
+
+        // ===== Peek loop (step 1: highlight-only, no fruit/bomb yet) =====
+        let levelRunning = false;
+
+        // NEW: multiple active peeks in a wave
+        let activePeeks = new Set();   // Set<HTMLElement>
+
+        // Timers
+        let peekHideTimer = null;
+        let peekNextTimer = null;
+
+        // Existing
+        let bombStreak = 0;
+
+        // NEW: wave bookkeeping for combo scoring
+        let waveId = 0;               // increments each spawn wave
+        let waveFruitHits = 0;        // how many fruits collected in this wave
+        let waveBaseSum = 0;          // sum of base points collected in this wave
+        let waveAwarded = 0;          // total points awarded for this wave (base + combo bonus)
+        let waveMultApplied = 1;      // 1, 2, or 3 (so we only show "combo" when it upgrades)
+
+
+
+        function getRevealMsForMonth(month) {
+          // placeholder scaling: later months = less time
+          // tweak later; for now it just proves the loop works.
+          const start = 1600;
+          const step = 80;
+          return Math.max(650, start - (month - 1) * step);
+        }
+
+        function getCandidatesForMonth(month) {
+          // All real day tiles in the month, including past days.
+          const cells = [...elGrid.querySelectorAll(`.day[data-month="${month}"][data-day]`)];
+          return cells.filter(c =>
+            !c.classList.contains('empty') &&
+            !c.classList.contains('hidden')
+          );
+        }
+
+        function cheatClearCurrentMonth() {
+          if (!coinInserted) return;
+
+          // Re-find the current start tile safely (it’s scoped locally here)
+          const start =
+            elGrid.querySelector(`.day[data-month="${currentLevel}"][data-day="1"]`) ||
+            elGrid.querySelector(`.day[data-month="${currentLevel}"]`);
+
+          CHIP.coin();
+
+          if (start) showCheatFloat(start, start._lastTapXY);
+
+          if (start) {
+            start.classList.add('cheat-flash');
+            setTimeout(() => start.classList.remove('cheat-flash'), 120);
+          }
+
+          // Stop the level cleanly: clears peek timers + month timer
+          stopLevel();
+
+          // Hide every remaining tile in this month (including past days)
+          const cells = getCandidatesForMonth(currentLevel);
+          cells.forEach(c => {
+            c.classList.remove('peek');
+            clearFace(c);
+            c.classList.add('hidden');
+          });
+
+          // Now advance as if the month had been cleared normally
+          setTimeout(() => advanceLevel(), 60);
+        }
+
+
+        function clearPeekTimers() {
+          if (peekHideTimer) clearTimeout(peekHideTimer);
+          if (peekNextTimer) clearTimeout(peekNextTimer);
+          peekHideTimer = null;
+          peekNextTimer = null;
+        }
+
+        function clearActivePeeks({ rewardBombPass = false } = {}) {
+          // Remove peek visuals and faces for any still-active tiles
+          for (const c of activePeeks) {
+            if (rewardBombPass && c.dataset.peekType === 'bomb') {
+              addTimerMs(BOMB_PASS_BONUS_MS);
+            }
+            c.classList.remove('peek');
+            clearFace(c);
+          }
+          activePeeks.clear();
+        }
+
+        function stopLevel() {
+          levelRunning = false;
+          clearMonthTimer();
+          clearPeekTimers();
+          clearActivePeeks({ rewardBombPass: false });
+        }
+
+
+        // Fruit table (later we can tune values)
+        const FRUITS = [
+          { emoji: '🍒', pts: 10 },
+          { emoji: '🍋', pts: 10 },
+          { emoji: '🍇', pts: 10 },
+          { emoji: '🍓', pts: 10 },
+          { emoji: '🍍', pts: 10 },
+          { emoji: '🍉', pts: 10 },
+        ];
+
+        function bombChanceForMonth(month) {
+          // gentler ramp, lower cap
+          return Math.max(
+            0.15,
+            Math.min(0.30, 0.15 + (month - 1) * 0.015)
+          );
+        }
+
+        function tempoForMonth(month) {
+          // January tempo and how much it rises each month
+          const jan = 116;     // BPM in January
+          const step = 4;      // +4 BPM per month
+
+          // Calculate
+          const t = jan + (month - 1) * step;
+
+          // Clamp so it stays reasonable
+          return Math.max(100, Math.min(176, t));
+        }
+
+        // Full-cell face overlay for fruit/bomb during peek
+        function ensureFace(cell) {
+          let face = cell.querySelector('.face');
+          if (!face) {
+            face = document.createElement('div');
+            face.className = 'face';
+            cell.appendChild(face);
+            cell.classList.add('revealFace');
+          }
+          return face;
+        }
+        function setFace(cell, text) {
+          const face = ensureFace(cell);
+          face.textContent = text;
+        }
+        function clearFace(cell) {
+          const face = cell.querySelector('.face');
+          if (face) face.textContent = '';
+        }
+
+        function startLevel() {
+          stopLevel(); // clean start
+          bombStreak = 0;
+          levelRunning = true;
+          setManualMusic(false);
+          CHIP.music.start({ tempo: tempoForMonth(currentLevel), volume: 0.30 });
+          startMonthTimer();
+          revealMs = getRevealMsForMonth(currentLevel);
+          scheduleNextPeek(150);
+          updateHud();
+        }
+
+        function scheduleNextPeek(delayMs) {
+          clearPeekTimers();
+          peekNextTimer = setTimeout(() => {
+            if (!levelRunning) return;
+
+            const candidates = getCandidatesForMonth(currentLevel);
+            if (!candidates.length) {
+              // Month cleared
+              stopLevel();
+              setTimeout(() => advanceLevel(), 250);
+              return;
+            }
+
+            spawnWave(candidates);
+
+          }, delayMs);
+        }
+
+        function spawnWave(candidates) {
+          if (!levelRunning) return;
+
+          // Clear any previous peek visuals (we don’t reward bomb-pass here;
+          // bomb-pass is only awarded when a wave expires naturally)
+          clearActivePeeks({ rewardBombPass: false });
+
+          // Start a new wave (for combo bookkeeping later)
+          waveId++;
+          waveFruitHits = 0;
+          waveBaseSum = 0;
+          waveAwarded = 0;
+          waveMultApplied = 1;
+
+          // Choose how many to spawn: 1–3, but never more than remaining squares
+          const maxSpawn = Math.min(3, candidates.length);
+          const spawnCount = 1 + ((Math.random() * maxSpawn) | 0); // 1..maxSpawn
+
+          // Pick unique random cells
+          const pool = candidates.slice();
+          const picked = [];
+          for (let i = 0; i < spawnCount; i++) {
+            const idx = (Math.random() * pool.length) | 0;
+            picked.push(pool[idx]);
+            pool.splice(idx, 1);
+          }
+
+          // Reveal each picked tile
+          for (const cell of picked) {
+            activePeeks.add(cell);
+            cell.classList.add('peek');
+
+            // Decide bomb vs fruit using existing logic
+            let isBomb;
+            if (bombStreak >= 3) {
+              isBomb = false; // hard cap: never allow >3 bombs in a row
+            } else {
+              isBomb = Math.random() < bombChanceForMonth(currentLevel);
+            }
+
+            if (isBomb) {
+              bombStreak++;
+              cell.dataset.peekType = 'bomb';
+              CHIP.revealFruit();
+              setFace(cell, '💣');
+            } else {
+              bombStreak = 0;
+              cell.dataset.peekType = 'fruit';
+              const f = FRUITS[(Math.random() * FRUITS.length) | 0];
+              cell.dataset.peekFruit = f.emoji;
+              cell.dataset.peekPts = String(f.pts);
+              CHIP.revealFruit();
+              setFace(cell, f.emoji);
+            }
+          }
+
+          // Hide the wave after revealMs, reward bomb-pass for any bombs left unclicked
+          clearPeekTimers();
+          peekHideTimer = setTimeout(() => {
+            if (!levelRunning) return;
+
+            clearActivePeeks({ rewardBombPass: true });
+            scheduleNextPeek(120);
+          }, revealMs);
+        }
+
+
+        // One delegated handler for the whole grid:
+        elGrid.addEventListener('pointerdown', (e) => {
+          if (!coinInserted) return;
+          if (!levelRunning) return;
+
+          const cell = e.target.closest('.day');
+          if (!cell) return;
+
+          // Only accept presses on currently peeked tiles
+          if (!activePeeks.has(cell)) return;
+
+          e.preventDefault();
+
+          // Remember tap point for combo float positioning
+          cell._lastTapXY = {
+            x: (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX),
+            y: (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY)
+          };
+
+          const t = cell.dataset.peekType || 'fruit';
+
+          cell.classList.remove('peek');
+          activePeeks.delete(cell);
+
+          clearFace(cell);
+
+          if (t === 'bomb') {
+            CHIP.bomb();
+            lives = Math.max(0, lives - 1);
+            document.body.classList.add('zx-flash');
+            setTimeout(() => document.body.classList.remove('zx-flash'), 260);
+
+            updateHud();
+
+            if (lives <= 0) {
+              triggerGameOver();
+              return;
+            }
+
+            if (activePeeks.size === 0) {
+              clearPeekTimers();
+              scheduleNextPeek(120);
+            }
+            return;
+
+          }
+
+
+          // fruit
+          CHIP.fruit();
+          const pts = Number(cell.dataset.peekPts || '50');
+          applyWaveFruitScore(cell, pts);
+          addTimerMs(FRUIT_HIT_BONUS_MS);
+          updateHud();
+
+          const r = cell.getBoundingClientRect();
+          fx.emitBurst(r.left + r.width / 2, r.top + r.height / 2);
+
+          // hide collected fruit tile
+          cell.classList.add('hidden');
+
+          // If that was the last remaining tile in the month, clear the level
+          if (getCandidatesForMonth(currentLevel).length === 0) {
+            CHIP.music.stop({ fade: 0.10 });
+            stopLevel();
+            setTimeout(() => advanceLevel(), 250);
+            return;
+          }
+
+          // cleanup
+          delete cell.dataset.peekType;
+          delete cell.dataset.peekFruit;
+          delete cell.dataset.peekPts;
+
+          if (activePeeks.size === 0) {
+            clearPeekTimers();
+            scheduleNextPeek(120);
+          }
+
+        });
+
+        const UNLOCK_KEY = 'wsCalendarArcadeUnlocked';
+        const HIGH_SCORE_KEY = 'wsCalendarHighScore';
+
+        function getHighScore() {
+          try { return Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0; }
+          catch { return 0; }
+        }
+
+        function setHighScoreIfBetter(score) {
+          try {
+            const prev = getHighScore();
+            if (score > prev) {
+              localStorage.setItem(HIGH_SCORE_KEY, String(score));
+            }
+          } catch { }
+        }
+
+        function setUnlocked() {
+          try { localStorage.setItem(UNLOCK_KEY, '1'); } catch { }
+        }
+        function isUnlocked() {
+          try { return localStorage.getItem(UNLOCK_KEY) === '1'; } catch { return false; }
+        }
+
+        const pad = n => String(n).padStart(2, '0');
+        const iso = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
+
+        const todayISO = () => {
+          const t = new Date();
+          t.setHours(0, 0, 0, 0);
+          return iso(t.getFullYear(), t.getMonth() + 1, t.getDate());
+        };
+
+
+        // Capitalise Member Names for display only (internal keys remain lowercase)
+        const displayName = (name) =>
+          String(name || '')
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+
+        // Parse CSV robustly (handles quoted fields + commas)
+        function parseCSV(text) {
+          const rows = [];
+          let row = [];
+          let cur = '';
+          let inQuotes = false;
+
+          for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            const next = text[i + 1];
+
+            if (inQuotes) {
+              if (ch === '"' && next === '"') {
+                cur += '"';
+                i++;
+              } else if (ch === '"') {
+                inQuotes = false;
+              } else {
+                cur += ch;
+              }
+            } else {
+              if (ch === '"') {
+                inQuotes = true;
+              } else if (ch === ',') {
+                row.push(cur);
+                cur = '';
+              } else if (ch === '\n') {
+                row.push(cur);
+                rows.push(row);
+                row = [];
+                cur = '';
+              } else if (ch === '\r') {
+                // ignore CR
+              } else {
+                cur += ch;
+              }
+            }
+          }
+          // last field
+          if (cur.length || row.length) {
+            row.push(cur);
+            rows.push(row);
+          }
+          return rows;
+        }
+
+        function normaliseHeader(h) {
+          return String(h || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        // Accepts:
+        // - YYYY-MM-DD
+        // - YYYY/MM/DD
+        // - DD/MM/YYYY
+        // Returns ISO YYYY-MM-DD or null
+        function toISODate(s) {
+          const v = String(s || '').trim();
+          if (!v) return null;
+
+          // YYYY-MM-DD or YYYY/MM/DD
+          let m = v.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
+          if (m) {
+            const y = +m[1], mo = +m[2], d = +m[3];
+            if (isValidYMD(y, mo, d)) return iso(y, mo, d);
+            return null;
+          }
+
+          // DD/MM/YYYY
+          m = v.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+          if (m) {
+            const d = +m[1], mo = +m[2], y = +m[3];
+            if (isValidYMD(y, mo, d)) return iso(y, mo, d);
+            return null;
+          }
+
+          return null;
+        }
+
+        function isValidYMD(y, m, d) {
+          if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return false;
+          if (y < 1900 || y > 2100) return false;
+          if (m < 1 || m > 12) return false;
+          if (d < 1 || d > 31) return false;
+          const dt = new Date(y, m - 1, d);
+          return dt.getFullYear() === y && dt.getMonth() === (m - 1) && dt.getDate() === d;
+        }
+
+        // Inclusive range expansion
+        function expandDates(startISO, endISO) {
+          const out = [];
+          const [sy, sm, sd] = startISO.split('-').map(Number);
+          const [ey, em, ed] = endISO.split('-').map(Number);
+          let cur = new Date(sy, sm - 1, sd);
+          const end = new Date(ey, em - 1, ed);
+
+          // guard against inverted ranges
+          if (cur > end) return out;
+
+          while (cur <= end) {
+            out.push(iso(cur.getFullYear(), cur.getMonth() + 1, cur.getDate()));
+            cur.setDate(cur.getDate() + 1);
+          }
+          return out;
+        }
+
+        const currentYear = new Date().getFullYear();
+        const yearOptions = [currentYear, currentYear + 1];
+
+        let state = {
+          members: [],          // { name, unavailable: [YYYY-MM-DD...], ranges: [{start,end}...] }
+          byDate: new Map(),    // date -> [names...]
+          gigsByDate: new Map(), // date -> venue string (or array later)
+          year: currentYear,
+          mode: '__ALL__'
+        };
+
+        function loadGigs() {
+          return fetch(GIGS_URL, { cache: 'no-store' })
+            .then(r => {
+              if (!r.ok) throw new Error(`Failed to fetch GIGS CSV: HTTP ${r.status}`);
+              return r.text();
+            })
+            .then(text => {
+              const rows = parseCSV(text).filter(r => r.some(c => String(c || '').trim() !== ''));
+              if (!rows.length) return new Map();
+
+              // Expecting: Col A = venue/location, Col B = date (or vice versa)
+              // We'll detect which column looks like a date.
+              const out = new Map();
+
+              for (let i = 1; i < rows.length; i++) {
+                const a = (rows[i][0] ?? '').toString().trim();
+                const b = (rows[i][1] ?? '').toString().trim();
+
+                const aISO = toISODate(a);
+                const bISO = toISODate(b);
+
+                let dateISO = null;
+                let venue = null;
+
+                if (aISO && !bISO) { dateISO = aISO; venue = b; }
+                else if (bISO && !aISO) { dateISO = bISO; venue = a; }
+                else if (bISO && aISO) { dateISO = bISO; venue = a; } // both look date: pick col B as date
+                else continue;
+
+                if (!dateISO) continue;
+                if (!venue) venue = 'Gig';
+
+                // If two gigs land on same date, join them nicely
+                if (out.has(dateISO)) out.set(dateISO, out.get(dateISO) + ' · ' + venue);
+                else out.set(dateISO, venue);
+              }
+
+              return out;
+            })
+            .catch(err => {
+              console.error(err);
+              return new Map(); // fail safe: no gigs instead of crashing
+            });
+        }
+
+        Promise.all([
+          fetch(CSV_URL, { cache: 'no-store' })
+            .then(r => {
+              if (!r.ok) throw new Error(`Failed to fetch CSV: HTTP ${r.status}`);
+              return r.text();
+            }),
+          loadGigs()
+        ])
+          .then(([text, gigsMap]) => {
+            state.gigsByDate = gigsMap;
+            const rows = parseCSV(text).filter(r => r.some(c => String(c || '').trim() !== ''));
+            if (!rows.length) throw new Error('CSV is empty.');
+
+            const header = rows[0] || [];
+            const h = header.map(normaliseHeader);
+
+            // Find column indices by header name; fallback to first three columns.
+            const idxMember = h.findIndex(x => ['member', 'name', 'person', 'bandmember'].includes(x));
+            const idxStart = h.findIndex(x => ['startdate', 'start', 'from', 'datestart'].includes(x));
+            const idxEnd = h.findIndex(x => ['enddate', 'end', 'to', 'dateend'].includes(x));
+
+            const memberCol = idxMember >= 0 ? idxMember : 0;
+            const startCol = idxStart >= 0 ? idxStart : 1;
+            const endCol = idxEnd >= 0 ? idxEnd : 2;
+
+            const memberMap = new Map();      // name -> Set(expanded dates)
+            const memberRanges = new Map();   // name -> Array<{start,end}> (source rows)
+            const byDate = new Map();
+            const years = new Set();
+
+            for (let i = 1; i < rows.length; i++) {
+              const row = rows[i];
+              const nameRaw = (row[memberCol] ?? '').toString().trim();
+              if (!nameRaw) continue;
+
+              const startISO = toISODate(row[startCol]);
+              const endISO = toISODate(row[endCol]) || startISO;
+              if (!startISO || !endISO) continue;
+
+              const dates = expandDates(startISO, endISO);
+              if (!dates.length) continue;
+
+              const name = nameRaw.toLowerCase(); // internal key
+              if (!memberMap.has(name)) memberMap.set(name, new Set());
+              if (!memberRanges.has(name)) memberRanges.set(name, []);
+
+              // store the original row range (source data)
+              memberRanges.get(name).push({ start: startISO, end: endISO });
+
+              for (const d of dates) {
+                memberMap.get(name).add(d);
+                years.add(+d.slice(0, 4));
+
+                if (!byDate.has(d)) byDate.set(d, []);
+                byDate.get(d).push(name);
+              }
+            }
+
+            const uniqRanges = (ranges) => {
+              const seen = new Set();
+              const out = [];
+              for (const r of ranges) {
+                const key = `${r.start}|${r.end}`;
+                if (seen.has(key)) continue;
+                seen.add(key);
+                out.push(r);
+              }
+              out.sort((a, b) => (a.start.localeCompare(b.start) || a.end.localeCompare(b.end)));
+              return out;
+            };
+
+            // Build members array
+            const members = [...memberMap.entries()]
+              .map(([name, set]) => ({
+                name,
+                unavailable: [...set].sort(),
+                ranges: uniqRanges(memberRanges.get(name) || [])
+              }))
+              .sort((a, b) => a.name.localeCompare(b.name));
+
+            // Sort tooltip names on each date
+            for (const [d, names] of byDate.entries()) {
+              names.sort((a, b) => a.localeCompare(b));
+              byDate.set(d, names);
+            }
+
+            state.members = members;
+            state.byDate = byDate;
+            // Keep displayed year controlled by the Year dropdown (defaults to current year).
+
+            updateTitle();
+            updateBadge();
+
+            elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
+
+            const coin = document.getElementById('insertCoin');
+            coin.addEventListener('pointerdown', () => {
+              CHIP.coin({ notes: [523.25, 659.25, 783.99, 987.77], step: 0.07 }); // C5 E5 G5 B5
+              coinInserted = true;
+
+              // Enter game mode (disable tooltips etc.)
+              document.body.classList.add('game-mode');
+              setArcadeHeaderMode(true);
+              
+              coin.textContent = 'READY';
+              coin.style.animation = 'none';
+              armStartTile();
+              updateHud();
+
+            });
+
+            buildYear();
+            buildMode();
+            render();
+          })
+          .catch(err => {
+            elSubtitle.textContent = 'Failed to load data.';
+            elTitle.textContent = 'Weird Science Band Availability';
+            console.error(err);
+          });
+
+        function buildYear() {
+          elYear.innerHTML = '';
+          yearOptions.forEach(y => {
+            const o = document.createElement('option');
+            o.value = String(y);
+            o.textContent = String(y);
+            elYear.appendChild(o);
+          });
+          elYear.value = String(state.year); // default current year
+          elYear.onchange = () => {
+            state.year = +elYear.value;
+            updateTitle();
+            render();
+          };
+        }
+
+        function updateTitle() {
+          elTitle.textContent = `Weird Science Band Availability for ${state.year}`;
+        }
+
+        function buildMode() {
+          elMode.innerHTML = '<option value="__ALL__">Whole band</option>';
+
+          state.members
+            .map(m => m.name)
+            .sort()
+            .forEach(n => {
+              const o = document.createElement('option');
+              o.value = n;                    // internal key (lowercase)
+              o.textContent = displayName(n);  // display label (capitalised)
+              elMode.appendChild(o);
+            });
+
+          elMode.onchange = () => { state.mode = elMode.value; render(); };
+        }
+
+        function render() {
+          elGrid.innerHTML = '';
+
+          for (let m = 1; m <= 12; m++) {
+            if (clearedMonths.has(m)) continue; // ✅ don’t render completed months
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<div class="monthHeader">${MONTHS[m - 1]} ${state.year}</div>`;
+
+            const cal = document.createElement('div');
+            cal.className = 'cal';
+
+            const dow = document.createElement('div');
+            dow.className = 'dow';
+            DOW.forEach(d => dow.innerHTML += `<div>${d}</div>`);
+
+            const days = document.createElement('div');
+            days.className = 'days';
+
+            const first = new Date(state.year, m - 1, 1);
+            const offset = (first.getDay() + 6) % 7;
+            for (let i = 0; i < offset; i++) days.innerHTML += '<div class="day empty"></div>';
+
+            const count = new Date(state.year, m, 0).getDate();
+            for (let d = 1; d <= count; d++) {
+              const date = iso(state.year, m, d);
+              const gigVenue = state.gigsByDate?.get(date) || '';
+              const hasGig = !!gigVenue;
+              const names = state.byDate.get(date) || [];
+              const bad = state.mode === '__ALL__' ? names.length > 0 : names.includes(state.mode);
+              const past = date < todayISO();
+
+              const cell = document.createElement('div');
+              cell.className = `day ${past ? 'past' : (bad ? 'bad' : 'good')}${(!past && hasGig) ? ' gig' : ''}`;
+              cell.dataset.day = String(d);
+              cell.dataset.month = String(m);
+
+              cell.innerHTML = past
+                ? `<strong>${d}</strong>`
+                : `<strong>${d}</strong><div class="mark">${hasGig ? '★' : (bad ? '✖' : '✔')}</div>`;
+
+              // Tooltip only for unavailable squares:
+              // show the (whole-band) list of unavailable members for that date.
+              if (!past && (bad || hasGig)) {
+                const tt = document.createElement('div');
+                tt.className = 'tooltip';
+
+                if (hasGig) {
+                  const row = document.createElement('div');
+                  row.textContent = `★ ${gigVenue}`;
+                  tt.appendChild(row);
+                }
+
+                (state.byDate.get(date) || []).forEach(n => {
+                  const row = document.createElement('div');
+                  row.textContent = `✖ ${displayName(n)}`;
+                  tt.appendChild(row);
+                });
+
+                cell.appendChild(tt);
+              }
+
+              days.appendChild(cell);
+            }
+
+            cal.appendChild(dow);
+            cal.appendChild(days);
+            card.appendChild(cal);
+            elGrid.appendChild(card);
+          }
+
+          // Re-arm the starting tile after every render (once coin inserted)
+          if (coinInserted) armStartTile();
+        }
+
+        function armStartTile() {
+          // clear any existing blink
+          elGrid.querySelectorAll('.day.start-blink')
+            .forEach(el => el.classList.remove('start-blink'));
+
+          // pick day 1 in the active month; fallback to the first day tile if needed
+          const start =
+            elGrid.querySelector(`.day[data-month="${currentLevel}"][data-day="1"]`) ||
+            elGrid.querySelector(`.day[data-month="${currentLevel}"]`);
+
+          if (!start) return;
+
+          start.classList.add('start-blink');
+
+          // tap starts the level 
+
+          start.onpointerdown = (e) => {
+            if (!coinInserted) return;
+            if (levelRunning) return; // ✅ don’t allow cheat / start taps mid-level
+            e.preventDefault();
+            start._lastTapXY = { x: e.clientX, y: e.clientY };
+
+            const now = performance.now();
+
+            // SECOND TAP → CHEAT
+            if (startTapTimer && (now - startLastTapAt) < 350) {
+              clearTimeout(startTapTimer);
+              startTapTimer = null;
+              startLastTapAt = 0;
+
+              cheatClearCurrentMonth();
+              return;
+            }
+
+            // FIRST TAP → arm delayed start
+            startLastTapAt = now;
+
+            if (startTapTimer) clearTimeout(startTapTimer);
+
+            startTapTimer = setTimeout(() => {
+              startTapTimer = null;
+
+              // If level already started some other way, do nothing
+              if (levelRunning) return;
+
+              gameStarted = true;
+              start.classList.remove('start-blink');
+              elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
+
+              CHIP.revealFruit();
+
+              startLevel();
+            }, 260);
+          };
+
+
+        }
+
+        function clearMonthTimer() {
+          if (monthTimerId) clearInterval(monthTimerId);
+          monthTimerId = null;
+        }
+
+        function monthTimeSecondsForMonth(month) {
+          // Total time to clear the month. Decreases as months progress.
+          // Tune these numbers to taste.
+          const start = 38;   // January
+          const step = 2;    // -2s per month
+          return Math.max(16, start - (month - 1) * step); // December bottoms at 16s
+        }
+
+        function startMonthTimer() {
+          clearMonthTimer();
+
+          monthSecondsLeft = monthTimeSecondsForMonth(currentLevel);
+          monthDeadline = performance.now() + monthSecondsLeft * 1000;
+
+          updateHud();
+
+          monthTimerId = setInterval(() => {
+            const msLeft = monthDeadline - performance.now();
+            const secLeft = Math.max(0, Math.ceil(msLeft / 1000));
+
+            if (secLeft !== monthSecondsLeft) {
+              monthSecondsLeft = secLeft;
+              updateHud();
+            }
+
+            if (msLeft <= 0) {
+              onMonthTimeUp();
+            }
+          }, 100);
+        }
+
+        function onMonthTimeUp() {
+          clearMonthTimer();
+          stopLevel(); // stops peek loop
+
+          lives = Math.max(0, lives - 1);
+
+          if (lives <= 0) {
+            triggerGameOver();
+            return;
+          }
+
+          document.body.classList.add('zx-flash');
+          setTimeout(() => document.body.classList.remove('zx-flash'), 260);
+
+          // Reset this month (bring back hidden tiles)
+          // Easiest reliable reset is: re-render without clearing the month,
+          // then re-arm the start tile.
+          elSubtitle.innerHTML = `<span class="arcade-text">TIME UP</span>`;
+          render();
+
+          // Go back to READY for the same level
+          setTimeout(() => {
+            elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
+            updateHud();
+          }, 450);
+        }
+
+        function advanceLevel() {
+          // Capture which month we just cleared (1=Jan ... 12=Dec)
+          const cleared = currentLevel;
+
+          // Compute remaining time (ms) using the monthDeadline you already maintain
+          const msLeft = Math.max(0, monthDeadline ? (monthDeadline - performance.now()) : 0);
+
+          // Convert remaining time to points (1 point per 100ms * rate)
+          const bonusPts = Math.max(
+            0,
+            Math.floor(msLeft / 100) * TIME_BONUS_POINTS_PER_100MS
+          );
+
+          // Always award the bonus (including December) unless you decide otherwise
+          if (bonusPts > 0) {
+            score += bonusPts;
+            updateHud();
+          }
+
+          // Mark month cleared and advance
+          clearedMonths.add(cleared);
+          currentLevel++;
+
+          // If December was cleared, that wins the game: DO NOT show the level-clear overlay
+          if (cleared === 12) {
+            winGame({
+              bonusPts,
+              msLeft
+            });
+            return;
+          }
+
+          // For Jan–Nov: show overlay, then render next level after dismissal
+          showLevelClearOverlay({
+            clearedMonth: cleared,
+            bonusPts,
+            msLeft,
+            onDone: () => {
+              elSubtitle.innerHTML = `<span class="arcade-text">LEVEL ${currentLevel}</span>`;
+              render();
+              updateHud();
+            }
+          });
+        }
+
+        function showLevelClearOverlay({ clearedMonth, bonusPts, msLeft, onDone }) {
+          CHIP.levelClear();
+          const ov = document.createElement('div');
+          ov.className = 'levelClearOverlay';
+
+          const sec = Math.max(0, Math.ceil(msLeft / 1000));
+
+          ov.innerHTML = `
+          <div class="box">
+            <div class="big">LEVEL CLEARED</div>
+            <div class="small">TIME BONUS +${bonusPts}  (${sec}s LEFT)</div>
+            <div class="hint">CLICK TO CONTINUE</div>
+          </div>
+        `;
+
+          document.body.appendChild(ov);
+
+          // Click anywhere to continue
+          ov.addEventListener('pointerdown', () => {
+            ov.remove();
+            if (typeof onDone === 'function') onDone();
+          }, { once: true });
+        }
+
+        function showCheatFloat(cell, xy) {
+          const el = document.createElement('div');
+          el.className = 'cheatFloat';
+          el.textContent = 'CHEAT!';
+
+          let x, y;
+          if (xy && typeof xy.x === 'number' && typeof xy.y === 'number') {
+            x = xy.x;
+            y = xy.y;
+          } else {
+            const r = cell.getBoundingClientRect();
+            x = r.left + r.width / 2;
+            y = r.top + r.height * 0.15;
+          }
+
+          el.style.left = `${x}px`;
+          el.style.top = `${y}px`;
+
+          document.body.appendChild(el);
+
+          setTimeout(() => el.classList.add('fade'), 1000);
+          setTimeout(() => el.remove(), 1500);
+        }
+
+
+        function showComboFloat(cell, mult, xy) {
+          const el = document.createElement('div');
+          el.className = 'comboFloat';
+          el.textContent = `COMBO x${mult}`;
+
+          let x, y;
+
+          if (xy && typeof xy.x === 'number' && typeof xy.y === 'number') {
+            x = xy.x;
+            y = xy.y;
+          } else {
+            const r = cell.getBoundingClientRect();
+            x = r.left + r.width / 2;
+            y = r.top + r.height * 0.15;
+          }
+
+          el.style.left = `${x}px`;
+          el.style.top = `${y}px`;
+
+          document.body.appendChild(el);
+
+          setTimeout(() => el.classList.add('fade'), 1000);
+          setTimeout(() => el.remove(), 1500);
+        }
+
+        function applyWaveFruitScore(cell, pts) {
+          // 1) Always award the base points for this fruit
+          score += pts;
+
+          // 2) Track wave totals
+          waveFruitHits += 1;
+          waveBaseSum += pts;
+
+          // 3) If we’ve now hit 2 or 3 fruits in THIS wave, upgrade multiplier
+          const newMult = Math.min(3, waveFruitHits);
+
+          if (newMult > waveMultApplied) {
+            // Retroactively multiply all fruits collected so far in this wave.
+            // We already awarded base points for each fruit, so we add just the "extra".
+            const bonus = waveBaseSum * (newMult - waveMultApplied);
+
+            score += bonus;
+            waveAwarded += bonus;
+            waveMultApplied = newMult;
+
+            // Show the combo text above the fruit that triggered the upgrade
+            CHIP.comboChime(newMult);
+            showComboFloat(cell, newMult, cell._lastTapXY);
+
+          }
+        }
+
+        function winGame({ bonusPts = 0, msLeft = 0 } = {}) {
+
+          CHIP.music.stop({ fade: 0.10 });
+          CHIP.music.fanfare({ volume: 0.3, tempo: 156 });
+
+          setUnlocked();
+          setHighScoreIfBetter(score);
+          updateBadge();
+
+          elSubtitle.innerHTML = '<span class="arcade-text">ALL CLEAR</span>';
+
+          // Use the same duration as celebrateWin so we reset AFTER the show
+          const durationMs = 14400;
+          celebrateWin({ durationMs, bursts: 28, bonusPts, msLeft });
+
+          // Reset state after fireworks + overlay fade
+          setTimeout(() => {
+            // reset game state
+            score = 0;
+            lives = 3;
+            clearedMonths.clear();
+            currentLevel = 1;
+            coinInserted = false;
+            updateHud();
+            gameStarted = false;
+
+            // exit game mode (tooltips back)
+            document.body.classList.remove('game-mode');
+            setArcadeHeaderMode(false);
+
+            // restore INSERT COIN prompt and re-bind handler
+            elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
+            const coin = document.getElementById('insertCoin');
+            coin.addEventListener('pointerdown', () => {
+              CHIP.coin({ notes: [523.25, 659.25, 783.99, 987.77], step: 0.07 }); // C5 E5 G5 B5
+              coinInserted = true;
+              updateHud();
+              document.body.classList.add('game-mode');
+              coin.textContent = 'READY';
+              coin.style.animation = 'none';
+              armStartTile();
+            });
+
+            // re-render all months
+            render();
+          }, durationMs + 700); // 700ms covers your overlay fadeOut (650ms)
+        }
+
+        function celebrateWin(opts = {}) {
+          const bonusPts = opts.bonusPts ?? 0;
+          const msLeft = opts.msLeft ?? 0;
+          const secLeft = Math.max(0, Math.ceil(msLeft / 1000));
+          const durationMs = opts.durationMs ?? 14400;   // 4× longer
+          const bursts = opts.bursts ?? 28;              // how many starbursts total
+
+          // Blackout overlay (header remains visible above because it’s outside the overlay stacking)
+          const overlay = document.createElement('div');
+          overlay.className = 'winOverlay';
+          overlay.innerHTML = `
+            <div class="winText">
+              <div class="winBadgeBox">
+                <div class="line">LEVEL CLEAR</div>
+                <div class="line">TIME BONUS +${bonusPts} (${secLeft}s LEFT)</div>
+                <div class="badgeLine badgeScore">
+                  <span class="star">⭐</span>
+                  <span class="line">ARCADE MODE CLEARED</span>
+                  <span class="star">⭐</span>
+                </div>
+              </div>
+            </div>
+          `;
+
+
+          document.body.appendChild(overlay);
+
+          const canvas = document.createElement('canvas');
+          canvas.className = 'fxCanvas';
+          canvas.style.zIndex = 9995;
+          document.body.appendChild(canvas);
+
+          const ctx = canvas.getContext('2d', { alpha: true });
+          const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+
+          function resize() {
+            const w = Math.floor(window.innerWidth);
+            const h = Math.floor(window.innerHeight);
+            canvas.width = Math.floor(w * dpr);
+            canvas.height = Math.floor(h * dpr);
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          }
+          resize();
+          window.addEventListener('resize', resize, { passive: true });
+
+          const particles = [];
+          const colors = ['#22c55e', '#3b82f6', '#ec4899', '#ffffff']; // add white pops
+          const rnd = (a, b) => a + Math.random() * (b - a);
+
+          function spawnBurst() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            // spread across screen, avoid header area
+            const x = rnd(w * 0.08, w * 0.92);
+            const y = rnd(h * 0.22, h * 0.88);
+
+            const col = colors[(Math.random() * colors.length) | 0];
+
+            // Big, slow “shell” parameters
+            const points = Math.floor(rnd(14, 22));     // fewer points reads bigger
+            const baseRadius = rnd(10, 18);
+            const maxRadius = rnd(260, 460);            // BIG
+            const life = Math.floor(rnd(190, 280));     // SLOW hang
+            const size = rnd(7, 12);                    // chunky pixels
+
+            for (let i = 0; i < points; i++) {
+              const angle = (i / points) * Math.PI * 2 + rnd(-0.03, 0.03);
+              particles.push({
+                x, y, angle,
+                radius: baseRadius,
+                expand: (maxRadius - baseRadius) / life, // slow radial expansion
+                col,
+                life,
+                fade: life,
+                size,
+                isFlash: false
+              });
+            }
+
+            // centre flash to sell the “boom”
+            if (Math.random() < 0.6) {
+              particles.push({
+                x, y,
+                angle: 0,
+                radius: 0,
+                expand: 0,
+                col: '#ffffff',
+                life: 26,
+                fade: 26,
+                size: rnd(14, 24),
+                isFlash: true
+              });
+            }
+          }
+
+          const t0 = performance.now();
+          const burstEvery = durationMs / bursts; // spread bursts evenly
+          let lastBurstElapsed = -burstEvery;     // so we spawn immediately
+
+          function cleanup() {
+            window.removeEventListener('resize', resize);
+            canvas.remove();
+
+            overlay.classList.add('fadeOut');
+            setTimeout(() => overlay.remove(), 650);
+          }
+
+          function tick() {
+            const now = performance.now();
+            const elapsed = now - t0;
+
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+            // spawn bursts across most of the show; taper near the end
+            if (elapsed < durationMs * 0.92) {
+              if (elapsed - lastBurstElapsed >= burstEvery) {
+                spawnBurst();
+                if (Math.random() < 0.22) spawnBurst(); // occasional double for “finale” feel
+                lastBurstElapsed = elapsed;
+              }
+            }
+
+            // draw particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+              const p = particles[i];
+              p.life--;
+
+              // slow radial expansion (unless flash)
+              if (!p.isFlash) p.radius += p.expand;
+
+              const px = p.isFlash ? p.x : (p.x + Math.cos(p.angle) * p.radius);
+              const py = p.isFlash ? p.y : (p.y + Math.sin(p.angle) * p.radius + (p.radius * 0.010)); // tiny gravity drift
+
+              const alpha = Math.max(0, p.life / p.fade);
+              ctx.globalAlpha = alpha;
+              ctx.fillStyle = p.col;
+
+              ctx.fillRect(px - p.size / 2, py - p.size / 2, p.size, p.size);
+
+              if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            if (elapsed < durationMs || particles.length) {
+              requestAnimationFrame(tick);
+            } else {
+              cleanup();
+            }
+          }
+
+          requestAnimationFrame(tick);
+        }
+
+        let manualMusicOn = false;
+
+        function setManualMusic(on) {
+          manualMusicOn = on;
+
+          if (on) {
+            CHIP.unlock();
+            CHIP.music.start({ tempo: 120, volume: 0.50 }); // tweak to taste
+            elAvailPill.style.outline = '2px solid rgba(255,255,255,0.35)';
+            elAvailPill.title = 'Double-click to stop music';
+          } else {
+            CHIP.music.stop({ fade: 0.08 });
+            elAvailPill.style.outline = '';
+            elAvailPill.title = 'Double-click to play music';
+          }
+        }
+
+        elAvailPill.addEventListener('dblclick', (e) => {
+          e.preventDefault();
+          setManualMusic(!manualMusicOn);
+        });
+
+        updateBadge();
+
+      })();
+
+    </script>
+
+</body>
+
+</html>
