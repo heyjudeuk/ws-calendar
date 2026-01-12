@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="manifest" href="/site.webmanifest">
-  
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Weird Science Band Availability</title>
@@ -850,12 +850,22 @@
       opacity: 0;
       transform: translate(-50%, -140%);
     }
+
+    #arcadeBanner {
+      width: 100%;
+      max-width: 980px;
+      height: auto;
+      margin: 6px auto 2px;
+      display: none;
+      /* default hidden until game starts */
+    }
   </style>
 </head>
 
 <body>
   <header>
     <h1 id="title">Weird Science Band Availability</h1>
+    <img id="arcadeBanner" src="arcade-banner.webp" alt="Arcade banner" style="display:none;" />
     <div id="unlockBadge" class="unlockBadge" style="display:none;"></div>
     <p class="sub" id="subtitle">Loading…</p>
     <p class="sub" id="hud" style="display:none; margin-top:-6px;">
@@ -904,9 +914,26 @@
         const elHud = document.getElementById('hud');
         const elHudText = document.getElementById('hudText');
         const elBadge = document.getElementById('unlockBadge');
+        const elArcadeBanner = document.getElementById('arcadeBanner');
+        const elLegend = document.querySelector('.legend');
         const elAvailPill = document.getElementById('availPill');
 
+        function setArcadeHeaderMode(on) {
+          if (on) {
+            if (elArcadeBanner) elArcadeBanner.style.display = 'block';
+            if (elTitle) elTitle.style.display = 'none';
+            if (elBadge) elBadge.style.display = 'none';
+            if (elLegend) elLegend.style.display = 'none';
+          } else {
+            if (elArcadeBanner) elArcadeBanner.style.display = 'none';
+            if (elTitle) elTitle.style.display = '';
+            if (elLegend) elLegend.style.display = '';
 
+            updateTitle();
+            updateBadge();
+          }
+        }
+    
         // ---------- CHIP SFX (iPhone-safe, no samples) ----------
         const CHIP = (() => {
           let ctx = null;
@@ -1406,11 +1433,14 @@
 
             let noiseBuf = null;
 
-            let leadCar = null;      // carrier
-            let leadMod = null;      // modulator
-            let leadModGain = null;  // modulation index control
-            let leadGain = null;     // output amp envelope (reuse your existing name if you like)
+            // LEAD (Mini V / Minimoog-style subtractive)
+            let leadOsc1 = null;   // saw 8'
+            let leadOsc2 = null;   // saw 8' (detuned)
+            let leadOsc3 = null;   // triangle 16'
 
+            let leadMix = null;   // sums oscillators
+            let leadFilt = null;   // low-pass filter (ladder-style approximation)
+            let leadGain = null;   // amp envelope (keep this name)
 
             function bars(...barArrays) {
               // each bar array must be length 16 (16th notes)
@@ -1559,6 +1589,9 @@
 
                 musicGain.connect(comp);
                 comp.connect(c.destination);
+
+                //musicGain.connect(c.destination);
+
               }
             }
 
@@ -1605,37 +1638,61 @@
               }
 
 
-              if (!leadCar) {
-                // DX7-ish 2-op FM:
-                // modulator -> (gain) -> carrier frequency
+              if (!leadOsc1) {
+                // Mini V / Minimoog-ish 3-osc subtractive lead
 
-                leadCar = c.createOscillator();
-                leadCar.type = 'sine';          // carrier sine is classic FM
+                // Oscillators
+                leadOsc1 = c.createOscillator();
+                leadOsc1.type = 'sawtooth';     // OSC 1 saw 8'
 
-                leadMod = c.createOscillator();
-                leadMod.type = 'sine';          // modulator sine
+                leadOsc2 = c.createOscillator();
+                leadOsc2.type = 'sawtooth';     // OSC 2 saw 8'
+                leadOsc2.detune.value = 16.5;   // +1.54% fine ≈ +26.5 cents
 
-                leadModGain = c.createGain();
-                leadModGain.gain.value = 0;     // modulation index (amount), set per note
+                leadOsc3 = c.createOscillator();
+                leadOsc3.type = 'triangle';     // OSC 3 triangle 16'
+                leadOsc3.detune.value = 20;
 
-                // connect modulator to carrier frequency
-                leadMod.connect(leadModGain);
-                leadModGain.connect(leadCar.frequency);
+                // Per-osc levels (OSC3 is -2 dB vs 1 & 2)
+                const leadG1 = c.createGain();
+                const leadG2 = c.createGain();
+                const leadG3 = c.createGain();
+                leadG1.gain.value = 1.0;
+                leadG2.gain.value = 1.0;
+                leadG3.gain.value = 0.794; // -2 dB (10^(-2/20))
 
-                // output amp
+                // Mixer
+                leadMix = c.createGain();
+                leadMix.gain.value = 0.35; // pre-filter trim (tweak if too loud)
+
+                // Filter (cutoff 130 Hz, emphasis 2.97)
+                leadFilt = c.createBiquadFilter();
+                leadFilt.type = 'lowpass';
+                leadFilt.frequency.value = 130;
+                leadFilt.Q.value = 3.0;
+
+                // Output amp
                 leadGain = c.createGain();
                 leadGain.gain.value = 0.0001;
 
-                // carrier -> amp -> music bus
-                leadCar.connect(leadGain).connect(musicGain);
+                // Wire it up: osc -> oscGain -> mix -> filter -> amp -> music bus
+                leadOsc1.connect(leadG1); leadG1.connect(leadMix);
+                leadOsc2.connect(leadG2); leadG2.connect(leadMix);
+                leadOsc3.connect(leadG3); leadG3.connect(leadMix);
 
-                leadMod.start();
-                leadCar.start();
+                leadMix.connect(leadFilt);
+                leadFilt.connect(leadGain).connect(musicGain);
+
+                // Start
+                leadOsc1.start();
+                leadOsc2.start();
+                leadOsc3.start();
               }
+
 
               if (!bassOsc) {
                 bassOsc = c.createOscillator();
-                bassOsc.type = 'sawtooth';          // MOOG-ish base wave
+                bassOsc.type = 'sawtooth';
 
                 bassFilt = c.createBiquadFilter();
                 bassFilt.type = 'lowpass';
@@ -1652,10 +1709,17 @@
 
               if (!arpOsc) {
                 arpOsc = c.createOscillator();
-                arpOsc.type = 'square';           // sparkly
+                arpOsc.type = 'square';
+
+                arpFilt = c.createBiquadFilter();
+                arpFilt.type = 'lowpass';
+                arpFilt.frequency.value = 1200; // brightness
+                arpFilt.Q.value = 1.2;
+
                 arpGain = c.createGain();
                 arpGain.gain.value = 0.0001;
-                arpOsc.connect(arpGain).connect(musicGain);
+
+                arpOsc.connect(arpFilt).connect(arpGain).connect(musicGain);
                 arpOsc.start();
               }
 
@@ -1674,8 +1738,14 @@
               const c = getCtx();
               const spb = 60 / tempo;                       // seconds per beat
               const stepDur = spb / stepsPerBeat;           // seconds per 16th
-              // const len = Math.max(patternLead.length, patternBass.length, patternArp.length);
-              const len = 64;
+
+              const len = Math.max(
+                patternPad?.length || 0,
+                patternLead?.length || 0,
+                patternBass?.length || 0,
+                patternArp?.length || 0
+              ) || 32;
+
               const idx = step % len;
 
               // PAD: sustain one root per bar (16 steps = 1 bar)
@@ -1685,129 +1755,161 @@
 
               if (barStep === 0) {
 
-                // If no chord this step, fade pad out
+                // If no chord this bar, fade pad out (but DO NOT return; keep scheduling others)
                 if (!chord) {
                   padGain.gain.setTargetAtTime(0.0001, t, 0.2);
-                  return;
+                } else {
+
+                  // Use the first two notes of the chord for a wide pad
+                  const hz1 = midiToHz(chord[0]); // root
+                  const hz2 = midiToHz(chord[1]); // 3rd
+                  const hz3 = midiToHz(chord[3]); // 7th / duplicated top note
+
+                  padOsc1.frequency.cancelScheduledValues(t);
+                  padOsc2.frequency.cancelScheduledValues(t);
+                  padOsc3.frequency.cancelScheduledValues(t);
+
+                  padOsc1.frequency.setValueAtTime(hz1, t);
+                  padOsc2.frequency.setValueAtTime(hz2, t);
+                  padOsc3.frequency.setValueAtTime(hz3, t);
+
+                  const padAttack = 0.35;
+                  const padRelease = 0.45;
+                  const padLevel = 0.020;
+
+                  padGain.gain.cancelScheduledValues(t);
+                  padGain.gain.setTargetAtTime(padLevel, t, padAttack);
+
+                  const barDur = stepDur * 16;
+                  padGain.gain.setTargetAtTime(0.0001, t + barDur - 0.05, padRelease);
                 }
-
-                // Use the first two notes of the chord for a wide pad
-                const hz1 = midiToHz(chord[0]); // root
-                const hz2 = midiToHz(chord[1]); // 3rd
-                const hz3 = midiToHz(chord[3]); // 7th
-
-                padOsc1.frequency.cancelScheduledValues(t);
-                padOsc2.frequency.cancelScheduledValues(t);
-                padOsc3.frequency.cancelScheduledValues(t);
-
-                padOsc1.frequency.setValueAtTime(hz1, t);
-                padOsc2.frequency.setValueAtTime(hz2, t);
-                padOsc3.frequency.setValueAtTime(hz3, t);
-
-                const padAttack = 0.35;
-                const padRelease = 0.45;
-                const padLevel = 0.020;
-
-                padGain.gain.cancelScheduledValues(t);
-                padGain.gain.setTargetAtTime(padLevel, t, padAttack);
-
-                const barDur = stepDur * 16;
-                padGain.gain.setTargetAtTime(0.0001, t + barDur - 0.05, padRelease);
               }
 
-              if (leadGain) leadGain.gain.setTargetAtTime(0.0001, t, 0.01);
-
-              // LEAD (DX7-ish 2-op FM, long sustain, glide)
+              // LEAD (Mini V / 3-osc subtractive, filter+amp contours, glide)
               const leadNote = patternLead[idx];
 
-              const leadGlide = 0.035;  // seconds; tweak 0.02..0.08
-              const leadAttack = 0.020;
-              const leadRelease = 0.120;
+              const leadGlide = 0.005; // seconds; tweak 0.02..0.08
 
-              const sustainAmp = 0.030;  // overall loudness; tweak 0.015..0.05
-              const peakAmp = 0.040;  // slight swell into sustain
+              // --- Mini V style settings (mapped to WebAudio) ---
 
-              // FM character controls
-              const modRatio = 6.0;    // 1.0, 2.0, 3.0 etc. 2.0 is classic “bright”
-              const modAttackIx = 120;    // attack brightness (index)
-              const modSustainIx = 80;     // sustain brightness (index)
-              const modAttack = 0.030;
-              const modDecay = 0.120;
+              // Loudness contour (Attack 0.52ms, Decay 1.83s, Sustain 3.98/10)
+              const ampA = 0.00052;
+              const ampD = 1.83;
+              const ampS = 0.398;      // 3.98/10
+              const ampPeak = 0.075;   // overall loudness peak; tweak 0.05..0.10
+
+              // Filter (Cutoff 130Hz, Emphasis 2.97, Amount 61.54%, Attack 16ms, Decay 768ms, Sustain 3.8/10)
+              const leadBaseCut = 130;
+              const filtQ = 3.0;
+              const filtAmt = 0.6154;
+              const filtA = 0.016;
+              const filtD = 0.768;
+              const filtS = 0.38;    // 3.8/10
+
+              // How far the contour can open the filter (WebAudio needs a "span" value)
+              const filtSpan = 2200;   // tweak 1500..3500 depending on brightness
+
+              // Release on note-off (Mini V patch view you gave doesn’t mention release; keep short and click-safe)
+              const rel = 0.08;
 
               if (leadNote == null) {
+                // release to silence
                 if (prevLead != null) {
-                  // release
                   leadGain.gain.cancelScheduledValues(t);
-                  leadGain.gain.setTargetAtTime(0.0001, t, leadRelease);
+                  leadGain.gain.setValueAtTime(Math.max(0.0001, leadGain.gain.value), t);
+                  leadGain.gain.setTargetAtTime(0.0001, t, rel);
 
-                  leadModGain.gain.cancelScheduledValues(t);
-                  leadModGain.gain.setTargetAtTime(0, t, 0.10);
+                  if (leadFilt) {
+                    leadFilt.Q.value = filtQ;
+                    leadFilt.frequency.cancelScheduledValues(t);
+                    leadFilt.frequency.setValueAtTime(Math.max(leadBaseCut, leadFilt.frequency.value || leadBaseCut), t);
+                    leadFilt.frequency.setTargetAtTime(leadBaseCut, t, rel);
+                  }
                 }
                 prevLead = null;
 
               } else {
                 const hz = (typeof leadNote === 'number' && leadNote < 200) ? midiToHz(leadNote) : leadNote;
 
-                // subtle vibrato (manual wobble)
-                leadCar.frequency.setTargetAtTime(hz * 1.002, t + 0.10, 0.06);
-                leadCar.frequency.setTargetAtTime(hz, t + 0.22, 0.06);
+                // Osc ranges:
+                // OSC1: 8' -> hz
+                // OSC2: 8' -> hz
+                // OSC3: 16' -> hz/2
+                leadOsc1.frequency.cancelScheduledValues(t);
+                leadOsc2.frequency.cancelScheduledValues(t);
+                leadOsc3.frequency.cancelScheduledValues(t);
 
-                // glide carrier pitch
-                leadCar.frequency.cancelScheduledValues(t);
-                leadCar.frequency.setTargetAtTime(hz, t, leadGlide);
+                leadOsc1.frequency.setTargetAtTime(hz, t, leadGlide);
+                leadOsc2.frequency.setTargetAtTime(hz, t, leadGlide);
+                leadOsc3.frequency.setTargetAtTime(hz * 0.5, t, leadGlide);
 
-                // modulator tracks pitch by ratio (keeps tone consistent across notes)
-                leadMod.frequency.cancelScheduledValues(t);
-                leadMod.frequency.setTargetAtTime(hz * modRatio, t, leadGlide);
+                // optional tiny pitch wobble
+                //leadOsc1.frequency.setTargetAtTime(hz * 1.0015, t + 0.10, 0.06);
+                //leadOsc1.frequency.setTargetAtTime(hz, t + 0.22, 0.06);
 
                 if (prevLead !== leadNote) {
-                  // AMP: long sustain
+                  // AMP contour: A -> D -> Sustain
                   leadGain.gain.cancelScheduledValues(t);
                   leadGain.gain.setValueAtTime(Math.max(0.0001, leadGain.gain.value), t);
-                  leadGain.gain.setTargetAtTime(peakAmp, t, leadAttack);
-                  leadGain.gain.setTargetAtTime(sustainAmp, t + 0.08, 0.06);
+                  leadGain.gain.linearRampToValueAtTime(ampPeak, t + ampA);
+                  leadGain.gain.linearRampToValueAtTime(ampPeak * ampS, t + ampA + ampD);
 
-                  // FM INDEX: bright bite then mellow sustain
-                  leadModGain.gain.cancelScheduledValues(t);
-                  leadModGain.gain.setValueAtTime(0, t);
-                  leadModGain.gain.setTargetAtTime(modAttackIx, t, modAttack);
-                  leadModGain.gain.setTargetAtTime(modSustainIx, t + 0.05, modDecay);
+                  // FILTER contour (filter mod on): A -> D -> Sustain
+                  if (leadFilt) {
+                    leadFilt.Q.value = filtQ;
+
+                    const peakCut = leadBaseCut + (filtSpan * filtAmt);
+                    const susCut = leadBaseCut + (filtSpan * filtAmt * filtS);
+
+                    leadFilt.frequency.cancelScheduledValues(t);
+                    leadFilt.frequency.setValueAtTime(leadBaseCut, t);
+                    leadFilt.frequency.linearRampToValueAtTime(peakCut, t + filtA);
+                    leadFilt.frequency.linearRampToValueAtTime(susCut, t + filtA + filtD);
+                  }
+
                 } else {
-                  // same note, just hold
+                  // same note held: keep sustain level, don't re-trigger contours
                   leadGain.gain.cancelScheduledValues(t);
-                  leadGain.gain.setTargetAtTime(sustainAmp, t, 0.08);
+                  leadGain.gain.setTargetAtTime(ampPeak * ampS, t, 0.06);
+
+                  if (leadFilt) {
+                    leadFilt.Q.value = filtQ;
+                    // hold wherever it currently is; don't "bite" again
+                    leadFilt.frequency.cancelScheduledValues(t);
+                    leadFilt.frequency.setTargetAtTime(Math.max(leadBaseCut, leadFilt.frequency.value || leadBaseCut), t, 0.10);
+                  }
                 }
 
                 prevLead = leadNote;
               }
 
 
-              // BASS (moog-ish, click-safe)
+              // BASS (moog-ish)
               const bassNote = patternBass[idx];
 
               const glide = 0.03;       // seconds; tweak 0.01..0.05
               const ampAttack = 0.012;
               const ampRelease = 0.045;
 
-              const baseCut = 120;       // Hz (closed)
-              const envCut = 650;       // Hz (open on attack) tweak 500..1400
+              const baseCut = 120;      // Hz (closed)
+              const envCut = 650;      // Hz (open on attack) tweak 500..1400
               const filtAttack = 0.010;
               const filtRelease = 0.080;
 
               if (bassNote == null) {
-                if (prevBass != null) {
-                  // Legato hold through rests (prevents staccato + reduces pops)
-                  bassGain.gain.cancelScheduledValues(t);
-                  bassGain.gain.setTargetAtTime(0.040, t, 0.03); // sustain level; tweak 0.03..0.05
+                // TRUE REST (global): gate off, don't hold through nulls
+                bassGain.gain.cancelScheduledValues(t);
+                bassGain.gain.setValueAtTime(Math.max(0.0001, bassGain.gain.value), t);
+                bassGain.gain.setTargetAtTime(0.0001, t, ampRelease);
 
-                  if (bassFilt) {
-                    bassFilt.frequency.cancelScheduledValues(t);
-                    bassFilt.frequency.setTargetAtTime(baseCut + 80, t, 0.05); // keep it warm
-                  }
+                if (bassFilt) {
+                  bassFilt.frequency.cancelScheduledValues(t);
+                  bassFilt.frequency.setValueAtTime(Math.max(baseCut, bassFilt.frequency.value || baseCut), t);
+                  bassFilt.frequency.setTargetAtTime(baseCut, t, 0.03); // close gently on silence
                 }
 
-                // IMPORTANT: don't clear prevBass on a rest
-                // prevBass = null;
+                // Clear so the next note re-triggers amp + filter bite cleanly
+                prevBass = null;
 
               } else {
                 const hz = (typeof bassNote === 'number' && bassNote < 200) ? midiToHz(bassNote) : bassNote;
@@ -1816,13 +1918,12 @@
                 bassOsc.frequency.cancelScheduledValues(t);
                 bassOsc.frequency.setValueAtTime(hz, t);
 
-
                 // if new note: retrigger amp + filter env
                 if (prevBass !== bassNote) {
                   // AMP env (click-safe)
                   bassGain.gain.cancelScheduledValues(t);
                   bassGain.gain.setValueAtTime(Math.max(0.0001, bassGain.gain.value), t);
-                  bassGain.gain.setTargetAtTime(0.060, t, ampAttack);     // bass loudness; tweak 0.04..0.08
+                  bassGain.gain.setTargetAtTime(0.060, t, ampAttack); // bass loudness; tweak 0.04..0.08
 
                   // FILTER env (the “moog” character)
                   if (bassFilt) {
@@ -1831,10 +1932,12 @@
                     bassFilt.frequency.setTargetAtTime(envCut, t, filtAttack);
                     bassFilt.frequency.setTargetAtTime(baseCut, t + 0.06, filtRelease); // closes after bite
                   }
+
                 } else {
                   // same note: hold steady, no re-attack
                   bassGain.gain.cancelScheduledValues(t);
                   bassGain.gain.setTargetAtTime(0.050, t, 0.03);
+
                   if (bassFilt) {
                     bassFilt.frequency.cancelScheduledValues(t);
                     bassFilt.frequency.setTargetAtTime(baseCut + 120, t, 0.04);
@@ -1844,23 +1947,43 @@
                 prevBass = bassNote;
               }
 
-              // ARP (chord sparkle)
+
+              // ARP
               const arpNote = patternArp[idx];
 
+              // Pluck envelope (no sustain = no overlap/delay feel)
+              const arpPeak = 0.045;  // overall arp level
+              const arpA = 0.004;  // attack (click-safe)
+              const arpD = Math.min(0.035, stepDur * 0.35);
+              const arpFloor = 0.00001; // tiny, only to keep maths stable
+              const arpGlide = 0.00; // keep your tiny glide
+
               if (arpNote == null) {
-                if (prevArp != null) arpGain.gain.setTargetAtTime(0.0001, t, 0.01);
+                // REST: do not “re-hit” the tail; just shut the gate
+                arpGain.gain.cancelScheduledValues(t);
+                arpGain.gain.setTargetAtTime(0.0, t, 0.005);
                 prevArp = null;
+
               } else {
                 const hz = (typeof arpNote === 'number' && arpNote < 200) ? midiToHz(arpNote) : arpNote;
 
-                // always plucky, but quieter
-                arpOsc.frequency.setValueAtTime(hz, t);
-                arpGain.gain.setValueAtTime(0.0001, t);
-                arpGain.gain.exponentialRampToValueAtTime(0.022, t + 0.004);
-                arpGain.gain.exponentialRampToValueAtTime(0.0001, t + stepDur * 0.55);
+                // pitch (keep glide)
+                arpOsc.frequency.setTargetAtTime(hz, t, arpGlide);
+
+                // Retrigger every note as a pluck (even if same note), because arp patterns are per-step
+                if (arpGain.gain.cancelAndHoldAtTime) arpGain.gain.cancelAndHoldAtTime(t);
+                else arpGain.gain.cancelScheduledValues(t);
+
+                // Start from current value to avoid discontinuities
+                arpGain.gain.setValueAtTime(0.0, t);
+
+                // Up quickly, then decay back down
+                arpGain.gain.linearRampToValueAtTime(arpPeak, t + arpA);
+                arpGain.gain.exponentialRampToValueAtTime(arpFloor, t + arpA + arpD);
 
                 prevArp = arpNote;
               }
+
 
               // Theme song pattern
 
@@ -1899,82 +2022,131 @@
                 tempo = opts.tempo;
               }
 
-              // LEAD: hooky, fewer notes, longer holds (repeat notes to sustain)
-              // const L1 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 81, 81, 79, 79];
-              //  const L2 = [76, 76, null, null, 76, 76, 79, 79, 81, 81, null, null, 79, 79, null, null];
+              // --- LEAD — A section (8 bars) from MIDI ---
 
-              // const L3 = [79, 79, 79, 79, null, null, 81, 81, 83, 83, null, null, 86, 86, 84, 84];
-              // const L4 = [83, 83, null, null, 81, 81, 79, 79, 77, 77, null, null, 76, 76, null, null];
+              const LA1 = [78, 78, 78, 78, 76, 76, 78, 78, 78, 78, 76, 76, 76, 76, 81, 81];
+              const LA2 = [81, 81, 81, 81, 79, 79, 78, 78, 78, 78, 78, 78, 76, 76, null, null];
+              const LA3 = [81, 81, 83, 83, 83, 83, 84, 84, 84, 84, 84, 84, 86, 86, 83, 83];
+              const LA4 = [83, 83, 83, 83, 83, 83, 83, null, null, null, 79, 79, 81, 81, 81, 81];
+              const LA5 = [82, 82, 82, 82, 82, 82, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84];
+              const LA6 = [85, 85, 85, 85, 85, 85, 86, 86, 86, 86, 86, 86, 86, null, null, null];
+              const LA7 = [87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, null, null, 88, 88];
+              const LA8 = [88, 88, 88, 88, 88, 88, 88, 88, null, null, 79, 79, 78, 78, 76, 76];
 
-              // Repeat phrase (8 bars total)
-              // patternLead = opts.lead ?? bars(L1, L2, L3, L4, L1, L2, L3, L4);
 
-              // Bass: roots plus approach notes, gives that “driving” feel.
-              const B_C = [36, null, 36, 40, 43, null, 45, null, 47, null, 45, null, 43, null, 40, null];
-              const B_A = [33, null, 33, 36, 40, null, 41, null, 43, null, 41, null, 40, null, 38, null];
-              const B_D = [38, null, 38, 41, 45, null, 47, null, 48, null, 47, null, 45, null, 41, null];
-              const B_G = [31, null, 31, 35, 38, null, 40, null, 41, null, 40, null, 38, null, 35, null];
+              // --- LEAD — B section (8 bars) from b-lead.mid ---
 
-              // 4 bars per chord cycle, repeated with slight bass motion already baked in.
+              const LB1 = [74, 74, 74, 74, 74, 74, 78, 78, 78, 78, 78, 78, 78, 78, 69, 69];
+              const LB2 = [69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69, 69];
+              const LB3 = [74, 74, 74, 74, 74, 74, 76, 76, 76, 76, 76, 76, 76, 76, 73, 73];
+              const LB4 = [73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73];
+              const LB5 = [74, 74, 74, 74, 74, 74, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76];
+              const LB6 = [70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 79, 79, 78, 78];
+              const LB7 = [76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76];
+              const LB8 = [76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76];
+
+
+              // Full lead timeline: A x4, then B x1 (40 bars total)
+              patternLead = opts.lead ?? bars(
+                // A x4              
+                LA1, LA2, LA3, LA4, LA5, LA6, LA7, LA8,
+
+                // B x1
+                LB1, LB2, LB3, LB4, LB5, LB6, LB7, LB8
+
+              );
+
+              // --- A SECTION (8 bars) BASS  ---
+              // 16 steps per bar (16th notes). Use null for “no new note”.
+
+              const BA1 = [50, null, 50, null, 50, null, 50, null, 50, null, 50, null, 50, null, 50, null];
+              const BA2 = [45, null, 45, null, 45, null, 45, null, 45, null, 45, null, 40, 43, 45, null];
+              const BA3 = [38, null, 38, null, 38, null, 38, null, 38, null, 38, null, 38, null, 38, null];
+              const BA4 = [43, null, 43, null, 43, null, 43, null, 43, null, 43, null, 43, null, 43, null];
+              const BA5 = [43, null, 43, null, 43, null, 43, null, 43, null, 43, null, 43, null, 43, null];
+              const BA6 = [42, null, 42, null, 42, null, 42, null, 42, null, 42, null, 42, null, 42, null];
+              const BA7 = [47, null, 47, null, 47, null, 47, null, 47, null, 47, null, 47, null, 47, null];
+              const BA8 = [45, null, 45, null, 45, null, 45, null, 45, null, 45, null, 45, null, 45, null];
+
+              // --- B SECTION (8 bars) BASS from b-bass.mid ---
+
+              const BB1 = [42, 42, 42, 42, null, null, 42, 42, 42, 42, 42, 42, 42, 42, null, null];
+              const BB2 = [47, 47, 47, 47, null, null, 47, 47, 47, 47, 47, 47, 47, 47, 47, null];
+              const BB3 = [40, 40, 40, 40, null, null, 40, 40, 40, 40, 40, 40, 40, 40, 40, null];
+              const BB4 = [45, 45, 45, 45, null, null, 45, 45, 45, 45, 45, 45, 45, 45, null, null];
+              const BB5 = [43, 43, 43, 43, null, null, 43, 43, 43, 43, 43, 43, 43, 43, null, null];
+              const BB6 = [43, 43, 43, 43, null, null, 43, 43, 43, 43, 43, 43, 43, 43, null, null];
+              const BB7 = [53, 53, 53, 53, 53, 53, 53, 53, 57, null, 61, 61, 64, 64, 54, 54];
+              const BB8 = [57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57];
+
+
+              // Full bass timeline: A x4, then B x1 (40 bars total)
               patternBass = opts.bass ?? bars(
-                B_C, B_A, B_D, B_G,
-                B_C, B_A, B_D, B_G,
-                B_C, B_A, B_D, B_G,
-                B_C, B_A, B_D, B_G
+                // A x4
+                BA1, BA2, BA3, BA4, BA5, BA6, BA7, BA8,
+
+                // B x1
+                BB1, BB2, BB3, BB4, BB5, BB6, BB7, BB8
               );
 
-              // Arp: 16ths that imply maj7, m7, m7, dom7.
-              // Kept bright, consistent, “cruising city-pop”.
-              const A_C = [72, 76, 79, 83, 76, 79, 83, 86, 72, 76, 79, 83, 76, 79, 83, 86];
-              const A_A = [69, 72, 76, 79, 72, 76, 79, 83, 69, 72, 76, 79, 72, 76, 79, 83];
-              const A_D = [74, 77, 81, 84, 77, 81, 84, 86, 74, 77, 81, 84, 77, 81, 84, 86];
-              const A_G = [67, 71, 74, 77, 71, 74, 77, 81, 67, 71, 74, 77, 71, 74, 77, 81];
+              // --- ARP ---
+              // A section: no arp (32 bars of rests)
+              const AR = Array(16).fill(null);
 
+              // B section (8 bars) from arp.mid
+              const AB1 = [78, null, 81, null, 78, null, 85, null, 78, null, 88, null, 78, null, 92, null];
+              const AB2 = [83, null, 86, null, 83, null, 90, null, 83, null, 93, null, 83, null, 90, null];
+              const AB3 = [76, null, 79, null, 76, null, 83, null, 76, null, 86, null, 76, null, 90, null];
+              const AB4 = [81, null, 85, null, 81, null, 88, null, 81, null, 91, null, 81, null, 95, null];
+              const AB5 = [79, null, 83, null, 79, null, 86, null, 79, null, 90, null, 79, null, 93, null];
+              const AB6 = [79, null, 82, null, 79, null, 86, null, 79, null, 89, null, 79, null, 86, null];
+              const AB7 = [74, null, 78, null, 74, null, 81, null, 74, null, 78, null, 74, null, 81, null];
+              const AB8 = [81, null, 85, null, 81, null, 88, null, 81, null, 91, null, 81, null, 95, null];
+
+              // Full arp timeline: A x4 (32 bars), then B x1 (8 bars)
               patternArp = opts.arp ?? bars(
-                A_C, A_A, A_D, A_G,
-                A_C, A_A, A_D, A_G,
-                A_C, A_A, A_D, A_G,
-                A_C, A_A, A_D, A_G
+                // A x4
+                AR, AR, AR, AR, AR, AR, AR, AR,
+
+                // B x1
+                AB1, AB2, AB3, AB4, AB5, AB6, AB7, AB8
               );
 
+              // PAD — A section (8 bars) from MIDI
+              // One chord per bar: chord at step 0, then nulls.
+              // MIDI contained triads; we duplicate the top note as the 4th slot so chord[3] exists.
+              // Shifted +12 (one octave) so the pad sits above the bass.
 
-              // PAD: one chord per bar (16 steps), sustained.
-              // Represent chords as arrays of MIDI notes: [root, 3rd, 5th, 7th].
-              // Use null for “no chord” (rest).
+              const PA1 = [[54, 61, 64, 64], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA2 = [[55, 57, 60, 60], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA3 = [[54, 60, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA4 = [[54, 59, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA5 = [[53, 59, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA6 = [[52, 57, 61, 61], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA7 = [[57, 61, 63, 63], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PA8 = [[55, 61, 66, 66], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
 
-              // PAD CHORDS
+              // PAD — B section (8 bars) from MIDI
+              // MIDI contained triads; duplicate the top note as the 4th slot so chord[3] exists.
+              // Shifted +12 (one octave) to match A pad register.
 
-              const P_Cmaj7 = [
-                [72, 76, 79, 83], null, null, null,
-                null, null, null, null,
-                null, null, null, null,
-                null, null, null, null
-              ]; // C5 E5 G5 B5
+              const PB1 = [[57, 61, 64, 64], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB2 = [[57, 59, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB3 = [[55, 59, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB4 = [[55, 61, 66, 66], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB5 = [[54, 57, 59, 59], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB6 = [[53, 59, 62, 62], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB7 = [[57, 61, 64, 64], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+              const PB8 = [[55, 61, 64, 64], null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
 
-              const P_Am7 = [
-                [69, 72, 76, 79], null, null, null,
-                null, null, null, null,
-                null, null, null, null,
-                null, null, null, null
-              ]; // A4 C5 E5 G5
 
-              const P_Dm7 = [
-                [74, 77, 81, 84], null, null, null,
-                null, null, null, null,
-                null, null, null, null,
-                null, null, null, null
-              ]; // D5 F5 A5 C6
-
-              const P_G7 = [
-                [67, 71, 74, 77], null, null, null,
-                null, null, null, null,
-                null, null, null, null,
-                null, null, null, null
-              ]; // G4 B4 D5 F5
-
+              // Full pad timeline: A x4, then B x1 (40 bars total)
               patternPad = opts.pad ?? bars(
-                P_Cmaj7, P_Am7, P_Dm7, P_G7,
-                P_Cmaj7, P_Am7, P_Dm7, P_G7
+                // A x4
+                PA1, PA2, PA3, PA4, PA5, PA6, PA7, PA8,
+
+                // B x1
+                PB1, PB2, PB3, PB4, PB5, PB6, PB7, PB8
               );
 
               step = 0;
@@ -2393,6 +2565,7 @@
 
           // exit game mode (tooltips back)
           document.body.classList.remove('game-mode');
+          setArcadeHeaderMode(false);
 
           // restore INSERT COIN prompt and re-bind handler
           elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
@@ -2401,6 +2574,7 @@
             CHIP.coin({ notes: [523.25, 659.25, 783.99, 987.77], step: 0.07 }); // C5 E5 G5 B5
             coinInserted = true;
             document.body.classList.add('game-mode');
+            setArcadeHeaderMode(true);
             coin.textContent = 'READY';
             coin.style.animation = 'none';
             armStartTile();
@@ -3088,7 +3262,8 @@
 
               // Enter game mode (disable tooltips etc.)
               document.body.classList.add('game-mode');
-
+              setArcadeHeaderMode(true);
+              
               coin.textContent = 'READY';
               coin.style.animation = 'none';
               armStartTile();
@@ -3512,6 +3687,7 @@
 
             // exit game mode (tooltips back)
             document.body.classList.remove('game-mode');
+            setArcadeHeaderMode(false);
 
             // restore INSERT COIN prompt and re-bind handler
             elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
@@ -3715,4 +3891,5 @@
     </script>
 
 </body>
+
 </html>
