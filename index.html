@@ -859,6 +859,30 @@
       display: none;
       /* default hidden until game starts */
     }
+
+    .ws-footer {
+      margin-top: 32px;
+      /* space above footer */
+      padding: 20px 12px 28px;
+      /* breathing room */
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #bbb;
+      opacity: 0.9;
+    }
+
+    .ws-footer a,
+    .ws-footer a:visited {
+      color: #ffd700;
+      /* arcade gold */
+      text-decoration: none;
+    }
+
+    .ws-footer a:hover {
+      color: #fff;
+      text-shadow: 0 0 6px rgba(255, 215, 0, 0.8);
+    }
   </style>
 </head>
 
@@ -892,6 +916,7 @@
     </div>
 
   </header>
+
 
   <main>
     <div id="calGrid" class="grid"></div>
@@ -933,7 +958,7 @@
             updateBadge();
           }
         }
-    
+
         // ---------- CHIP SFX (iPhone-safe, no samples) ----------
         const CHIP = (() => {
           let ctx = null;
@@ -1030,59 +1055,108 @@
             bass.stop(t0 + step * notes.length + 0.25);
           }
 
-          // Level cleared fanfare (chip jingle)
+          // Level cleared fanfare (Upgraded: Thicker, resolved, plus echo)
           function levelClear(opts = {}) {
             unlock();
             const c = getCtx();
             const t0 = c.currentTime;
 
-            const vol = opts.volume ?? 0.14;
-            const step = opts.step ?? 0.085;
+            const vol = opts.volume ?? 0.16;
+            const step = opts.step ?? 0.09; // slightly slower for grandeur
 
-            // A bright, happy little cadence: C5 E5 G5 C6  B5 G5 E5
-            const notes = opts.notes ?? [523.25, 659.25, 783.99, 1046.50, 987.77, 783.99, 659.25];
+            // Revised Melody: C E G C(high) B G E ... and finally C(root) to resolve it!
+            const notes = opts.notes ?? [
+              523.25, 659.25, 783.99, 1046.50, 987.77, 783.99, 659.25, 523.25
+            ];
 
-            const out = c.createGain();
-            out.gain.setValueAtTime(0.0001, t0);
-            out.connect(c.destination);
+            // --- AUDIO GRAPH SETUP ---
 
-            // Main voice (chip)
-            const osc = c.createOscillator();
-            osc.type = 'square';
-            osc.connect(out);
+            // Main Output Gain
+            const master = c.createGain();
+            master.gain.setValueAtTime(0.0001, t0);
+            master.connect(c.destination);
 
-            // Optional soft support voice (adds “fanfare” without samples)
+            // Delay Line (The "Magic" Echo)
+            const delay = c.createDelay(0.5);
+            delay.delayTime.value = 0.18; // 180ms echo
+
+            const delayFb = c.createGain();
+            delayFb.gain.value = 0.45; // 45% feedback
+
+            // Filter the echo so it doesn't muddy the mix
+            const delayFilter = c.createBiquadFilter();
+            delayFilter.type = 'lowpass';
+            delayFilter.frequency.value = 4000;
+
+            // Connect Delay Loop
+            master.connect(delay);
+            delay.connect(delayFilter);
+            delayFilter.connect(delayFb);
+            delayFb.connect(delay);
+            delay.connect(c.destination); // Send echo to speakers
+
+            // --- VOICES ---
+
+            // Voice 1: Main Lead (Square - "NES" style)
+            const osc1 = c.createOscillator();
+            osc1.type = 'square';
+
+            // Voice 2: Harmony/Body (Sawtooth - Detuned for chorus)
             const osc2 = c.createOscillator();
-            osc2.type = 'triangle';
+            osc2.type = 'sawtooth';
+            osc2.detune.value = 10; // +10 cents detune
 
-            const out2 = c.createGain();
-            out2.gain.setValueAtTime(0.0001, t0);
-            out2.connect(c.destination);
+            // Voice 3: Sub Octave (Triangle - Solid foundation)
+            const osc3 = c.createOscillator();
+            osc3.type = 'triangle';
 
-            osc2.connect(out2);
+            // Connect Voices to Master
+            osc1.connect(master);
+            osc2.connect(master);
+            osc3.connect(master);
+
+            // Start Voices
+            osc1.start(t0);
+            osc2.start(t0);
+            osc3.start(t0);
+
+            // --- SEQUENCER ---
+
+            let finishTime = 0;
 
             for (let i = 0; i < notes.length; i++) {
               const ti = t0 + i * step;
+              const f = notes[i];
 
-              osc.frequency.setValueAtTime(notes[i], ti);
-              osc2.frequency.setValueAtTime(notes[i] / 2, ti); // octave below
+              // Last note holds longer
+              const isLast = (i === notes.length - 1);
+              const dur = isLast ? 0.8 : step;
 
-              // plucky envelope per note
-              out.gain.setValueAtTime(0.0001, ti);
-              out.gain.exponentialRampToValueAtTime(vol, ti + 0.006);
-              out.gain.exponentialRampToValueAtTime(0.0001, ti + step);
+              // Pitch
+              osc1.frequency.setValueAtTime(f, ti);
+              osc2.frequency.setValueAtTime(f, ti);
+              osc3.frequency.setValueAtTime(f / 2, ti); // Octave down
 
-              out2.gain.setValueAtTime(0.0001, ti);
-              out2.gain.exponentialRampToValueAtTime(vol * 0.35, ti + 0.006);
-              out2.gain.exponentialRampToValueAtTime(0.0001, ti + step);
+              // Envelope (ADSR-ish)
+              // We manipulate the Master Gain for the volume envelope
+              master.gain.setValueAtTime(0.0001, ti);
+              master.gain.linearRampToValueAtTime(vol, ti + 0.02); // Snappy attack
+
+              if (isLast) {
+                // Long tail for the final note
+                master.gain.exponentialRampToValueAtTime(0.0001, ti + 1.5);
+                finishTime = ti + 1.5;
+              } else {
+                // Short staccato for the run
+                master.gain.exponentialRampToValueAtTime(vol * 0.4, ti + step * 0.6);
+                master.gain.exponentialRampToValueAtTime(0.0001, ti + step * 0.95);
+              }
             }
 
-            const total = notes.length * step + 0.05;
-            osc.start(t0);
-            osc2.start(t0);
-
-            osc.stop(t0 + total);
-            osc2.stop(t0 + total);
+            // Stop oscillators after the last note fades
+            osc1.stop(finishTime + 0.5);
+            osc2.stop(finishTime + 0.5);
+            osc3.stop(finishTime + 0.5);
           }
 
           // Combo chime
@@ -1092,7 +1166,7 @@
             const c = getCtx();
             const t0 = c.currentTime;
 
-            const vol = opts.volume ?? 0.22;     // overall loudness
+            const vol = opts.volume ?? 0.080;     // overall loudness
             const step = opts.step ?? 0.085;     // spacing between notes
             const tail = opts.tail ?? 1.55;      // how long it rings
 
@@ -3263,7 +3337,7 @@
               // Enter game mode (disable tooltips etc.)
               document.body.classList.add('game-mode');
               setArcadeHeaderMode(true);
-              
+
               coin.textContent = 'READY';
               coin.style.animation = 'none';
               armStartTile();
@@ -3676,35 +3750,8 @@
 
           // Reset state after fireworks + overlay fade
           setTimeout(() => {
-            // reset game state
-            score = 0;
-            lives = 3;
-            clearedMonths.clear();
-            currentLevel = 1;
-            coinInserted = false;
-            updateHud();
-            gameStarted = false;
-
-            // exit game mode (tooltips back)
-            document.body.classList.remove('game-mode');
-            setArcadeHeaderMode(false);
-
-            // restore INSERT COIN prompt and re-bind handler
-            elSubtitle.innerHTML = '<span id="insertCoin" class="insert-coin arcade-text">INSERT COIN</span>';
-            const coin = document.getElementById('insertCoin');
-            coin.addEventListener('pointerdown', () => {
-              CHIP.coin({ notes: [523.25, 659.25, 783.99, 987.77], step: 0.07 }); // C5 E5 G5 B5
-              coinInserted = true;
-              updateHud();
-              document.body.classList.add('game-mode');
-              coin.textContent = 'READY';
-              coin.style.animation = 'none';
-              armStartTile();
-            });
-
-            // re-render all months
-            render();
-          }, durationMs + 700); // 700ms covers your overlay fadeOut (650ms)
+            resetToInsertCoin();
+          }, durationMs + 700);
         }
 
         function celebrateWin(opts = {}) {
@@ -3891,5 +3938,11 @@
     </script>
 
 </body>
+
+<footer class="ws-footer">
+  Built by <strong>Jude</strong> ·
+  <a href="https://echo3.co" target="_blank" rel="noopener">echo3.co</a><br>
+  <span>If you want something cool built, drop me a line.</span>
+</footer>
 
 </html>
